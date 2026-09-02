@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SimplePage from '../components/sections/SimplePage.astro';
+---
+<BaseLayout
+  title="قیمت لحظه‌ای طلا"
+  description="مشاهده قیمت لحظه‌ای طلای آب‌شده، شمش و سکه طلا در آرکان گلد."
+  path="/price"
+>
+  <SimplePage
+    eyebrow="قیمت لحظه‌ای"
+    title="قیمت لحظه‌ای طلا"
+    intro="این بخش باید به API قیمت لحظه‌ای طلا (داخلی یا جهانی) وصل شود تا نرخ‌ها به‌صورت زنده به‌روزرسانی شوند."
+  >
+    <div class="rounded-card bg-white border border-gold-100/70 shadow-card p-8 text-center max-w-sm mx-auto">
+      <p class="text-xs text-ink-soft mb-1">هر گرم طلای ۱۸ عیار</p>
+      <p class="text-3xl font-extrabold text-maroon tnum">۸,۹۵۰,۰۰۰ تومان</p>
+      <p class="mt-2 text-[11px] text-ink-soft/70">این عدد نمایشی است — به API قیمت واقعی وصل شود.</p>
+    </div>
+  </SimplePage>
+</BaseLayout>

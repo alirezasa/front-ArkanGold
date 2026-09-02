@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { products } from '../../data/products';
+
+export function getStaticPaths() {
+  return products.map((p) => ({ params: { slug: p.slug }, props: { product: p } }));
+}
+
+const { product } = Astro.props;
+const priceFmt = new Intl.NumberFormat('fa-IR');
+
+const productSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: product.name,
+  category: product.category,
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'IRT',
+    price: product.priceToman,
+    availability: 'https://schema.org/InStock',
+    url: `https://arkan.gold/shop/${product.slug}`,
+  },
+};
+---
+
+<BaseLayout
+  title={product.name}
+  description={`خرید ${product.name} (${product.weightGram} گرم) با فاکتور رسمی و امکان تحویل فیزیکی از آرکان گلد.`}
+  path={`/shop/${product.slug}`}
+  jsonLd={productSchema}
+>
+  <section class="container-page py-12 grid gap-10 md:grid-cols-2 items-start">
+    <div class="aspect-square rounded-card bg-cream-100 flex items-center justify-center text-gold-300 text-sm">
+      تصویر محصول
+    </div>
+
+    <div>
+      <p class="text-xs text-gold-600 mb-2">{product.category}</p>
+      <h1 class="text-2xl font-bold text-maroon mb-4">{product.name}</h1>
+      <p class="text-sm text-ink-soft mb-1">وزن: <span class="tnum">{product.weightGram}</span> گرم</p>
+      <p class="text-2xl font-extrabold text-maroon tnum mb-6">
+        {priceFmt.format(product.priceToman)} تومان
+      </p>
+      <a
+        href="/login"
+        class="inline-block rounded-lg bg-maroon px-7 py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+      >
+        افزودن به سبد خرید
+      </a>
+      <p class="mt-6 text-xs leading-6 text-ink-soft max-w-md">
+        این محصول دارای فاکتور رسمی و ضمانت اصالت است. امکان تحویل فیزیکی از بخش «تحویل
+        فیزیکی» حساب کاربری شما فراهم است.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

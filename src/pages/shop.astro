@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { products } from '../data/products';
+
+const categories = ['همه', 'شمش طلا', 'سکه طلا', 'مصنوعات طلا'] as const;
+
+const itemListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  itemListElement: products.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    item: {
+      '@type': 'Product',
+      name: p.name,
+      category: p.category,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'IRT',
+        price: p.priceToman,
+        availability: 'https://schema.org/InStock',
+      },
+    },
+  })),
+};
+
+const priceFmt = new Intl.NumberFormat('fa-IR');
+---
+
+<BaseLayout
+  title="فروشگاه طلا | خرید شمش، سکه و مصنوعات طلا"
+  description="فروشگاه آنلاین آرکان گلد؛ خرید شمش طلا، سکه طلای امامی و مصنوعات طلای آب‌شده با فاکتور رسمی و امکان تحویل فیزیکی."
+  path="/shop"
+  jsonLd={itemListSchema}
+>
+  <section class="container-page py-12">
+    <header class="text-center mb-10">
+      <p class="text-xs text-gold mb-2">فروشگاه آرکان گلد</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-maroon">خرید شمش، سکه و مصنوعات طلا</h1>
+      <p class="mt-2 text-sm text-ink-soft max-w-xl mx-auto">
+        تمام محصولات با فاکتور رسمی، ضمانت اصالت و امکان تحویل فیزیکی یا نگهداری در خزانه ارائه می‌شوند.
+      </p>
+    </header>
+
+    <div class="flex flex-wrap justify-center gap-2 mb-8" role="tablist" aria-label="دسته‌بندی محصولات">
+      {categories.map((c, i) => (
+        <button
+          type="button"
+          class="filter-btn rounded-full border border-gold-100 px-4 py-2 text-xs font-medium text-ink-soft hover:border-gold data-[active=true]:bg-maroon data-[active=true]:text-cream-50 data-[active=true]:border-maroon transition-colors"
+          data-category={c}
+          data-active={i === 0 ? 'true' : 'false'}
+        >
+          {c}
+        </button>
+      ))}
+    </div>
+
+    <div id="product-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {products.map((p) => (
+        <article class="product-card rounded-card bg-white border border-gold-100/70 shadow-card overflow-hidden" data-category={p.category}>
+          <div class="aspect-[4/3] bg-cream-100 flex items-center justify-center text-gold-300 text-xs">
+            تصویر محصول
+          </div>
+          <div class="p-5">
+            <p class="text-[11px] text-gold-600 mb-1">{p.category}</p>
+            <h2 class="font-semibold text-maroon mb-2 leading-6">{p.name}</h2>
+            <div class="flex items-center justify-between text-xs text-ink-soft mb-4">
+              <span>وزن: {p.weightGram} گرم</span>
+              <span class="tnum">{priceFmt.format(p.priceToman)} تومان</span>
+            </div>
+            <a
+              href={`/shop/${p.slug}`}
+              class="block text-center rounded-lg bg-maroon py-2.5 text-xs font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+            >
+              مشاهده و خرید
+            </a>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.product-card');
+
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      buttons.forEach((b) => b.setAttribute('data-active', 'false'));
+      btn.setAttribute('data-active', 'true');
+      const category = btn.dataset.category;
+      cards.forEach((card) => {
+        const show = category === 'همه' || card.dataset.category === category;
+        card.classList.toggle('hidden', !show);
+      });
+    });
+  });
+</script>

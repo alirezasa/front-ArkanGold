@@ -1,0 +1,22 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+const { eyebrow, title, description, ctaLabel, ctaHref } = Astro.props;
+---
+
+<div class="rounded-card bg-white border border-gold-100/70 shadow-card p-7 text-center md:text-right">
+  {eyebrow && <p class="text-xs text-gold mb-2">{eyebrow}</p>}
+  <h3 class="text-lg font-bold text-maroon mb-2">{title}</h3>
+  <p class="text-sm leading-7 text-ink-soft mb-5">{description}</p>
+  <a
+    href={ctaHref}
+    class="inline-block rounded-lg bg-maroon px-5 py-2.5 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+  >
+    {ctaLabel}
+  </a>
+</div>

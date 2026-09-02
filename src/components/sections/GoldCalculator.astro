@@ -1,0 +1,63 @@
+---
+interface Props {
+  mode: 'buy' | 'sell';
+}
+const { mode } = Astro.props;
+const label = mode === 'buy' ? 'خرید' : 'فروش';
+const ctaLabel = mode === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخواست فروش';
+---
+
+<div class="rounded-card bg-white border border-gold-100/70 shadow-card p-6 md:p-8 max-w-md mx-auto md:mx-0">
+  <p class="text-xs text-ink-soft mb-1">قیمت لحظه‌ای هر گرم طلای ۱۸ عیار</p>
+  <p class="text-2xl font-extrabold text-maroon tnum" id="gold-unit-price">۸,۹۵۰,۰۰۰ تومان</p>
+
+  <label for="gold-grams" class="block mt-6 mb-2 text-xs font-medium text-ink-soft">
+    مقدار طلا برای {label} (گرم)
+  </label>
+  <input
+    id="gold-grams"
+    type="number"
+    inputmode="decimal"
+    min="0.1"
+    step="0.1"
+    value="1"
+    class="w-full rounded-lg border border-gold-100 px-4 py-3 text-sm tnum focus:border-gold focus:outline-none"
+    aria-describedby="gold-total-desc"
+  />
+
+  <div class="mt-4 flex items-center justify-between rounded-lg bg-cream-100 px-4 py-3">
+    <span class="text-xs text-ink-soft" id="gold-total-desc">مبلغ قابل پرداخت</span>
+    <span class="font-bold text-maroon tnum" id="gold-total-price">۸,۹۵۰,۰۰۰ تومان</span>
+  </div>
+
+  <button
+    type="button"
+    id="gold-cta"
+    class="mt-6 w-full rounded-lg bg-maroon py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+  >
+    {ctaLabel}
+  </button>
+  <p class="mt-3 text-[11px] text-ink-soft/70 text-center">
+    برای تکمیل معامله، ابتدا باید وارد حساب کاربری خود شوید.
+  </p>
+</div>
+
+<script define:vars={{ mode }}>
+  const UNIT_PRICE = 8_950_000; // تومان — مقدار نمایشی، باید به API قیمت لحظه‌ای واقعی وصل شود
+  const fmt = new Intl.NumberFormat('fa-IR');
+
+  const gramsInput = document.getElementById('gold-grams');
+  const totalEl = document.getElementById('gold-total-price');
+  const ctaBtn = document.getElementById('gold-cta');
+
+  function updateTotal() {
+    const grams = parseFloat(gramsInput?.value || '0') || 0;
+    const total = Math.max(0, grams) * UNIT_PRICE;
+    if (totalEl) totalEl.textContent = `${fmt.format(Math.round(total))} تومان`;
+  }
+
+  gramsInput?.addEventListener('input', updateTotal);
+  ctaBtn?.addEventListener('click', () => {
+    window.location.href = '/login';
+  });
+</script>

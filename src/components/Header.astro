@@ -1,0 +1,89 @@
+---
+const nav = [
+  { label: 'خدمات', href: '/services' },
+  { label: 'قیمت لحظه‌ای', href: '/price' },
+  { label: 'فروشگاه', href: '/shop' },
+  { label: 'مجله آرکان گلد', href: 'https://arkan.gold/mag', external: true },
+  { label: 'سوالات متداول', href: '/faq' },
+];
+const currentPath = Astro.url.pathname;
+---
+
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-2 focus:z-50 focus:bg-maroon focus:text-cream focus:px-4 focus:py-2 focus:rounded">
+  رفتن به محتوای اصلی
+</a>
+
+<header class="sticky top-0 z-40 border-b border-gold-100 bg-cream-50/95 backdrop-blur">
+  <div class="container-page flex h-[64px] items-center justify-between gap-6">
+    <a href="/" class="flex items-center gap-2 shrink-0" aria-label="آرکان گلد - صفحه اصلی">
+      <span class="text-lg font-bold text-maroon">آرکان گلد</span>
+    </a>
+
+    <nav aria-label="ناوبری اصلی" class="hidden lg:flex items-center gap-1">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          target={item.external ? '_blank' : undefined}
+          rel={item.external ? 'noopener noreferrer' : undefined}
+          class:list={[
+            'px-3.5 py-2 rounded-md text-sm transition-colors',
+            currentPath === item.href
+              ? 'text-maroon font-semibold'
+              : 'text-ink-soft hover:text-maroon',
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <a href="#" class="hidden md:flex items-center gap-1.5 text-sm text-ink-soft hover:text-maroon">
+        دانلود اپلیکیشن
+      </a>
+      <a
+        href="/login"
+        class="rounded-lg bg-maroon px-5 py-2.5 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+      >
+        ورود / ثبت نام
+      </a>
+
+      <button
+        id="mobile-menu-btn"
+        type="button"
+        class="lg:hidden rounded-md p-2 text-maroon"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="باز کردن منو"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-menu" aria-label="ناوبری موبایل" class="hidden lg:hidden border-t border-gold-100 bg-cream-50">
+    <div class="container-page flex flex-col py-2">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          target={item.external ? '_blank' : undefined}
+          rel={item.external ? 'noopener noreferrer' : undefined}
+          class="py-3 text-sm text-ink-soft hover:text-maroon border-b border-gold-100/60 last:border-0"
+        >
+          {item.label}
+        </a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn?.addEventListener('click', () => {
+    const isOpen = menu?.classList.toggle('hidden') === false;
+    btn.setAttribute('aria-expanded', String(isOpen));
+  });
+</script>

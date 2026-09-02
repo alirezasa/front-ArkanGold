@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AboutPanel from '../components/sections/AboutPanel.astro';
+
+const values = [
+  { title: 'شفافیت در قیمت و فرآیند معامله', desc: 'قیمت لحظه‌ای، بدون هزینه پنهان و با نمایش شفاف هر مرحله از معامله.' },
+  { title: 'اطمینان از اصالت و اعتبار طلا', desc: 'تمامی محصولات دارای گواهی اصالت و قابل استعلام هستند.' },
+  { title: 'دسترسی آسان به خدمات خرید، فروش و تحویل فیزیکی', desc: 'در هر ساعت از شبانه‌روز، از هر دستگاهی به حساب خود دسترسی دارید.' },
+];
+---
+
+<BaseLayout
+  title="درباره آرکان گلد"
+  description="آرکان گلد، متعلق به شرکت گنجینه طلای پروانه زر، بستری امن و شفاف برای خرید و فروش طلای آب‌شده، شمش و مصنوعات طلا است."
+  path="/about"
+>
+  <section class="container-page py-12">
+    <header class="text-center max-w-2xl mx-auto mb-4">
+      <p class="text-xs text-gold mb-2">درباره ما</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-maroon">آرکان گلد را بیشتر بشناسید</h1>
+    </header>
+  </section>
+
+  <AboutPanel />
+
+  <section class="container-page py-6 pb-16">
+    <h2 class="text-xl font-bold text-maroon text-center mb-8">اصولی که بر پایه آن‌ها فعالیت می‌کنیم</h2>
+    <div class="grid gap-5 md:grid-cols-3">
+      {values.map((v, i) => (
+        <div class="rounded-card bg-white border border-gold-100/70 shadow-card p-6">
+          <span class="text-xs font-semibold text-gold-600">{['۱', '۲', '۳'][i]}</span>
+          <h3 class="font-semibold text-maroon mt-2 mb-2">{v.title}</h3>
+          <p class="text-xs leading-6 text-ink-soft">{v.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <p class="mt-10 text-sm leading-8 text-ink-soft text-center max-w-2xl mx-auto">
+      در آرکان گلد، هدف ما فقط فروش طلا نیست؛ بلکه ایجاد یک تجربه حرفه‌ای، امن و ماندگار
+      برای افرادی است که طلا را به عنوان ابزار دارایی‌گذاری یا کالایی زینتی انتخاب می‌کنند.
+    </p>
+  </section>
+</BaseLayout>

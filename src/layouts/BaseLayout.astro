@@ -1,0 +1,65 @@
+---
+import Seo from '../components/Seo.astro';
+import Analytics from '../components/Analytics.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  noindex?: boolean;
+  /** JSON-LD اضافی مخصوص همان صفحه (مثلا Product یا FAQPage) */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { title, description, path, image, noindex, jsonLd } = Astro.props;
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'آرکان گلد | Arkan Gold Gallery',
+  alternateName: 'Arkan Gold',
+  url: 'https://arkan.gold',
+  logo: 'https://arkan.gold/logo.png',
+  description:
+    'خرید و فروش آنلاین طلای آب‌شده، شمش طلا و مصنوعات طلا با پشتوانه واقعی، فاکتور رسمی و امکان تحویل فیزیکی.',
+  telephone: '+982198765431',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'تهران',
+    addressRegion: 'اختیاریه',
+    addressCountry: 'IR',
+  },
+  sameAs: [],
+};
+
+const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4A1015" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+
+    <Seo title={title} description={description} path={path} image={image} noindex={noindex} />
+    <Analytics />
+
+    {schemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+  </head>
+  <body>
+    <Header />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

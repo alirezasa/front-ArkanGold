@@ -1,0 +1,46 @@
+---
+interface Props {
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+---
+
+<section class="container-page py-14">
+  <div class="rounded-card bg-maroon text-cream-50 p-8 md:p-12 grid gap-10 md:grid-cols-[220px_1fr]">
+    <div class="text-center md:text-right">
+      <p class="text-3xl font-extrabold tracking-wide">ARKAN</p>
+      <p class="text-xs tracking-[0.3em] text-cream-50/70 mt-1">GOLD GALLERY</p>
+      <p class="text-xs text-gold mt-1">2026</p>
+    </div>
+
+    <div>
+      <p class="text-xs text-gold mb-2">Arkan Gold Gallery</p>
+      <h2 class="text-xl md:text-2xl font-bold mb-4">درباره آرکان گلد</h2>
+
+      <p class="text-sm leading-8 text-cream-50/85">
+        آرکان گلد، نام تجاری فعال در حوزه خرید و فروش طلا، متعلق به شرکت گنجینه طلای پروانه
+        زر، با هدف ایجاد بستری امن، شفاف و حرفه‌ای برای سرمایه‌گذاری، خرید و فروش طلای
+        آب‌شده، مصنوعات طلا و شمش طلا راه‌اندازی شده است.
+      </p>
+
+      {!compact && (
+        <p class="mt-4 text-sm leading-8 text-cream-50/85">
+          ما در آرکان گلد تلاش کرده‌ایم یک بستر مطمئن و ساده برای معاملات طلا فراهم کنیم؛
+          بستری که در آن اصالت کالا، شفافیت قیمت، امکان بررسی سفارش و قابلیت تحویل فیزیکی
+          طلا در اولویت قرار دارد.
+        </p>
+      )}
+
+      <div class="mt-6 grid grid-cols-2 gap-4 max-w-sm">
+        <div class="rounded-card bg-cream-50 text-maroon px-5 py-4 text-center">
+          <p class="text-2xl font-extrabold tnum">۹۸٪+</p>
+          <p class="text-[11px] text-ink-soft mt-1">رضایت مشتریان</p>
+        </div>
+        <div class="rounded-card bg-cream-50 text-maroon px-5 py-4 text-center">
+          <p class="text-2xl font-extrabold tnum">۱۵+</p>
+          <p class="text-[11px] text-ink-soft mt-1">سال سابقه</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

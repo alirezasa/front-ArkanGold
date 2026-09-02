@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SimplePage from '../components/sections/SimplePage.astro';
+
+const services = [
+  { title: 'خرید و فروش طلای آب‌شده', desc: 'معامله آنلاین طلای آب‌شده با قیمت لحظه‌ای.' },
+  { title: 'خرید شمش و سکه طلا', desc: 'خرید شمش و سکه طلا با فاکتور رسمی.' },
+  { title: 'نگهداری در خزانه امن', desc: 'نگهداری طلای خریداری‌شده در خزانه رسمی بانک.' },
+  { title: 'تحویل فیزیکی طلا', desc: 'دریافت فیزیکی طلای خریداری‌شده در آدرس دلخواه.' },
+];
+---
+<BaseLayout
+  title="خدمات آرکان گلد"
+  description="خدمات آرکان گلد شامل خرید و فروش آنلاین طلای آب‌شده، شمش و سکه طلا، نگهداری در خزانه امن و تحویل فیزیکی."
+  path="/services"
+>
+  <SimplePage
+    eyebrow="خدمات"
+    title="خدماتی که آرکان گلد ارائه می‌دهد"
+    intro="از خرید و فروش آنلاین تا نگهداری امن و تحویل فیزیکی، تمام مراحل معامله طلا را در یک بستر مدیریت کنید."
+  >
+    <div class="grid gap-5 sm:grid-cols-2 text-right">
+      {services.map((s) => (
+        <div class="rounded-card bg-white border border-gold-100/70 shadow-card p-5">
+          <h2 class="font-semibold text-maroon mb-1.5">{s.title}</h2>
+          <p class="text-xs leading-6 text-ink-soft">{s.desc}</p>
+        </div>
+      ))}
+    </div>
+  </SimplePage>
+</BaseLayout>

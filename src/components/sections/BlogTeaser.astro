@@ -1,0 +1,54 @@
+---
+// این بخش آخرین مطالب مجله (arkan.gold/mag که با وردپرس اجرا می‌شود) را
+// از طریق REST API وردپرس می‌خواند و به‌صورت زنده نمایش می‌دهد.
+// چون این درخواست در زمان build/SSR اجرا می‌شود، اگر بلاگ در دسترس نباشد
+// یا تعداد پست کافی نباشد، این بخش بی‌صدا حذف می‌شود (خطا صفحه را نمی‌شکند).
+
+interface WpPost {
+  id: number;
+  link: string;
+  title: { rendered: string };
+  excerpt: { rendered: string };
+  date: string;
+}
+
+let posts: WpPost[] = [];
+try {
+  const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
+    signal: AbortSignal.timeout(4000),
+  });
+  if (res.ok) posts = await res.json();
+} catch {
+  posts = [];
+}
+
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
+---
+
+{posts.length > 0 && (
+  <section class="container-page py-14">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-xl md:text-2xl font-bold text-maroon">مطالب مجله آرکان گلد</h2>
+      <a href="https://arkan.gold/mag" target="_blank" rel="noopener" class="text-sm text-gold-600 hover:underline">
+        مشاهده همه مطالب
+      </a>
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {posts.map((post) => (
+        <a
+          href={post.link}
+          target="_blank"
+          rel="noopener"
+          class="block rounded-card bg-white border border-gold-100/70 shadow-card p-5 hover:border-gold transition-colors"
+        >
+          <h3 class="font-semibold text-maroon mb-2 line-clamp-2" set:html={post.title.rendered} />
+          <p class="text-xs leading-6 text-ink-soft line-clamp-3">{stripHtml(post.excerpt.rendered)}</p>
+          <time datetime={post.date} class="mt-3 block text-[11px] text-ink-soft/70 tnum">
+            {new Date(post.date).toLocaleDateString('fa-IR')}
+          </time>
+        </a>
+      ))}
+    </div>
+  </section>
+)}

@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SimplePage from '../components/sections/SimplePage.astro';
+---
+<BaseLayout
+  title="ورود / ثبت‌نام"
+  description="ورود یا ثبت‌نام در آرکان گلد با شماره موبایل."
+  path="/login"
+  noindex={true}
+>
+  <SimplePage
+    eyebrow="ورود / ثبت‌نام"
+    title="وارد حساب کاربری خود شوید"
+    intro="با شماره موبایل خود وارد شوید یا در کمتر از یک دقیقه ثبت‌نام کنید."
+  >
+    <form class="max-w-sm mx-auto rounded-card bg-white border border-gold-100/70 shadow-card p-6 space-y-4 text-right">
+      <div>
+        <label for="mobile" class="block text-xs font-medium text-ink-soft mb-1.5">شماره موبایل</label>
+        <input id="mobile" type="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" class="w-full rounded-lg border border-gold-100 px-4 py-2.5 text-sm tnum focus:border-gold focus:outline-none" />
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-maroon py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors">
+        دریافت کد تایید
+      </button>
+    </form>
+  </SimplePage>
+</BaseLayout>

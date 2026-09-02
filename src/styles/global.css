@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* فونت وزیرمتن (Vazirmatn) — نسخه‌ی متغیر، سبک تا درشت */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/DanaFaNum-Regular.woff') format('woff-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+html {
+  direction: rtl;
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-cream text-ink font-sans antialiased;
+  font-feature-settings: 'ss01' on;
+}
+
+/* فوکوس قابل‌مشاهده برای دسترسی‌پذیری با صفحه‌کلید */
+:focus-visible {
+  outline: 2px solid theme('colors.gold.DEFAULT');
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.container-page {
+  @apply mx-auto max-w-content px-5 md:px-8;
+}
+
+/* اعداد فارسی/لاتین یک‌دست در قیمت‌ها و آمار */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

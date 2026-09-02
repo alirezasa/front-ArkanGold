@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import { faqItems } from '../data/faq';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer },
+  })),
+};
+---
+
+<BaseLayout
+  title="سوالات متداول"
+  description="پاسخ سوالات پرتکرار درباره ثبت‌نام، خرید و فروش طلا، کارمزد، تسویه حساب و تحویل فیزیکی در آرکان گلد."
+  path="/faq"
+  jsonLd={faqSchema}
+>
+  <section class="container-page py-12 max-w-3xl mx-auto">
+    <header class="text-center mb-10">
+      <p class="text-xs text-gold mb-2">پشتیبانی و راهنما</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-maroon">سوالات متداول</h1>
+      <p class="mt-2 text-sm text-ink-soft">پاسخ‌های سریع به سوالات پرتکرار و پشتیبانی ۲۴ ساعته در دسترس شما.</p>
+    </header>
+
+    <FaqAccordion items={faqItems} idPrefix="faq-page" />
+
+    <p class="mt-8 text-center text-sm text-ink-soft">
+      سوال شما پاسخ داده نشد؟
+      <a href="/contact" class="text-gold-600 font-semibold hover:underline">با پشتیبانی تماس بگیرید</a>
+    </p>
+  </section>
+</BaseLayout>

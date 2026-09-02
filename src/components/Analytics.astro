@@ -1,0 +1,33 @@
+---
+/**
+ * لودر آنالیز — فعلاً فقط «جای اتصال» است.
+ * وقتی ابزار مشخص شد (Google Analytics / یکتانت / هر ابزار دیگر)،
+ * فقط کافیست مقدار متغیرهای محیطی زیر را در فایل .env پروژه ست کنید؛
+ * کد لازم برای بارگذاری اسکریپت به‌صورت خودکار فعال می‌شود و نیازی به
+ * تغییر در Layout یا صفحات نیست.
+ *
+ * PUBLIC_GA4_ID=G-XXXXXXXXXX          -> فعال‌سازی Google Analytics 4
+ * PUBLIC_YEKTANET_ID=xxxxxxxx          -> فعال‌سازی یکتانت آنالیتیکس
+ */
+const GA4_ID = import.meta.env.PUBLIC_GA4_ID;
+const YEKTANET_ID = import.meta.env.PUBLIC_YEKTANET_ID;
+---
+
+{GA4_ID && (
+  <>
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}></script>
+    <script define:vars={{ GA4_ID }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', GA4_ID, { anonymize_ip: true });
+    </script>
+  </>
+)}
+
+{YEKTANET_ID && (
+  <script define:vars={{ YEKTANET_ID }} async>
+    // جای اسکریپت رسمی یکتانت آنالیتیکس؛ کد نصب واقعی را از پنل یکتانت
+    // اینجا جایگزین کنید (شناسه از YEKTANET_ID در دسترس است).
+  </script>
+)}

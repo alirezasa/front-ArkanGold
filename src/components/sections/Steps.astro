@@ -1,0 +1,54 @@
+---
+const steps = [
+  {
+    n: '۱',
+    title: 'ثبت‌نام',
+    desc: 'پس از ثبت‌نام با شماره موبایل خود، وارد آرکان گلد شوید.',
+  },
+  {
+    n: '۲',
+    title: 'احراز هویت',
+    desc: 'با ثبت اطلاعات هویتی، در کمتر از ۱ دقیقه احراز هویت کنید.',
+  },
+  {
+    n: '۳',
+    title: 'خرید آنلاین',
+    desc: 'میزان طلا یا نقره مورد نظر خود را وارد کرده و مبلغ آن را آنلاین پرداخت کنید.',
+  },
+  {
+    n: '۴',
+    title: 'تحویل فیزیکی',
+    desc: 'در بخش تحویل فیزیکی با انتخاب آدرس ثبت‌شده، طلای خریداری‌شده را تحویل بگیرید.',
+  },
+];
+---
+
+<section class="bg-cream-200/50 py-14">
+  <div class="container-page grid gap-10 md:grid-cols-2 items-start">
+    <div class="text-center md:text-right">
+      <p class="text-xs text-ink-soft mb-2">خرید آسان طلای آب‌شده تنها در ۴ مرحله</p>
+      <h2 class="text-xl md:text-2xl font-bold text-maroon">شروع آسان با آرکان گلد</h2>
+      <p class="mt-2 text-sm text-ink-soft">چطور آنلاین طلا و نقره بخریم؟</p>
+      <a
+        href="/faq"
+        class="mt-6 inline-block rounded-lg border-2 border-maroon px-5 py-2.5 text-sm font-semibold text-maroon hover:bg-maroon hover:text-cream-50 transition-colors"
+      >
+        مشاهده سوالات متداول
+      </a>
+    </div>
+
+    <ol class="space-y-3">
+      {steps.map((s) => (
+        <li class="flex items-start gap-4 rounded-card bg-white p-5 shadow-card border border-gold-100/70">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-maroon text-sm font-bold text-cream-50 tnum">
+            {s.n}
+          </span>
+          <div>
+            <h3 class="font-semibold text-maroon mb-1">{s.title}</h3>
+            <p class="text-xs leading-6 text-ink-soft">{s.desc}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

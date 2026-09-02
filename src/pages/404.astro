@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="صفحه پیدا نشد"
+  description="صفحه مورد نظر یافت نشد."
+  path="/404"
+  noindex={true}
+>
+  <section class="container-page py-24 text-center">
+    <p class="text-6xl font-extrabold text-gold mb-4 tnum">۴۰۴</p>
+    <h1 class="text-xl font-bold text-maroon mb-3">صفحه مورد نظر پیدا نشد</h1>
+    <p class="text-sm text-ink-soft mb-8">ممکن است لینک اشتباه باشد یا صفحه جابه‌جا شده باشد.</p>
+    <a href="/" class="inline-block rounded-lg bg-maroon px-7 py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors">
+      بازگشت به صفحه اصلی
+    </a>
+  </section>
+</BaseLayout>

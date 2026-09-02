@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/sections/Hero.astro';
+import Features from '../components/sections/Features.astro';
+import Steps from '../components/sections/Steps.astro';
+import AboutPanel from '../components/sections/AboutPanel.astro';
+import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import CtaBanner from '../components/sections/CtaBanner.astro';
+import BlogTeaser from '../components/sections/BlogTeaser.astro';
+import { faqItems } from '../data/faq';
+
+const homeFaq = faqItems.slice(0, 7);
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: homeFaq.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer },
+  })),
+};
+---
+
+<BaseLayout
+  title="آرکان گلد | خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی"
+  description="خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا و مصنوعات طلا با ارائه فاکتور رسمی و ضمانت اصالت. معامله ۲۴ ساعته، بدون اجرت و کارمزد."
+  path="/"
+  jsonLd={faqSchema}
+>
+  <Hero />
+  <Features />
+  <Steps />
+  <AboutPanel />
+
+  <section class="container-page py-14 grid gap-10 lg:grid-cols-[1fr_360px]">
+    <div>
+      <h2 class="text-xl md:text-2xl font-bold text-maroon mb-6">سوالات متداول</h2>
+      <FaqAccordion items={homeFaq} idPrefix="home-faq" />
+    </div>
+    <CtaBanner
+      eyebrow="پشتیبانی و راهنما"
+      title="نیاز به راهنمایی دارید؟"
+      description="پاسخ‌های سریع به سوالات پرتکرار و پشتیبانی ۲۴ ساعته در دسترس شما."
+      ctaLabel="تماس با پشتیبانی"
+      ctaHref="/contact"
+    />
+  </section>
+
+  <BlogTeaser />
+</BaseLayout>

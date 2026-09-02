@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GoldCalculator from '../components/sections/GoldCalculator.astro';
+import Features from '../components/sections/Features.astro';
+
+const points = [
+  'خرید از ۰.۱ گرم، بدون محدودیت مقدار',
+  'قیمت لحظه‌ای بر اساس نرخ بازار جهانی و داخلی',
+  'امکان تحویل فیزیکی یا نگهداری در خزانه امن',
+  'صدور فاکتور رسمی برای هر تراکنش',
+];
+---
+
+<BaseLayout
+  title="خرید طلای آب‌شده آنلاین"
+  description="خرید آنلاین طلای آب‌شده با قیمت لحظه‌ای، بدون اجرت ساخت و مالیات مصنوعات، با امکان تحویل فیزیکی و فاکتور رسمی."
+  path="/buy-gold"
+>
+  <section class="container-page py-12 grid gap-10 md:grid-cols-2 items-start">
+    <div class="text-center md:text-right order-2 md:order-1">
+      <p class="text-xs text-gold mb-2">خرید طلای آب‌شده</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-maroon mb-4">
+        خرید آنلاین طلای آب‌شده با قیمت لحظه‌ای
+      </h1>
+      <p class="text-sm leading-8 text-ink-soft mb-6">
+        بدون نیاز به مراجعه حضوری، طلای آب‌شده خود را با نرخ لحظه‌ای بازار خریداری کنید؛
+        بدون اجرت ساخت و بدون مالیات مصنوعات.
+      </p>
+      <ul class="space-y-3 text-sm text-ink-soft max-w-md mx-auto md:mx-0">
+        {points.map((p) => (
+          <li class="flex items-center gap-2 justify-center md:justify-start">
+            <span class="h-1.5 w-1.5 rounded-full bg-gold shrink-0"></span>
+            {p}
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="order-1 md:order-2">
+      <GoldCalculator mode="buy" />
+    </div>
+  </section>
+
+  <Features />
+</BaseLayout>

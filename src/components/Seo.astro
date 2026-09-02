@@ -1,0 +1,44 @@
+---
+// کامپوننت سئو — روی هر صفحه با props اختصاصی همان صفحه فراخوانی می‌شود
+import { SITE_URL } from '../../astro.config.mjs';
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string; // مسیر صفحه، مثلا "/shop"
+  image?: string; // مسیر تصویر og، نسبت به public
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  path = Astro.url.pathname,
+  image = '/og/og-default.jpg',
+  noindex = false,
+} = Astro.props;
+
+const canonicalURL = new URL(path, SITE_URL).toString();
+const ogImageURL = new URL(image, SITE_URL).toString();
+const fullTitle = title.includes('آرکان گلد') ? title : `${title} | آرکان گلد`;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="آرکان گلد | Arkan Gold Gallery" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:image" content={ogImageURL} />
+<meta property="og:locale" content="fa_IR" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageURL} />

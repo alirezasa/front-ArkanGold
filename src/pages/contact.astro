@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const contactSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'تماس با آرکان گلد',
+  url: 'https://arkan.gold/contact',
+};
+
+const details = [
+  { label: 'تلفن پشتیبانی', value: '۰۲۱۹۸۷۶۵۴۳۱', href: 'tel:02198765431' },
+  { label: 'ایمیل', value: 'info@arkan.gold', href: 'mailto:info@arkan.gold' },
+  { label: 'ساعت کاری', value: 'شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲' },
+  { label: 'آدرس', value: 'تهران، اختیاریه' },
+];
+---
+
+<BaseLayout
+  title="تماس با ما"
+  description="راه‌های ارتباطی با تیم پشتیبانی آرکان گلد؛ تماس تلفنی، ایمیل و فرم ارتباط با ما."
+  path="/contact"
+  jsonLd={contactSchema}
+>
+  <section class="container-page py-12 grid gap-10 lg:grid-cols-2">
+    <div>
+      <p class="text-xs text-gold mb-2">تماس با ما</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-maroon mb-4">در ارتباط با آرکان گلد باشید</h1>
+      <p class="text-sm leading-8 text-ink-soft mb-8">
+        سوالی درباره خرید، فروش یا تحویل فیزیکی طلا دارید؟ تیم پشتیبانی ما آماده پاسخ‌گویی
+        است.
+      </p>
+
+      <dl class="space-y-4">
+        {details.map((d) => (
+          <div class="flex items-center justify-between rounded-card bg-white border border-gold-100/70 px-5 py-4 shadow-card">
+            <dt class="text-xs text-ink-soft">{d.label}</dt>
+            <dd class="text-sm font-semibold text-maroon tnum">
+              {d.href ? <a href={d.href} class="hover:text-gold-600">{d.value}</a> : d.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+
+    <form class="rounded-card bg-white border border-gold-100/70 shadow-card p-6 md:p-8 space-y-4" id="contact-form">
+      <div>
+        <label for="name" class="block text-xs font-medium text-ink-soft mb-1.5">نام و نام خانوادگی</label>
+        <input id="name" name="name" type="text" required class="w-full rounded-lg border border-gold-100 px-4 py-2.5 text-sm focus:border-gold focus:outline-none" />
+      </div>
+      <div>
+        <label for="phone" class="block text-xs font-medium text-ink-soft mb-1.5">شماره موبایل</label>
+        <input id="phone" name="phone" type="tel" required class="w-full rounded-lg border border-gold-100 px-4 py-2.5 text-sm tnum focus:border-gold focus:outline-none" />
+      </div>
+      <div>
+        <label for="message" class="block text-xs font-medium text-ink-soft mb-1.5">پیام شما</label>
+        <textarea id="message" name="message" rows="4" required class="w-full rounded-lg border border-gold-100 px-4 py-2.5 text-sm focus:border-gold focus:outline-none"></textarea>
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-maroon py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors">
+        ارسال پیام
+      </button>
+      <p id="contact-status" class="text-xs text-ink-soft text-center" role="status"></p>
+    </form>
+  </section>
+</BaseLayout>
+
+<script>
+  // این فرم فعلاً فقط سمت کلاینت است. برای فعال‌سازی واقعی، این fetch را
+  // به یک endpoint واقعی (مثلا /api/contact یا سرویس ایمیل) وصل کنید.
+  const form = document.getElementById('contact-form');
+  const status = document.getElementById('contact-status');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (status) status.textContent = 'پیام شما ثبت شد. به‌زودی با شما تماس می‌گیریم.';
+    (form as HTMLFormElement).reset();
+  });
+</script>

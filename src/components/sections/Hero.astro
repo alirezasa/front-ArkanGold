@@ -1,0 +1,60 @@
+---
+const trustItems = [
+  'مجوز فینتک',
+  'تحویل فیزیکی',
+  'قیمت رقابتی',
+  'خزانه بانکی امن',
+  'تضمین دارایی',
+];
+---
+
+<section class="container-page pt-10 pb-14 md:pt-16 md:pb-20">
+  <div class="grid items-center gap-10 md:grid-cols-2">
+    <div class="order-2 md:order-1 flex justify-center">
+      <img
+        src="/images/hero-gold-vault.jpg"
+        alt="مکعب طلای آرکان گلد، نمادی از خزانه امن طلای آب‌شده مشتریان"
+        width="520"
+        height="440"
+        class="w-full max-w-md drop-shadow-xl"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+
+    <div class="order-1 md:order-2 text-center md:text-right">
+      <p class="text-2xl font-extrabold text-gold mb-2">آرکان گلد؛</p>
+      <h1 class="text-2xl md:text-[32px] leading-[1.5] font-bold text-maroon">
+        خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی
+      </h1>
+      <p class="mt-4 text-sm md:text-base leading-8 text-ink-soft">
+        خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا، مصنوعات طلا و ارائه فاکتور
+        رسمی با ضمانت اصالت.
+      </p>
+
+      <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
+        <a
+          href="/sell-gold"
+          class="rounded-lg border-2 border-maroon px-6 py-3 text-sm font-semibold text-maroon hover:bg-maroon hover:text-cream-50 transition-colors"
+        >
+          خرید شمش طلا
+        </a>
+        <a
+          href="/buy-gold"
+          class="rounded-lg bg-maroon px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
+        >
+          خرید طلای آب‌شده
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <ul class="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xs text-ink-soft">
+    {trustItems.map((item) => (
+      <li class="flex items-center gap-2">
+        <span class="h-1.5 w-1.5 rounded-full bg-gold"></span>
+        {item}
+      </li>
+    ))}
+  </ul>
+</section>
