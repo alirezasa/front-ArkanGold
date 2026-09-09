@@ -1,0 +1,223 @@
+---
+// نمودار لحظه‌ای قیمت طلا — Chart.js
+// -----------------------------------------------------------------
+// وضعیت فعلی: چون API فعلی (talasea) فقط قیمت لحظه‌ای برمی‌گرداند و بازه‌ی
+// زمانی (ساعتی/روزانه/هفتگی) ندارد، نمودار از تاریخچه‌ی محلی‌ای که هر ۳۰
+// ثانیه در src/lib/goldPrice.ts جمع می‌شود تغذیه می‌کند (تب «زنده»).
+// تب‌های «روزانه»، «هفتگی» و «ماهانه» فعلاً placeholder هستند تا وقتی
+// API بازه‌ی زمانی واقعی اضافه شود — نقطه‌ی اتصال آینده دقیقاً مشخص شده:
+// به تابع `fetchRangeData` در اسکریپت پایین همین فایل نگاه کنید.
+---
+
+<section class="container-page py-14">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+    <div>
+      <div class="flex items-center gap-2 text-sm text-ink-soft mb-1">
+        <span class="live-dot"></span>
+        بروزرسانی زنده — هر ۳۰ ثانیه
+      </div>
+      <h2 class="text-2xl font-bold text-brand">تحلیل لحظه‌ای بازار طلا</h2>
+    </div>
+
+    <div class="flex gap-1 rounded-full bg-canvas-100 p-1 self-start scrollbar-thin overflow-x-auto" role="tablist" aria-label="بازه زمانی نمودار">
+      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="live" data-active="true">زنده</button>
+      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="day" data-active="false">روزانه</button>
+      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="week" data-active="false">هفتگی</button>
+      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="month" data-active="false">ماهانه</button>
+    </div>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-[1fr_300px]">
+    <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 md:p-6">
+      <div id="chart-range-note" class="mb-3 hidden rounded-lg bg-brand-50 text-brand text-xs px-3 py-2">
+        این بازه‌ی زمانی هنوز به داده‌ی واقعی وصل نشده و به‌محض دریافت API بازه‌ای فعال می‌شود.
+      </div>
+      <div class="h-64 md:h-80">
+        <canvas id="gold-price-chart" role="img" aria-label="نمودار قیمت لحظه‌ای طلای آب‌شده"></canvas>
+      </div>
+
+      <div class="mt-5 grid grid-cols-3 gap-3 border-t border-brand-100/30 pt-4 text-center">
+        <div>
+          <p class="text-xs text-ink-soft mb-1">کمترین قیمت</p>
+          <p class="text-sm font-bold text-brand tnum" id="stat-min">--</p>
+        </div>
+        <div>
+          <p class="text-xs text-ink-soft mb-1">بیشترین قیمت</p>
+          <p class="text-sm font-bold text-brand tnum" id="stat-max">--</p>
+        </div>
+        <div>
+          <p class="text-xs text-ink-soft mb-1">تغییر ۲۴ ساعته</p>
+          <p class="text-sm font-bold tnum" id="stat-change" data-price-bind="changePercent">--</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-3 content-start">
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 flex items-center justify-between card-lift">
+        <div>
+          <p class="text-xs text-ink-soft mb-1">قیمت هر گرم ۱۸ عیار</p>
+          <p class="font-bold text-brand tnum" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</p>
+        </div>
+        <span class="text-xs font-semibold tnum" data-price-bind="changePercent">--</span>
+      </div>
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 card-lift">
+        <p class="text-xs text-ink-soft mb-1">آخرین بروزرسانی</p>
+        <p class="font-bold text-brand tnum" data-price-bind="fetchedAt">--</p>
+      </div>
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 card-lift">
+        <p class="text-xs text-ink-soft mb-1">کارمزد معامله</p>
+        <p class="font-bold text-brand tnum" id="stat-fee">--</p>
+      </div>
+      <a href="/price" class="btn-outline w-full mt-1">مشاهده و مقایسه کامل بازارها</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .chart-range-btn[data-active="true"] {
+    background: linear-gradient(135deg, #7a171e, #330509);
+    color: #ffffff;
+  }
+  .chart-range-btn[data-active="false"] {
+    color: #5c5449;
+  }
+</style>
+
+<script>
+  import Chart from 'chart.js/auto';
+  import { subscribeGoldPrice, getPriceHistory, formatToman, type NormalizedGoldPrice } from '../../lib/goldPrice';
+
+  const fmt = new Intl.NumberFormat('fa-IR');
+  const canvas = document.getElementById('gold-price-chart') as HTMLCanvasElement | null;
+  const rangeNote = document.getElementById('chart-range-note');
+  let chart: Chart | null = null;
+  let activeRange = 'live';
+
+  function buildGradient(ctx: CanvasRenderingContext2D, area: { top: number; bottom: number }) {
+    const gradient = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    gradient.addColorStop(0, 'rgba(51, 5, 9, 0.22)');
+    gradient.addColorStop(1, 'rgba(51, 5, 9, 0)');
+    return gradient;
+  }
+
+  /**
+   * TODO (آینده): وقتی API بازه‌ی زمانی واقعی (روزانه/هفتگی/ماهانه) در
+   * دسترس قرار گرفت، این تابع را جایگزین کنید تا از آن API واقعی fetch کند.
+   * فعلاً فقط برای «زنده» داده‌ی واقعی از تاریخچه‌ی محلی نمایش داده می‌شود
+   * و بقیه‌ی بازه‌ها placeholder (تکرار آخرین نقطه) هستند.
+   */
+  function fetchRangeData(range: string): { labels: string[]; data: number[] } {
+    if (range === 'live') {
+      const history = getPriceHistory();
+      if (history.length === 0) return { labels: ['اکنون'], data: [0] };
+      return {
+        labels: history.map((h) => h.time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })),
+        data: history.map((h) => h.price),
+      };
+    }
+    // Placeholder تا زمان اتصال API بازه‌ی زمانی واقعی
+    const history = getPriceHistory();
+    const lastPrice = history.length ? history[history.length - 1].price : 0;
+    return { labels: ['--', '--', '--', '--'], data: [lastPrice, lastPrice, lastPrice, lastPrice] };
+  }
+
+  function renderChart(range: string) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { labels, data } = fetchRangeData(range);
+
+    if (rangeNote) rangeNote.classList.toggle('hidden', range === 'live');
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'قیمت هر گرم طلای ۱۸ عیار',
+            data,
+            borderColor: '#330509',
+            borderWidth: 2.5,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#330509',
+            tension: 0.4,
+            fill: true,
+            backgroundColor: (context) => {
+              const { ctx: c, chartArea } = context.chart;
+              if (!chartArea) return 'rgba(51,5,9,0.10)';
+              return buildGradient(c, chartArea);
+            },
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        animation: { duration: 600, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            rtl: true,
+            titleFont: { family: 'Vazirmatn' },
+            bodyFont: { family: 'Vazirmatn' },
+            backgroundColor: '#330509',
+            padding: 10,
+            callbacks: {
+              label: (item) => formatToman(Number(item.raw)),
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Vazirmatn', size: 10 }, color: '#5C5449' },
+          },
+          y: {
+            grid: { color: 'rgba(51,5,9,0.08)' },
+            ticks: {
+              font: { family: 'Vazirmatn', size: 10 },
+              color: '#5C5449',
+              callback: (value) => fmt.format(Number(value)),
+            },
+          },
+        },
+      },
+    });
+
+    if (data.length && data.some((d) => d > 0)) {
+      const min = Math.min(...data.filter((d) => d > 0));
+      const max = Math.max(...data);
+      const statMin = document.getElementById('stat-min');
+      const statMax = document.getElementById('stat-max');
+      if (statMin) statMin.textContent = fmt.format(min);
+      if (statMax) statMax.textContent = fmt.format(max);
+    }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.chart-range-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chart-range-btn').forEach((b) => b.setAttribute('data-active', 'false'));
+      btn.setAttribute('data-active', 'true');
+      activeRange = btn.dataset.range || 'live';
+      renderChart(activeRange);
+    });
+  });
+
+  subscribeGoldPrice((price: NormalizedGoldPrice) => {
+    const feeEl = document.getElementById('stat-fee');
+    if (feeEl) feeEl.textContent = `${(price.raw.fee * 100).toLocaleString('fa-IR')}٪`;
+    if (activeRange === 'live') renderChart('live');
+  });
+
+  renderChart('live');
+</script>
+
+<script>
+  import '../../lib/priceBinding';
+</script>

@@ -6,25 +6,31 @@ const { compact = false } = Astro.props;
 ---
 
 <section class="container-page py-14">
-  <div class="rounded-card bg-maroon text-cream-50 p-8 md:p-12 grid gap-10 md:grid-cols-[220px_1fr]">
-    <div class="text-center md:text-right">
-      <p class="text-3xl font-extrabold tracking-wide">ARKAN</p>
-      <p class="text-xs tracking-[0.3em] text-cream-50/70 mt-1">GOLD GALLERY</p>
-      <p class="text-xs text-gold mt-1">2026</p>
+  <div class="relative overflow-hidden rounded-xl2 bg-brand-radial text-white p-8 md:p-12 grid gap-10 md:grid-cols-[220px_1fr] shadow-glow-brand">
+    <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-[0.07]"></div>
+
+    <div class="relative flex items-center justify-center md:justify-start">
+      <img
+        src="/images/logo-mark.png"
+        alt="آرکان گلد"
+        width="180"
+        height="120"
+        class="w-full max-w-[180px] drop-shadow-lg"
+      />
     </div>
 
-    <div>
+    <div class="relative">
       <p class="text-xs text-gold mb-2">Arkan Gold Gallery</p>
-      <h2 class="text-xl md:text-2xl font-bold mb-4">درباره آرکان گلد</h2>
+      <h2 class="text-2xl font-bold mb-4">درباره آرکان گلد</h2>
 
-      <p class="text-sm leading-8 text-cream-50/85">
+      <p class="text-base leading-8 text-white/85">
         آرکان گلد، نام تجاری فعال در حوزه خرید و فروش طلا، متعلق به شرکت گنجینه طلای پروانه
         زر، با هدف ایجاد بستری امن، شفاف و حرفه‌ای برای سرمایه‌گذاری، خرید و فروش طلای
         آب‌شده، مصنوعات طلا و شمش طلا راه‌اندازی شده است.
       </p>
 
       {!compact && (
-        <p class="mt-4 text-sm leading-8 text-cream-50/85">
+        <p class="mt-4 text-base leading-8 text-white/85">
           ما در آرکان گلد تلاش کرده‌ایم یک بستر مطمئن و ساده برای معاملات طلا فراهم کنیم؛
           بستری که در آن اصالت کالا، شفافیت قیمت، امکان بررسی سفارش و قابلیت تحویل فیزیکی
           طلا در اولویت قرار دارد.
@@ -32,13 +38,13 @@ const { compact = false } = Astro.props;
       )}
 
       <div class="mt-6 grid grid-cols-2 gap-4 max-w-sm">
-        <div class="rounded-card bg-cream-50 text-maroon px-5 py-4 text-center">
+        <div class="glass-panel rounded-card px-5 py-4 text-center">
           <p class="text-2xl font-extrabold tnum">۹۸٪+</p>
-          <p class="text-[11px] text-ink-soft mt-1">رضایت مشتریان</p>
+          <p class="text-xs text-white/70 mt-1">رضایت مشتریان</p>
         </div>
-        <div class="rounded-card bg-cream-50 text-maroon px-5 py-4 text-center">
+        <div class="glass-panel rounded-card px-5 py-4 text-center">
           <p class="text-2xl font-extrabold tnum">۱۵+</p>
-          <p class="text-[11px] text-ink-soft mt-1">سال سابقه</p>
+          <p class="text-xs text-white/70 mt-1">سال سابقه</p>
         </div>
       </div>
     </div>

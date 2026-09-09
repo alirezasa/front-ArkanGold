@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+
+const licenses = [
+  {
+    title: 'مجوز فینوتک بانک مرکزی',
+    desc: 'آرکان گلد تحت نظارت و مطابق با آیین‌نامه‌های حوزه فناوری‌های مالی فعالیت می‌کند.',
+    icon: 'bank',
+  },
+  {
+    title: 'گواهی ثبت نماد اعتماد الکترونیکی (اینماد)',
+    desc: 'این پلتفرم دارای نماد اعتماد الکترونیکی معتبر از مرکز توسعه تجارت الکترونیکی است.',
+    icon: 'seal',
+  },
+  {
+    title: 'مجوز فعالیت صرافی طلا',
+    desc: 'خرید و فروش طلای آب‌شده مطابق مجوزهای رسمی اتحادیه طلا و جواهر انجام می‌شود.',
+    icon: 'gold-bar',
+  },
+  {
+    title: 'گواهی اصالت کالا (استاندارد ملی)',
+    desc: 'تمامی شمش‌ها و مصنوعات طلا دارای گواهی عیار و اصالت قابل استعلام هستند.',
+    icon: 'shield',
+  },
+  {
+    title: 'بیمه‌نامه خزانه امن',
+    desc: 'دارایی طلای مشتریان در خزانه رسمی بانکی و تحت پوشش بیمه نگهداری می‌شود.',
+    icon: 'vault',
+  },
+  {
+    title: 'گواهی امنیت اطلاعات (SSL / PCI)',
+    desc: 'تمامی تراکنش‌های مالی از طریق درگاه‌های امن و رمزنگاری‌شده انجام می‌شود.',
+    icon: 'lock',
+  },
+];
+
+const licensesSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'مجوزها و اعتبار آرکان گلد',
+  url: 'https://arkan.gold/licenses',
+};
+---
+
+<BaseLayout
+  title="مجوزها و اعتبار آرکان گلد"
+  description="مجوزهای رسمی، تاییدیه‌ها و گواهی‌نامه‌های فعالیت آرکان گلد در حوزه خرید و فروش طلا و فین‌تک."
+  path="/licenses"
+  jsonLd={licensesSchema}
+>
+  <section class="relative overflow-hidden py-14">
+    <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-30"></div>
+    <div class="container-page relative text-center max-w-2xl mx-auto mb-12">
+      <p class="text-xs font-semibold text-brand mb-2">شفافیت و اعتماد</p>
+      <h1 class="text-3xl font-bold text-brand mb-4">مجوزها و اعتبار آرکان گلد</h1>
+      <p class="text-base leading-8 text-ink-soft">
+        آرکان گلد با دریافت مجوزهای لازم از نهادهای نظارتی، در چارچوب قوانین جمهوری اسلامی
+        ایران فعالیت می‌کند. در ادامه می‌توانید مجوزها و تاییدیه‌های رسمی این مجموعه را
+        مشاهده کنید.
+      </p>
+    </div>
+
+    <div class="container-page grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {licenses.map((l) => (
+        <div class="group rounded-xl2 bg-white border border-brand-100/40 shadow-card p-6 card-lift shine-hover">
+          <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand shadow-glow transition-transform duration-300 group-hover:scale-110">
+            <Icon name={l.icon as any} class="h-6 w-6 text-white" />
+          </div>
+          <h2 class="font-semibold text-brand mb-2 text-lg">{l.title}</h2>
+          <p class="text-sm leading-7 text-ink-soft">{l.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="container-page mt-12">
+      <div class="rounded-xl2 bg-brand-radial text-white p-8 md:p-10 grid gap-6 md:grid-cols-[1fr_auto] items-center shadow-glow-brand">
+        <div>
+          <h2 class="text-xl font-bold mb-2">استعلام صحت مجوزها</h2>
+          <p class="text-sm leading-7 text-white/80">
+            برای اطمینان از اصالت مجوزهای فعالیت آرکان گلد، می‌توانید از طریق سامانه‌های
+            رسمی نهادهای مربوطه استعلام بگیرید یا با پشتیبانی تماس بگیرید.
+          </p>
+        </div>
+        <a href="/contact" class="btn-light whitespace-nowrap">تماس با پشتیبانی</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

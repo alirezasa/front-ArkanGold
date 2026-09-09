@@ -16,20 +16,20 @@ const values = [
 >
   <section class="container-page py-12">
     <header class="text-center max-w-2xl mx-auto mb-4">
-      <p class="text-xs text-gold mb-2">درباره ما</p>
-      <h1 class="text-2xl md:text-3xl font-bold text-maroon">آرکان گلد را بیشتر بشناسید</h1>
+      <p class="text-xs text-brand mb-2">درباره ما</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-brand">آرکان گلد را بیشتر بشناسید</h1>
     </header>
   </section>
 
   <AboutPanel />
 
   <section class="container-page py-6 pb-16">
-    <h2 class="text-xl font-bold text-maroon text-center mb-8">اصولی که بر پایه آن‌ها فعالیت می‌کنیم</h2>
+    <h2 class="text-xl font-bold text-brand text-center mb-8">اصولی که بر پایه آن‌ها فعالیت می‌کنیم</h2>
     <div class="grid gap-5 md:grid-cols-3">
       {values.map((v, i) => (
-        <div class="rounded-card bg-white border border-gold-100/70 shadow-card p-6">
-          <span class="text-xs font-semibold text-gold-600">{['۱', '۲', '۳'][i]}</span>
-          <h3 class="font-semibold text-maroon mt-2 mb-2">{v.title}</h3>
+        <div class="rounded-card bg-white border border-brand-100/40 shadow-card p-6 card-lift">
+          <span class="text-xs font-semibold text-brand">{['۱', '۲', '۳'][i]}</span>
+          <h3 class="font-semibold text-brand mt-2 mb-2">{v.title}</h3>
           <p class="text-xs leading-6 text-ink-soft">{v.desc}</p>
         </div>
       ))}

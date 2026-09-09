@@ -1,4 +1,6 @@
 ---
+import Icon from '../Icon.astro';
+
 const trustItems = [
   'مجوز فینتک',
   'تحویل فیزیکی',
@@ -6,50 +8,163 @@ const trustItems = [
   'خزانه بانکی امن',
   'تضمین دارایی',
 ];
+
+const miniCards = [
+  { title: 'کسب درآمد', desc: 'پاداش معرفی به ازای هر خرید', icon: 'gift-card' },
+  { title: 'تحویل فیزیکی', desc: 'دریافت شمش، سکه یا مصنوعات', icon: 'gold-bar' },
+  { title: 'پشتیبانی سریع', desc: 'پاسخگویی تمام روزهای هفته', icon: 'headset' },
+];
 ---
 
-<section class="container-page pt-10 pb-14 md:pt-16 md:pb-20">
-  <div class="grid items-center gap-10 md:grid-cols-2">
-    <div class="order-2 md:order-1 flex justify-center">
-      <img
-        src="/images/hero-gold-vault.jpg"
-        alt="مکعب طلای آرکان گلد، نمادی از خزانه امن طلای آب‌شده مشتریان"
-        width="520"
-        height="440"
-        class="w-full max-w-md drop-shadow-xl"
-        loading="eager"
-        fetchpriority="high"
-      />
+<section class="relative overflow-hidden pt-8 pb-16 md:pt-14 md:pb-24">
+  <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-40 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"></div>
+  <div class="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full brand-glow-bg blur-2xl"></div>
+
+  <div class="container-page relative">
+    <div class="grid items-center gap-10 md:grid-cols-2">
+      <div class="order-2 md:order-1 flex justify-center">
+        <div class="relative">
+          <div class="absolute inset-0 -z-10 brand-glow-bg blur-xl"></div>
+          <img
+            src="/images/hero-gold-vault.jpg"
+            alt="مکعب طلای آرکان گلد، نمادی از خزانه امن طلای آب‌شده مشتریان"
+            width="520"
+            height="440"
+            class="w-full max-w-md drop-shadow-xl floaty-img"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+      </div>
+
+      <div class="order-1 md:order-2 text-center md:text-right">
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-brand-100/40 bg-white/70 px-3 py-1.5 text-xs font-medium text-brand shadow-sm">
+          <span class="live-dot"></span>
+          نرخ لحظه‌ای بازار فعال است
+        </span>
+
+        <p class="mt-4 text-2xl font-extrabold text-brand mb-2">آرکان گلد؛</p>
+        <h1 class="text-3xl md:text-4xl leading-[1.4] font-bold text-brand">
+          خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی
+        </h1>
+        <p class="mt-4 text-base leading-8 text-ink-soft">
+          خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا، مصنوعات طلا و ارائه فاکتور
+          رسمی با ضمانت اصالت.
+        </p>
+
+        <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
+          <a href="/sell-gold" class="btn-primary">
+            خرید شمش طلا
+          </a>
+          <a href="/buy-gold" class="btn-primary shine-hover">
+            خرید طلای آب‌شده
+          </a>
+           <a href="/shop" class="btn-primary shine-hover">
+            خرید مصنوعات طلا
+          </a>
+        </div>
+      </div>
     </div>
 
-    <div class="order-1 md:order-2 text-center md:text-right">
-      <p class="text-2xl font-extrabold text-gold mb-2">آرکان گلد؛</p>
-      <h1 class="text-2xl md:text-[32px] leading-[1.5] font-bold text-maroon">
-        خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی
-      </h1>
-      <p class="mt-4 text-sm md:text-base leading-8 text-ink-soft">
-        خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا، مصنوعات طلا و ارائه فاکتور
-        رسمی با ضمانت اصالت.
-      </p>
+    <!-- کارت‌های کوچک اعتماد -->
+    <div class="mt-10 grid gap-3 sm:grid-cols-3 max-w-2xl mx-auto md:mx-0">
+      {miniCards.map((m) => (
+        <div class="flex items-center gap-3 rounded-xl2 bg-white/80 border border-brand-100/40/70 px-4 py-3.5 shadow-card card-lift">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+            <Icon name={m.icon as any} class="h-5 w-5" />
+          </span>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-brand">{m.title}</p>
+            <p class="text-xs text-ink-soft">{m.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
 
-      <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
-        <a
-          href="/sell-gold"
-          class="rounded-lg border-2 border-maroon px-6 py-3 text-sm font-semibold text-maroon hover:bg-maroon hover:text-cream-50 transition-colors"
-        >
-          خرید شمش طلا
+    <!-- ماشین‌حساب زنده خرید/فروش -->
+    <div class="mt-10 grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+      <div class="rounded-xl2 bg-white border border-brand-100/40/70 shadow-card-hover p-6 md:p-8">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-1.5 text-xs text-ink-soft">
+            <span class="live-dot"></span>
+            نرخ بازار
+          </div>
+          <div class="flex rounded-full bg-canvas-100 p-1" role="tablist" aria-label="نوع معامله">
+            <button type="button" id="tab-buy" class="calc-tab rounded-full px-5 py-2 text-xs font-semibold transition-all" data-active="true">خرید</button>
+            <button type="button" id="tab-sell" class="calc-tab rounded-full px-5 py-2 text-xs font-semibold transition-all" data-active="false">فروش</button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-[1fr_auto_1fr] items-end">
+          <div>
+            <label for="hero-grams" class="block mb-1.5 text-sm font-medium text-ink-soft">مقدار طلا (گرم)</label>
+            <div class="relative">
+              <input
+                id="hero-grams"
+                type="number"
+                inputmode="decimal"
+                min="0.1"
+                step="0.1"
+                value="1"
+                class="w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-base tnum focus:border-gold focus:outline-none focus:shadow-glow transition-shadow"
+              />
+              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-soft/60">گرم</span>
+            </div>
+          </div>
+
+          <button type="button" id="hero-swap" aria-label="جابه‌جایی واحد" class="mb-1 flex h-11 w-11 items-center justify-center self-end rounded-full border border-brand-100/40 text-brand hover:bg-brand-50 transition-colors">
+            <Icon name="trend-up" class="h-5 w-5 rotate-90" />
+          </button>
+
+          <div>
+            <label for="hero-toman" class="block mb-1.5 text-sm font-medium text-ink-soft">مبلغ (تومان)</label>
+            <div class="relative">
+              <input
+                id="hero-toman"
+                type="text"
+                inputmode="decimal"
+                class="w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-base tnum focus:border-gold focus:outline-none focus:shadow-glow transition-shadow"
+                readonly
+              />
+              <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-soft/60">تومان</span>
+            </div>
+          </div>
+        </div>
+
+        <p id="hero-calc-note" class="mt-4 text-xs text-ink-soft/70">
+          خرید شما با قیمت لحظه‌ای انجام می‌شود.
+        </p>
+
+        <a href="/login" id="hero-cta" class="btn-primary mt-5 w-full shine-hover">
+          ادامه و پرداخت
         </a>
-        <a
-          href="/buy-gold"
-          class="rounded-lg bg-maroon px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
-        >
-          خرید طلای آب‌شده
-        </a>
+      </div>
+
+      <div class="rounded-xl2 bg-cta-gradient text-white shadow-glow-brand p-6 md:p-8 flex flex-col justify-between">
+        <div>
+          <p class="text-xs text-white/60 mb-1">مبدل هوشمند طلا</p>
+          <h3 class="text-lg font-bold mb-4">مقدار را وارد کن، نتیجه را لحظه‌ای ببین</h3>
+          <p class="text-sm leading-6 text-white/75">
+            برای مشاهده جزئیات کامل نرخ‌ها، نمودار تحلیلی و مقایسه بازارها به صفحه قیمت
+            لحظه‌ای سر بزنید.
+          </p>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="glass-panel rounded-lg px-4 py-3 text-center">
+            <p class="text-[11px] text-white/70 mb-1">قیمت هر گرم ۱۸ عیار</p>
+            <p class="font-bold tnum" data-price-bind="pricePerGram">--</p>
+          </div>
+          <div class="glass-panel rounded-lg px-4 py-3 text-center">
+            <p class="text-[11px] text-white/70 mb-1">تغییر ۲۴ ساعته</p>
+            <p class="font-bold tnum" data-price-bind="changePercent">--</p>
+          </div>
+        </div>
+        <a href="/price" class="btn-light mt-5 w-full">مشاهده قیمت لحظه‌ای</a>
       </div>
     </div>
   </div>
 
-  <ul class="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xs text-ink-soft">
+  <ul class="mt-14 container-page flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-ink-soft">
     {trustItems.map((item) => (
       <li class="flex items-center gap-2">
         <span class="h-1.5 w-1.5 rounded-full bg-gold"></span>
@@ -58,3 +173,62 @@ const trustItems = [
     ))}
   </ul>
 </section>
+
+<style>
+  .calc-tab[data-active="true"] {
+    background: linear-gradient(135deg, #7a171e, #330509);
+    color: #ffffff;
+    box-shadow: 0 6px 16px -6px rgba(51, 5, 9, 0.5);
+  }
+  .calc-tab[data-active="false"] {
+    color: #5c5449;
+  }
+</style>
+
+<script>
+  import { subscribeGoldPrice, formatToman, type NormalizedGoldPrice } from '../../lib/goldPrice';
+
+  const gramsInput = document.getElementById('hero-grams') as HTMLInputElement | null;
+  const tomanInput = document.getElementById('hero-toman') as HTMLInputElement | null;
+  const tabBuy = document.getElementById('tab-buy');
+  const tabSell = document.getElementById('tab-sell');
+  const note = document.getElementById('hero-calc-note');
+  const cta = document.getElementById('hero-cta') as HTMLAnchorElement | null;
+  const swapBtn = document.getElementById('hero-swap');
+
+  let mode: 'buy' | 'sell' = 'buy';
+  let unitPrice = 0;
+
+  function updateTotal() {
+    const grams = parseFloat(gramsInput?.value || '0') || 0;
+    const total = Math.max(0, grams) * unitPrice;
+    if (tomanInput) tomanInput.value = formatToman(total).replace(' تومان', '');
+  }
+
+  function setMode(next: 'buy' | 'sell') {
+    mode = next;
+    tabBuy?.setAttribute('data-active', String(next === 'buy'));
+    tabSell?.setAttribute('data-active', String(next === 'sell'));
+    if (note) note.textContent = next === 'buy'
+      ? 'خرید شما با قیمت لحظه‌ای انجام می‌شود.'
+      : 'فروش شما با قیمت لحظه‌ای ثبت و طی ۲۴ ساعت تسویه می‌شود.';
+    if (cta) cta.textContent = next === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخواست فروش';
+  }
+
+  subscribeGoldPrice((price: NormalizedGoldPrice) => {
+    unitPrice = price.pricePerGram;
+    updateTotal();
+  });
+
+  gramsInput?.addEventListener('input', updateTotal);
+  tabBuy?.addEventListener('click', () => setMode('buy'));
+  tabSell?.addEventListener('click', () => setMode('sell'));
+  swapBtn?.addEventListener('click', () => {
+    if (gramsInput) gramsInput.classList.add('animate-pulse');
+    setTimeout(() => gramsInput?.classList.remove('animate-pulse'), 300);
+  });
+</script>
+
+<script>
+  import '../../lib/priceBinding';
+</script>

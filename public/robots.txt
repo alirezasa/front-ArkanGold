@@ -3,3 +3,4 @@ Allow: /
 Disallow: /login
 
 Sitemap: https://arkan.gold/sitemap-index.xml
+Sitemap: https://arkan.gold/mag/sitemap_index.xml

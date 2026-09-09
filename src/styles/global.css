@@ -16,13 +16,13 @@ html {
 }
 
 body {
-  @apply bg-cream text-ink font-sans antialiased;
+  @apply bg-canvas text-ink font-sans antialiased;
   font-feature-settings: 'ss01' on;
 }
 
 /* فوکوس قابل‌مشاهده برای دسترسی‌پذیری با صفحه‌کلید */
 :focus-visible {
-  outline: 2px solid theme('colors.gold.DEFAULT');
+  outline: 2px solid theme('colors.brand.DEFAULT');
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -45,4 +45,128 @@ body {
 /* اعداد فارسی/لاتین یک‌دست در قیمت‌ها و آمار */
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* ===== جلوه‌های زنده (بدون تغییر منطق، فقط ظاهر) ===== */
+
+.shine-hover {
+  position: relative;
+  overflow: hidden;
+}
+.shine-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: theme('backgroundImage.shimmer');
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.shine-hover:hover::after {
+  animation: shimmerMove 1.1s ease-out;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.gold-divider {
+  height: 1px;
+  background: theme('backgroundImage.gold-line');
+}
+
+.btn-primary {
+  @apply relative inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300;
+  background-image: theme('backgroundImage.cta-gradient');
+  box-shadow: 0 8px 24px -8px rgba(51, 5, 9, 0.55);
+}
+.btn-primary:hover {
+  box-shadow: 0 14px 34px -8px rgba(51, 5, 9, 0.65);
+  transform: translateY(-2px);
+}
+.btn-primary:active {
+  transform: translateY(0px);
+}
+
+/* دکمه‌ی ثانویه (روشن‌تر) — همچنان تک‌تن از برند، نه طلایی؛ برای زمینه‌های تیره استفاده می‌شود */
+.btn-light {
+  @apply relative inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-semibold text-brand bg-white transition-all duration-300;
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.25);
+}
+.btn-light:hover {
+  box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  @apply relative inline-flex items-center justify-center gap-2 rounded-lg border-2 border-brand px-6 py-3.5 text-sm font-semibold text-brand transition-all duration-300;
+}
+.btn-outline:hover {
+  @apply bg-brand text-white;
+  box-shadow: 0 10px 26px -10px rgba(51, 5, 9, 0.5);
+}
+
+.card-lift {
+  @apply transition-all duration-300 will-change-transform;
+}
+.card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: theme('boxShadow.card-hover');
+}
+
+.live-dot {
+  @apply relative inline-flex h-2 w-2 rounded-full bg-success;
+}
+.live-dot::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: theme('colors.success.DEFAULT');
+  opacity: 0.35;
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.dot-grid-bg {
+  background-image: radial-gradient(rgba(51, 5, 9, 0.14) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.floaty-img {
+  animation: floaty 5s ease-in-out infinite;
+}
+
+.brand-glow-bg {
+  background-image: theme('backgroundImage.brand-glow-soft');
+}
+
+.marquee-track {
+  animation: marquee 30s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: theme('colors.brand.100');
+  border-radius: 999px;
+}
+
+/* پس‌زمینه‌ی تیک قیمت — وقتی عدد جدید می‌آید یک لحظه هایلایت می‌شود */
+.price-tick {
+  animation: priceTick 1s ease-out;
+  border-radius: 6px;
+}
+
+/* خط SVG که با انیمیشن رسم می‌شود (برای آیکون‌های زنده) */
+.icon-draw path,
+.icon-draw circle,
+.icon-draw polyline {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: drawIn 1.2s ease-out forwards;
 }

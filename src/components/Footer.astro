@@ -1,29 +1,42 @@
 ---
-const links = [
+import Icon from './Icon.astro';
+
+const quickLinks = [
   { label: 'صفحه اصلی', href: '/' },
   { label: 'فروشگاه', href: '/shop' },
   { label: 'خرید طلای آب‌شده', href: '/buy-gold' },
+  { label: 'فروش طلا', href: '/sell-gold' },
+  { label: 'قیمت لحظه‌ای', href: '/price' },
+  { label: 'مجوزها و اعتبار', href: '/licenses' },
+];
+
+const supportLinks = [
   { label: 'تماس با ما', href: '/contact' },
   { label: 'درباره ما', href: '/about' },
+  { label: 'سوالات متداول', href: '/faq' },
   { label: 'قوانین و مقررات', href: '/rules' },
   { label: 'همکاری در فروش', href: '/cooperation' },
 ];
 
 const socials = [
-  { label: 'واتس‌اپ', href: '#' },
-  { label: 'تلگرام', href: '#' },
-  { label: 'یوتیوب', href: '#' },
-  { label: 'توییتر', href: '#' },
-  { label: 'فیسبوک', href: '#' },
+  { label: 'واتس‌اپ', href: '#', icon: 'M17.5 6.5a8 8 0 10-14.6 6.5L2 21l8.2-1a8 8 0 007.3-13.5z' },
+  { label: 'تلگرام', href: '#', icon: 'M21 4L2.5 11.4c-1 .4-1 1.9.1 2.2l4.6 1.4 1.7 5.4c.3.9 1.5 1.1 2.1.3l2.5-3 4.7 3.5c.8.6 1.9.1 2.1-.9L21 4z' },
+  { label: 'اینستاگرام', href: '#', icon: 'M4 8a4 4 0 014-4h8a4 4 0 014 4v8a4 4 0 01-4 4H8a4 4 0 01-4-4V8z M12 9a3 3 0 100 6 3 3 0 000-6z M16.5 7.5h.01' },
 ];
 ---
 
-<footer class="mt-16 bg-maroon text-cream-50">
-  <div class="container-page grid gap-10 py-12 md:grid-cols-3">
+<footer class="relative mt-16 bg-brand text-white/95">
+  <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-[0.05]"></div>
+
+  <div class="container-page relative grid gap-10 py-14 md:grid-cols-3">
+    <!-- ستون ۱: برند و شبکه‌های اجتماعی -->
     <div>
-      <p class="text-lg font-bold">آرکان گلد</p>
-      <p class="text-xs text-cream-50/60 mb-4">Arkan Gold Gallery</p>
-      <p class="text-sm leading-7 text-cream-50/80">
+      <div class="flex items-center gap-2.5 mb-3">
+        <img src="/images/logo-mark.png" alt="آرکان گلد" width="36" height="24" class="h-8 w-auto" />
+        <p class="text-lg font-bold">آرکان گلد</p>
+      </div>
+      <p class="text-xs text-white/55 mb-4">Arkan Gold Gallery</p>
+      <p class="text-sm leading-7 text-white/80">
         ما در آرکان گلد تلاش کرده‌ایم تجربه‌ای مطمئن، ساده و قابل‌اتکا از معاملات طلا برای
         کاربران فراهم کنیم؛ تجربه‌ای که در آن اصالت کالا، شفافیت قیمت، امکان بررسی سفارش
         و قابلیت تحویل فیزیکی طلا در اولویت قرار دارد.
@@ -34,36 +47,72 @@ const socials = [
             <a
               href={s.href}
               aria-label={s.label}
-              class="flex h-9 w-9 items-center justify-center rounded-full border border-cream-50/25 text-xs hover:border-gold hover:text-gold transition-colors"
+              class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 transition-all duration-300 hover:border-gold hover:text-gold hover:-translate-y-1 hover:shadow-glow"
             >
-              {s.label.slice(0, 1)}
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d={s.icon} />
+              </svg>
             </a>
           </li>
         ))}
       </ul>
     </div>
 
-    <div class="md:col-start-3">
-      <p class="mb-4 font-semibold text-gold">لینک‌های مهم</p>
-      <ul class="space-y-2.5 text-sm text-cream-50/80">
-        {links.map((l) => (
+    <!-- ستون ۲: دسترسی سریع -->
+    <div>
+      <p class="mb-4 font-semibold text-white">دسترسی سریع</p>
+      <ul class="space-y-2.5 text-sm text-white/80">
+        {quickLinks.map((l) => (
           <li>
-            <a href={l.href} class="hover:text-gold transition-colors">{l.label}</a>
+            <a href={l.href} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
+              <span class="h-1 w-1 rounded-full bg-gold/0 group-hover:bg-gold transition-colors"></span>
+              {l.label}
+            </a>
           </li>
         ))}
       </ul>
     </div>
-  </div>
 
-  <div class="border-t border-cream-50/10">
-    <div class="container-page flex flex-col gap-3 py-5 text-sm text-cream-50/70 md:flex-row md:items-center md:justify-between">
-      <span>ساعت کاری: شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲</span>
-      <a href="tel:02198765431" class="tnum hover:text-gold">۰۲۱۹۸۷۶۵۴۳۱</a>
-      <span>تهران - اختیاریه</span>
+    <!-- ستون ۳: پشتیبانی و تماس -->
+    <div>
+      <p class="mb-4 font-semibold text-white">پشتیبانی و راهنما</p>
+      <ul class="space-y-2.5 text-sm text-white/80 mb-6">
+        {supportLinks.map((l) => (
+          <li>
+            <a href={l.href} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
+              <span class="h-1 w-1 rounded-full bg-gold/0 group-hover:bg-gold transition-colors"></span>
+              {l.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <div class="flex items-center gap-3 rounded-xl2 glass-panel px-4 py-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
+          <Icon name="headset" class="h-4.5 w-4.5" />
+        </span>
+        <div>
+          <p class="text-[11px] text-white/60">پشتیبانی تلفنی</p>
+          <a href="tel:02198765431" class="text-sm font-semibold tnum hover:text-gold transition-colors">۰۲۱۹۸۷۶۵۴۳۱</a>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="border-t border-cream-50/10 py-4 text-center text-xs text-cream-50/50">
+  <div class="relative border-t border-white/10">
+    <div class="container-page flex flex-col gap-3 py-5 text-sm text-white/70 md:flex-row md:items-center md:justify-between">
+      <span class="flex items-center gap-2">
+        <Icon name="clock" class="h-4 w-4 text-gold" />
+        ساعت کاری: شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲
+      </span>
+      <span class="flex items-center gap-2">
+        <Icon name="location" class="h-4 w-4 text-gold" />
+        تهران - اختیاریه
+      </span>
+    </div>
+  </div>
+
+  <div class="relative border-t border-white/10 py-4 text-center text-xs text-white/50">
     کلیه حقوق برای آرکان گلد (گنجینه طلای پروانه زر) محفوظ است © {new Date().getFullYear()}
   </div>
 </footer>

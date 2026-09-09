@@ -1,89 +1,360 @@
 ---
+import Icon from './Icon.astro';
+
 const nav = [
-  { label: 'خدمات', href: '/services' },
-  { label: 'قیمت لحظه‌ای', href: '/price' },
-  { label: 'فروشگاه', href: '/shop' },
-  { label: 'مجله آرکان گلد', href: 'https://arkan.gold/mag', external: true },
-  { label: 'سوالات متداول', href: '/faq' },
+  {
+    label: 'خدمات',
+    href: '/services',
+    children: [
+      { label: 'خرید طلای آب‌شده', href: '/buy-gold', desc: 'خرید آنلاین با قیمت لحظه‌ای', icon: 'gold-drop' },
+      { label: 'فروش طلا و شمش', href: '/sell-gold', desc: 'فروش سریع، واریز طی ۲۴ ساعت', icon: 'trend-up' },
+      { label: 'خزانه امن بانکی', href: '/services', desc: 'نگهداری دارایی در خزانه رسمی', icon: 'vault' },
+      { label: 'تحویل فیزیکی', href: '/services', desc: 'دریافت فیزیکی طلا در آدرس شما', icon: 'location' },
+    ],
+  },
+  { label: 'قیمت لحظه‌ای', href: '/price', icon: 'trend-up' },
+  { label: 'فروشگاه', href: '/shop', icon: 'gold-bar' },
+  { label: 'مجوزها و اعتبار', href: '/licenses', icon: 'seal' },
+  { label: 'مجله آرکان گلد', href: 'https://arkan.gold/mag', external: true, icon: 'document' },
+  { label: 'سوالات متداول', href: '/faq', icon: 'question' },
 ];
 const currentPath = Astro.url.pathname;
 ---
 
-<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-2 focus:z-50 focus:bg-maroon focus:text-cream focus:px-4 focus:py-2 focus:rounded">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-2 focus:z-50 focus:bg-brand focus:text-white focus:px-4 focus:py-2 focus:rounded">
   رفتن به محتوای اصلی
 </a>
 
-<header class="sticky top-0 z-40 border-b border-gold-100 bg-cream-50/95 backdrop-blur">
-  <div class="container-page flex h-[64px] items-center justify-between gap-6">
-    <a href="/" class="flex items-center gap-2 shrink-0" aria-label="آرکان گلد - صفحه اصلی">
-      <span class="text-lg font-bold text-maroon">آرکان گلد</span>
+<header class="sticky top-0 z-50 border-b border-brand-100/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
+  <div class="container-page flex h-[72px] items-center justify-between gap-6">
+    <a href="/" class="flex items-center gap-2.5 shrink-0 group" aria-label="آرکان گلد - صفحه اصلی">
+      <img
+        src="/images/logo.png"
+        alt="آرکان گلد"
+        width="40"
+        height="30"
+        class="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+      />
+      <span class="hidden sm:block text-lg font-bold text-brand">آرکان گلد</span>
     </a>
 
     <nav aria-label="ناوبری اصلی" class="hidden lg:flex items-center gap-1">
       {nav.map((item) => (
-        <a
-          href={item.href}
-          target={item.external ? '_blank' : undefined}
-          rel={item.external ? 'noopener noreferrer' : undefined}
-          class:list={[
-            'px-3.5 py-2 rounded-md text-sm transition-colors',
-            currentPath === item.href
-              ? 'text-maroon font-semibold'
-              : 'text-ink-soft hover:text-maroon',
-          ]}
-        >
-          {item.label}
-        </a>
+        item.children ? (
+          <div class="relative group">
+            <button
+              type="button"
+              class:list={[
+                'flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm transition-colors',
+                currentPath === item.href ? 'text-brand font-semibold' : 'text-ink-soft hover:text-brand',
+              ]}
+              aria-haspopup="true"
+            >
+              <Icon name={item.icon as any} class="h-4 w-4" />
+              {item.label}
+              <Icon name="chevron" class="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
+            </button>
+
+            <div class="invisible absolute right-0 top-full z-50 w-96 translate-y-2 rounded-card border border-brand-100/50 bg-white p-2 opacity-0 shadow-card-hover transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+              {item.children.map((c) => (
+                <a href={c.href} class="flex items-start gap-3 rounded-lg px-4 py-3 hover:bg-canvas-100 transition-colors">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                    <Icon name={c.icon as any} class="h-5 w-5" />
+                  </span>
+                  <span class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-brand">{c.label}</span>
+                    <span class="text-xs text-ink-soft">{c.desc}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <a
+            href={item.href}
+            target={item.external ? '_blank' : undefined}
+            rel={item.external ? 'noopener noreferrer' : undefined}
+            class:list={[
+              'flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm transition-colors',
+              currentPath === item.href
+                ? 'text-brand font-semibold'
+                : 'text-ink-soft hover:text-brand',
+            ]}
+          >
+            <Icon name={item.icon as any} class="h-4 w-4" />
+            {item.label}
+          </a>
+        )
       ))}
     </nav>
 
     <div class="flex items-center gap-3">
-      <a href="#" class="hidden md:flex items-center gap-1.5 text-sm text-ink-soft hover:text-maroon">
-        دانلود اپلیکیشن
-      </a>
-      <a
-        href="/login"
-        class="rounded-lg bg-maroon px-5 py-2.5 text-sm font-semibold text-cream-50 hover:bg-maroon-400 transition-colors"
-      >
+      <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
+      <div class="nav-download-item hidden md:inline-flex">
+        <div class="nav-download-trigger">
+          <Icon name="smartphone" class="h-4 w-4" />
+          <span class="nav-label">دانلود اپلیکیشن</span>
+        </div>
+        <div class="qr-dropdown-modal">
+          <div class="qr-card">
+            <div class="qr-image-wrapper">
+              <img
+                class="qr-image"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://app.arkan.gold&color=330509&bgcolor=ffffff"
+                alt="اسکن جهت دانلود اپلیکیشن آرکان"
+                width="140"
+                height="140"
+                loading="lazy"
+              />
+            </div>
+            <p class="qr-title">اسکن با دوربین موبایل</p>
+            <span class="qr-subtitle">ورود مستقیم به نسخه تحت وب و اپلیکیشن</span>
+            <a class="qr-direct-link" href="https://app.arkan.gold" target="_blank" rel="noopener noreferrer">
+              باز کردن مستقیم لینک ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <a href="/login" class="btn-primary !px-5 !py-2.5 text-sm">
         ورود / ثبت نام
       </a>
 
       <button
         id="mobile-menu-btn"
         type="button"
-        class="lg:hidden rounded-md p-2 text-maroon"
+        class="lg:hidden rounded-md p-2 text-brand"
         aria-expanded="false"
         aria-controls="mobile-menu"
         aria-label="باز کردن منو"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
         </svg>
       </button>
     </div>
   </div>
 
-  <nav id="mobile-menu" aria-label="ناوبری موبایل" class="hidden lg:hidden border-t border-gold-100 bg-cream-50">
-    <div class="container-page flex flex-col py-2">
-      {nav.map((item) => (
-        <a
-          href={item.href}
-          target={item.external ? '_blank' : undefined}
-          rel={item.external ? 'noopener noreferrer' : undefined}
-          class="py-3 text-sm text-ink-soft hover:text-maroon border-b border-gold-100/60 last:border-0"
-        >
-          {item.label}
-        </a>
-      ))}
+  <!-- نوار وضعیت زنده قیمت طلا — در همه‌ی سایزها از جمله موبایل نمایش داده می‌شود -->
+  <div class="border-t border-brand-100/40 bg-brand text-white/90">
+    <div class="container-page flex h-9 items-center gap-2 text-[11px] sm:text-[12px] overflow-x-auto scrollbar-thin">
+      <span class="live-dot shrink-0"></span>
+      <span class="shrink-0 font-medium whitespace-nowrap">نرخ زنده:</span>
+      <span class="tnum whitespace-nowrap">
+        طلای ۱۸ عیار هر گرم: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+      </span>
+      <span class="tnum whitespace-nowrap">
+        تغییر ۲۴ ساعته: <b class="font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
+      </span>
+      <span class="tnum whitespace-nowrap text-white/65 hidden md:inline">
+        آخرین بروزرسانی: <b data-price-bind="fetchedAt">--</b>
+      </span>
     </div>
-  </nav>
+  </div>
+
+  <!-- منوی موبایل تمام‌صفحه -->
+  <div id="mobile-menu" class="fixed inset-0 z-[60] hidden lg:hidden bg-white">
+    <div class="absolute inset-0 bg-white flex flex-col h-screen">
+      <div class="flex h-[72px] items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
+        <a href="/" class="flex items-center gap-2.5">
+          <img src="/images/logo.png" alt="آرکان گلد" width="36" height="27" class="h-8 w-auto" />
+          <span class="text-lg font-bold text-brand">آرکان گلد</span>
+        </a>
+        <button id="mobile-menu-close" type="button" class="rounded-md p-2 text-brand" aria-label="بستن منو">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+
+      <!-- قیمت زنده هم بالای منوی موبایل تکرار می‌شود تا همیشه در دید باشد -->
+      <div class="shrink-0 bg-brand text-white/90 px-5 py-2.5 text-xs flex items-center gap-2">
+        <span class="live-dot"></span>
+        <span class="tnum">
+          طلای ۱۸ عیار: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+        </span>
+      </div>
+
+      <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto px-5 py-4">
+        <ul class="flex flex-col divide-y divide-brand-100/40">
+          {nav.map((item) => (
+            item.children ? (
+              <li>
+                <details class="group/d">
+                  <summary class="flex cursor-pointer items-center justify-between py-4 text-base font-medium text-ink marker:content-none">
+                    <span class="flex items-center gap-3">
+                      <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                      {item.label}
+                    </span>
+                    <Icon name="chevron" class="h-4 w-4 transition-transform group-open/d:rotate-180" />
+                  </summary>
+                  <div class="flex flex-col gap-1 pb-3">
+                    {item.children.map((c) => (
+                      <a href={c.href} class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-soft hover:bg-canvas-100 hover:text-brand">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                          <Icon name={c.icon as any} class="h-4.5 w-4.5" />
+                        </span>
+                        {c.label}
+                      </a>
+                    ))}
+                  </div>
+                </details>
+              </li>
+            ) : (
+              <li>
+                <a
+                  href={item.href}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
+                  class="flex items-center gap-3 py-4 text-base font-medium text-ink hover:text-brand"
+                >
+                  <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                  {item.label}
+                </a>
+              </li>
+            )
+          ))}
+        </ul>
+
+        <div class="mt-4 rounded-card border border-brand-100/50 bg-canvas-100 p-4 flex items-center gap-3">
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=efeff1"
+            alt="اسکن جهت دانلود اپلیکیشن"
+            width="64"
+            height="64"
+            class="rounded-lg"
+            loading="lazy"
+          />
+          <div>
+            <p class="text-sm font-semibold text-brand">دانلود اپلیکیشن آرکان</p>
+            <a href="https://app.arkan.gold" target="_blank" rel="noopener noreferrer" class="text-xs text-brand-300 font-medium">
+              باز کردن مستقیم لینک ↗
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="shrink-0 border-t border-brand-100/50 p-5">
+        <a href="/login" class="btn-primary w-full">ورود / ثبت نام</a>
+      </div>
+    </div>
+  </div>
 </header>
+
+<style>
+  /* ===== پاپ‌آپ QR دانلود اپلیکیشن (هاور) ===== */
+  .nav-download-item {
+    position: relative;
+    align-items: center;
+    font-family: inherit;
+    direction: rtl;
+  }
+  .nav-download-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: #5c5449;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  .nav-download-trigger:hover {
+    color: #330509;
+    background: #f6e7e8;
+  }
+  .qr-dropdown-modal {
+    position: absolute;
+    top: 100%;
+    right: 50%;
+    transform: translateX(50%) translateY(10px);
+    padding-top: 12px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.25s;
+    z-index: 1000;
+  }
+  .nav-download-item:hover .qr-dropdown-modal {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(50%) translateY(0);
+  }
+  .qr-card {
+    background: #ffffff;
+    color: #211a17;
+    width: 220px;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px -5px rgba(51, 5, 9, 0.18), 0 0 0 1px rgba(51, 5, 9, 0.06);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .qr-image-wrapper {
+    background: #ffffff;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid #e6c2c5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-image {
+    width: 140px;
+    height: 140px;
+    display: block;
+  }
+  .qr-title {
+    margin: 10px 0 2px 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .qr-subtitle {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .qr-direct-link {
+    font-size: 0.75rem;
+    color: #7a171e;
+    text-decoration: none;
+    font-weight: 600;
+    border-top: 1px dashed #e6c2c5;
+    width: 100%;
+    padding-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .qr-direct-link:hover {
+    opacity: 0.7;
+  }
+</style>
 
 <script>
   const btn = document.getElementById('mobile-menu-btn');
+  const closeBtn = document.getElementById('mobile-menu-close');
   const menu = document.getElementById('mobile-menu');
-  btn?.addEventListener('click', () => {
-    const isOpen = menu?.classList.toggle('hidden') === false;
-    btn.setAttribute('aria-expanded', String(isOpen));
-  });
+
+  function openMenu() {
+    menu?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    btn?.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu() {
+    menu?.classList.add('hidden');
+    document.body.style.overflow = '';
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+
+  btn?.addEventListener('click', openMenu);
+  closeBtn?.addEventListener('click', closeMenu);
+</script>
+
+<script>
+  import '../lib/priceBinding';
 </script>

@@ -1,0 +1,33 @@
+---
+import Icon from '../Icon.astro';
+
+const badges = [
+  { label: 'مجوز فینوتک', icon: 'bank' },
+  { label: 'نماد اعتماد', icon: 'seal' },
+  { label: 'تاییدیه بانک مرکزی', icon: 'shield' },
+  { label: 'گواهی اصالت کالا', icon: 'gold-bar' },
+  { label: 'امنیت SSL', icon: 'lock' },
+  { label: 'خزانه بیمه‌شده', icon: 'vault' },
+];
+---
+
+<section class="border-y border-brand-100/30 bg-white/60">
+  <div class="container-page py-10">
+    <div class="flex items-center justify-center gap-2 mb-6">
+      <p class="text-center text-sm font-medium text-ink-soft">
+        مجوزها و تاییدیه‌های رسمی — آرکان گلد در چارچوب قوانین کشور فعالیت می‌کند
+      </p>
+      <a href="/licenses" class="text-xs font-semibold text-brand hover:underline whitespace-nowrap">مشاهده همه</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      {badges.map((b) => (
+        <a href="/licenses" class="flex flex-col items-center gap-2 rounded-xl2 border border-brand-100/30 bg-white px-3 py-4 text-center card-lift">
+          <span class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
+            <Icon name={b.icon as any} class="h-5 w-5" />
+          </span>
+          <span class="text-xs font-medium text-ink-soft leading-5">{b.label}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

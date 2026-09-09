@@ -1,9 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
+import TrustBadges from '../components/sections/TrustBadges.astro';
+import PriceChart from '../components/sections/PriceChart.astro';
+import ProductCategories from '../components/sections/ProductCategories.astro';
 import Features from '../components/sections/Features.astro';
 import Steps from '../components/sections/Steps.astro';
 import AboutPanel from '../components/sections/AboutPanel.astro';
+import DeliveryMap from '../components/sections/DeliveryMap.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import CtaBanner from '../components/sections/CtaBanner.astro';
 import BlogTeaser from '../components/sections/BlogTeaser.astro';
@@ -29,13 +33,17 @@ const faqSchema = {
   jsonLd={faqSchema}
 >
   <Hero />
+  <TrustBadges />
+  <PriceChart />
+  <ProductCategories />
   <Features />
   <Steps />
   <AboutPanel />
+  <DeliveryMap />
 
   <section class="container-page py-14 grid gap-10 lg:grid-cols-[1fr_360px]">
     <div>
-      <h2 class="text-xl md:text-2xl font-bold text-maroon mb-6">سوالات متداول</h2>
+      <h2 class="text-2xl font-bold text-brand mb-6">سوالات متداول</h2>
       <FaqAccordion items={homeFaq} idPrefix="home-faq" />
     </div>
     <CtaBanner

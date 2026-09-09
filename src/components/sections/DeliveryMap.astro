@@ -1,0 +1,49 @@
+---
+import Icon from '../Icon.astro';
+---
+
+<section class="container-page py-14">
+  <div class="rounded-xl2 overflow-hidden border border-brand-100/40 shadow-card-hover grid lg:grid-cols-2">
+    <div class="p-8 md:p-10 flex flex-col justify-center bg-white">
+      <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand mb-4">
+        تضمین امنیت دارایی
+      </span>
+      <h2 class="text-2xl font-bold text-brand mb-4">طلای شما در دسترس شماست</h2>
+      <p class="text-base leading-8 text-ink-soft mb-6">
+        در آرکان گلد، خرید آنلاین به معنای دوری از طلای واقعی نیست؛ تمامی معاملات شما دارای
+        پشتوانه واقعی شمش ۹۹.۹ عیار است. هر زمان که بخواهید می‌توانید با ثبت درخواست،
+        طلای خود را به‌صورت فیزیکی و یا فاکتور رسمی دریافت کنید.
+      </p>
+
+      <div class="flex items-center gap-3 rounded-xl2 border border-brand-100/40 bg-canvas-100 px-5 py-4 mb-5">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+          <Icon name="location" class="h-5 w-5" />
+        </span>
+        <div class="text-right">
+          <p class="text-xs text-ink-soft">آدرس شعبه مرکزی تحویل طلا</p>
+          <p class="text-sm font-semibold text-brand">تهران، اختیاریه، مجتمع تجاری پلاک ۱</p>
+        </div>
+      </div>
+
+      <a href="/contact" class="btn-outline w-fit">
+        درخواست تحویل فیزیکی
+      </a>
+    </div>
+
+    <div class="relative min-h-[280px] bg-canvas-100">
+      <div class="absolute inset-0 dot-grid-bg opacity-70"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="relative">
+          <span class="absolute -inset-6 rounded-full bg-brand/10 animate-pulseGlow"></span>
+          <span class="relative flex h-12 w-12 items-center justify-center rounded-full bg-cta-gradient text-white shadow-glow-brand">
+            <Icon name="location" class="h-5.5 w-5.5" />
+          </span>
+        </div>
+      </div>
+      <div class="absolute bottom-4 right-4 left-4 flex items-center justify-between rounded-lg bg-white/90 backdrop-blur px-4 py-2.5 text-xs shadow-card">
+        <span class="text-ink-soft">مشاهده در نقشه و مسیریابی</span>
+        <a href="https://maps.google.com" target="_blank" rel="noopener" class="font-semibold text-brand hover:underline">باز کردن نقشه</a>
+      </div>
+    </div>
+  </div>
+</section>

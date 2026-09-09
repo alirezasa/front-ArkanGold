@@ -23,29 +23,31 @@ const steps = [
 ];
 ---
 
-<section class="bg-cream-200/50 py-14">
-  <div class="container-page grid gap-10 md:grid-cols-2 items-start">
+<section class="relative bg-canvas-200/50 py-14 overflow-hidden">
+  <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-30"></div>
+  <div class="container-page relative grid gap-10 md:grid-cols-2 items-start">
     <div class="text-center md:text-right">
-      <p class="text-xs text-ink-soft mb-2">خرید آسان طلای آب‌شده تنها در ۴ مرحله</p>
-      <h2 class="text-xl md:text-2xl font-bold text-maroon">شروع آسان با آرکان گلد</h2>
-      <p class="mt-2 text-sm text-ink-soft">چطور آنلاین طلا و نقره بخریم؟</p>
+      <p class="text-sm text-ink-soft mb-2">خرید آسان طلای آب‌شده تنها در ۴ مرحله</p>
+      <h2 class="text-2xl font-bold text-brand">شروع آسان با آرکان گلد</h2>
+      <p class="mt-2 text-base text-ink-soft">چطور آنلاین طلا و نقره بخریم؟</p>
       <a
         href="/faq"
-        class="mt-6 inline-block rounded-lg border-2 border-maroon px-5 py-2.5 text-sm font-semibold text-maroon hover:bg-maroon hover:text-cream-50 transition-colors"
+        class="btn-outline mt-6"
       >
         مشاهده سوالات متداول
       </a>
     </div>
 
-    <ol class="space-y-3">
+    <ol class="relative space-y-3">
+      <span class="absolute right-[17px] top-4 bottom-4 hidden sm:block w-px gold-divider"></span>
       {steps.map((s) => (
-        <li class="flex items-start gap-4 rounded-card bg-white p-5 shadow-card border border-gold-100/70">
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-maroon text-sm font-bold text-cream-50 tnum">
+        <li class="relative flex items-start gap-4 rounded-card bg-white p-5 shadow-card border border-brand-100/40 card-lift">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cta-gradient text-sm font-bold text-white tnum shadow-glow-brand">
             {s.n}
           </span>
           <div>
-            <h3 class="font-semibold text-maroon mb-1">{s.title}</h3>
-            <p class="text-xs leading-6 text-ink-soft">{s.desc}</p>
+            <h3 class="font-semibold text-brand mb-1 text-lg">{s.title}</h3>
+            <p class="text-sm leading-6 text-ink-soft">{s.desc}</p>
           </div>
         </li>
       ))}

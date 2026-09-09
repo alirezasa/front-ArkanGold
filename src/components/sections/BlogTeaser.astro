@@ -28,8 +28,8 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
 {posts.length > 0 && (
   <section class="container-page py-14">
     <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl md:text-2xl font-bold text-maroon">مطالب مجله آرکان گلد</h2>
-      <a href="https://arkan.gold/mag" target="_blank" rel="noopener" class="text-sm text-gold-600 hover:underline">
+      <h2 class="text-xl md:text-2xl font-bold text-brand">مطالب مجله آرکان گلد</h2>
+      <a href="https://arkan.gold/mag" target="_blank" rel="noopener" class="text-sm text-brand hover:underline">
         مشاهده همه مطالب
       </a>
     </div>
@@ -40,9 +40,9 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
           href={post.link}
           target="_blank"
           rel="noopener"
-          class="block rounded-card bg-white border border-gold-100/70 shadow-card p-5 hover:border-gold transition-colors"
+          class="block rounded-card bg-white border border-brand-100/40 shadow-card p-5 hover:border-brand transition-colors card-lift"
         >
-          <h3 class="font-semibold text-maroon mb-2 line-clamp-2" set:html={post.title.rendered} />
+          <h3 class="font-semibold text-brand mb-2 line-clamp-2" set:html={post.title.rendered} />
           <p class="text-xs leading-6 text-ink-soft line-clamp-3">{stripHtml(post.excerpt.rendered)}</p>
           <time datetime={post.date} class="mt-3 block text-[11px] text-ink-soft/70 tnum">
             {new Date(post.date).toLocaleDateString('fa-IR')}

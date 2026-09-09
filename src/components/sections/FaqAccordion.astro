@@ -8,21 +8,21 @@ interface Props {
 const { items, idPrefix = 'faq' } = Astro.props;
 ---
 
-<div class="divide-y divide-gold-100 rounded-card bg-white border border-gold-100/70 shadow-card overflow-hidden">
+<div class="divide-y divide-brand-100/30 rounded-card bg-white border border-brand-100/40 shadow-card overflow-hidden">
   {items.map((item, i) => {
     const panelId = `${idPrefix}-panel-${i}`;
     const btnId = `${idPrefix}-btn-${i}`;
     return (
-      <div>
+      <div class="faq-item">
         <h3>
           <button
             id={btnId}
             aria-expanded="false"
             aria-controls={panelId}
-            class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-right text-sm font-semibold text-maroon hover:bg-cream-50 transition-colors"
+            class="faq-trigger w-full flex items-center justify-between gap-4 px-5 py-4 text-right text-base font-semibold text-brand hover:bg-canvas-100 transition-colors"
           >
             <span>{item.question}</span>
-            <span class="faq-icon shrink-0 text-gold text-lg leading-none transition-transform" aria-hidden="true">+</span>
+            <span class="faq-icon shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand text-lg leading-none transition-transform duration-300" aria-hidden="true">+</span>
           </button>
         </h3>
         <div id={panelId} role="region" aria-labelledby={btnId} class="faq-panel hidden px-5 pb-4">
@@ -41,7 +41,10 @@ const { items, idPrefix = 'faq' } = Astro.props;
       const icon = btn.querySelector('.faq-icon');
       btn.setAttribute('aria-expanded', String(!expanded));
       panel?.classList.toggle('hidden', expanded);
-      if (icon) icon.textContent = expanded ? '+' : '−';
+      if (icon) {
+        icon.textContent = expanded ? '+' : '−';
+        (icon as HTMLElement).style.transform = expanded ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
     });
   });
 </script>
