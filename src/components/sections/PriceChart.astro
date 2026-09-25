@@ -7,6 +7,7 @@
 // تب‌های «روزانه»، «هفتگی» و «ماهانه» فعلاً placeholder هستند تا وقتی
 // API بازه‌ی زمانی واقعی اضافه شود — نقطه‌ی اتصال آینده دقیقاً مشخص شده:
 // به تابع `fetchRangeData` در اسکریپت پایین همین فایل نگاه کنید.
+import { TRADE_FEE_LABEL } from '../../config/site';
 ---
 
 <section class="container-page py-14">
@@ -66,7 +67,7 @@
       </div>
       <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 card-lift">
         <p class="text-xs text-ink-soft mb-1">کارمزد معامله</p>
-        <p class="font-bold text-brand tnum" id="stat-fee">--</p>
+        <p class="font-bold text-brand tnum">{TRADE_FEE_LABEL}٪</p>
       </div>
       <a href="/price" class="btn-outline w-full mt-1">مشاهده و مقایسه کامل بازارها</a>
     </div>
@@ -209,9 +210,7 @@
     });
   });
 
-  subscribeGoldPrice((price: NormalizedGoldPrice) => {
-    const feeEl = document.getElementById('stat-fee');
-    if (feeEl) feeEl.textContent = `${(price.raw.fee * 100).toLocaleString('fa-IR')}٪`;
+  subscribeGoldPrice((_price: NormalizedGoldPrice) => {
     if (activeRange === 'live') renderChart('live');
   });
 

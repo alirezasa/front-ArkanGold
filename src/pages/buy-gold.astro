@@ -1,11 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { TRADE_FEE_LABEL } from '../config/site';
 import GoldCalculator from '../components/sections/GoldCalculator.astro';
 import Features from '../components/sections/Features.astro';
 
 const points = [
   'خرید از ۰.۱ گرم، بدون محدودیت مقدار',
   'قیمت لحظه‌ای بر اساس نرخ بازار جهانی و داخلی',
+  `بدون مالیات و اجرت؛ فقط ${TRADE_FEE_LABEL} درصد کارمزد معامله`,
   'امکان تحویل فیزیکی یا نگهداری در خزانه امن',
   'صدور فاکتور رسمی برای هر تراکنش',
 ];
@@ -13,7 +15,7 @@ const points = [
 
 <BaseLayout
   title="خرید طلای آب‌شده آنلاین"
-  description="خرید آنلاین طلای آب‌شده با قیمت لحظه‌ای، بدون اجرت ساخت و مالیات مصنوعات، با امکان تحویل فیزیکی و فاکتور رسمی."
+  description="خرید آنلاین طلای آب‌شده بدون مالیات با قیمت لحظه‌ای و کارمزد ۰٫۵ درصد، با امکان تحویل فیزیکی شمش ۷۵۰ عیار و فاکتور رسمی."
   path="/buy-gold"
 >
   <section class="container-page py-12 grid gap-10 md:grid-cols-2 items-start">
@@ -24,7 +26,7 @@ const points = [
       </h1>
       <p class="text-sm leading-8 text-ink-soft mb-6">
         بدون نیاز به مراجعه حضوری، طلای آب‌شده خود را با نرخ لحظه‌ای بازار خریداری کنید؛
-        بدون اجرت ساخت و بدون مالیات مصنوعات.
+        بدون مالیات و اجرت، فقط با {TRADE_FEE_LABEL} درصد کارمزد معامله.
       </p>
       <ul class="space-y-3 text-sm text-ink-soft max-w-md mx-auto md:mx-0">
         {points.map((p) => (

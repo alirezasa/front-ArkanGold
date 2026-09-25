@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { TRADE_FEE_LABEL } from '../config/site';
 import GoldCalculator from '../components/sections/GoldCalculator.astro';
 
 const points = [
-  'فروش طلای آب‌شده یا شمش با نرخ لحظه‌ای، بدون کسر اجرت',
-  'واریز مبلغ به حساب بانکی طی حداکثر ۲۴ ساعت کاری',
+  `فروش طلای آب‌شده یا شمش با نرخ لحظه‌ای، فقط با ${TRADE_FEE_LABEL} درصد کارمزد`,
+  'واریز مبلغ به حساب بانکی معمولاً بین ۳۰ دقیقه تا چند ساعت کاری',
   'امکان فروش بخشی از موجودی طلای خزانه‌شده',
   'استعلام رایگان و بدون تعهد قبل از فروش',
 ];

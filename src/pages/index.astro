@@ -11,7 +11,8 @@ import DeliveryMap from '../components/sections/DeliveryMap.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import CtaBanner from '../components/sections/CtaBanner.astro';
 import BlogTeaser from '../components/sections/BlogTeaser.astro';
-import { faqItems } from '../data/faq';
+import VerifyTeaser from '../components/sections/VerifyTeaser.astro';
+import { faqItems, faqIntro } from '../data/faq';
 
 const homeFaq = faqItems.slice(0, 7);
 
@@ -28,7 +29,7 @@ const faqSchema = {
 
 <BaseLayout
   title="آرکان گلد | خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی"
-  description="خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا و مصنوعات طلا با ارائه فاکتور رسمی و ضمانت اصالت. معامله ۲۴ ساعته، بدون اجرت و کارمزد."
+  description="خرید آنلاین طلای آب‌شده بدون مالیات با امکان تحویل فیزیکی و شمش طلای ۷۵۰ عیار آرکان با فاکتور رسمی و استعلام اصالت. معامله ۲۴ ساعته با کارمزد ۰٫۵ درصد."
   path="/"
   jsonLd={faqSchema}
 >
@@ -36,6 +37,7 @@ const faqSchema = {
   <TrustBadges />
   <PriceChart />
   <ProductCategories />
+  <VerifyTeaser />
   <Features />
   <Steps />
   <AboutPanel />
@@ -43,13 +45,14 @@ const faqSchema = {
 
   <section class="container-page py-14 grid gap-10 lg:grid-cols-[1fr_360px]">
     <div>
-      <h2 class="text-2xl font-bold text-brand mb-6">سوالات متداول</h2>
+      <h2 class="text-2xl font-bold text-brand mb-2">سوالات متداول</h2>
+      <p class="text-sm text-ink-soft mb-6">{faqIntro}</p>
       <FaqAccordion items={homeFaq} idPrefix="home-faq" />
     </div>
     <CtaBanner
       eyebrow="پشتیبانی و راهنما"
       title="نیاز به راهنمایی دارید؟"
-      description="پاسخ‌های سریع به سوالات پرتکرار و پشتیبانی ۲۴ ساعته در دسترس شما."
+      description="تیم پشتیبانی آرکان گلد در تمام روزهای هفته از طریق چت آنلاین، تماس تلفنی یا تیکت پاسخگوی شماست."
       ctaLabel="تماس با پشتیبانی"
       ctaHref="/contact"
     />

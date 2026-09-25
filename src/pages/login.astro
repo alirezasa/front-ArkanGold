@@ -1,26 +1,26 @@
 ---
+// ورود و ثبت‌نام فقط در اپلیکیشن آرکان گلد انجام می‌شود؛ این مسیر برای لینک‌های قدیمی
+// نگه داشته شده و کاربر را بلافاصله به app.arkan.gold هدایت می‌کند.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SimplePage from '../components/sections/SimplePage.astro';
+import { APP_URL } from '../config/site';
 ---
 <BaseLayout
   title="ورود / ثبت‌نام"
-  description="ورود یا ثبت‌نام در آرکان گلد با شماره موبایل."
+  description="ورود یا ثبت‌نام در اپلیکیشن آرکان گلد با شماره موبایل."
   path="/login"
   noindex={true}
 >
+  <meta http-equiv="refresh" content={`0;url=${APP_URL}`} slot="head" />
   <SimplePage
     eyebrow="ورود / ثبت‌نام"
-    title="وارد حساب کاربری خود شوید"
-    intro="با شماره موبایل خود وارد شوید یا در کمتر از یک دقیقه ثبت‌نام کنید."
+    title="در حال انتقال به اپلیکیشن آرکان گلد..."
+    intro="ورود و ثبت‌نام با شماره موبایل در اپلیکیشن (نسخه تحت وب) آرکان گلد انجام می‌شود."
   >
-    <form class="max-w-sm mx-auto rounded-card bg-white border border-brand-100/40 shadow-card p-6 space-y-4 text-right">
-      <div>
-        <label for="mobile" class="block text-xs font-medium text-ink-soft mb-1.5">شماره موبایل</label>
-        <input id="mobile" type="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹" class="w-full rounded-lg border border-brand-100/40 px-4 py-2.5 text-sm tnum focus:border-brand focus:outline-none focus:shadow-glow transition-shadow" />
-      </div>
-      <button type="submit" class="btn-primary w-full">
-        دریافت کد تایید
-      </button>
-    </form>
+    <a href={APP_URL} class="btn-primary">ورود به app.arkan.gold</a>
   </SimplePage>
 </BaseLayout>
+
+<script is:inline define:vars={{ APP_URL }}>
+  window.location.replace(APP_URL);
+</script>
