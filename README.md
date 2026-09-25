@@ -98,7 +98,7 @@ src/components/Icon.astro
 <Icon name="gold-bar" class="h-6 w-6" />
 ```
 
-آیکون‌های موجود: `gold-bar`, `coin-stack`, `necklace`, `ring`, `gift-card`, `shield`,
+آیکون‌های موجود: `gold-bar`, `gift-card`, `shield`,
 `seal`, `bank`, `lock`, `vault`, `scale`, `clock`, `headset`, `percent`, `invoice`,
 `location`, `trend-up`, `sparkle`, `smartphone`, `chevron`, `gold-drop`, `wallet`,
 `document`, `handshake`, `question`.
@@ -110,11 +110,13 @@ src/components/Icon.astro
 | مسیر | توضیح |
 |---|---|
 | `/` | صفحه اصلی |
-| `/shop`, `/shop/[slug]` | فروشگاه و صفحه محصول |
+| `/shop`, `/shop/[slug]` | فروشگاه (محصولات فروشگاه واقعی) و صفحه کامل محصول |
+| `/verify` | **جدید** — استعلام اصالت شمش با شماره سریال (پشتیبانی از لینک مستقیم `?serial=`) |
 | `/buy-gold`, `/sell-gold` | خرید/فروش با ماشین‌حساب زنده |
 | `/price` | قیمت لحظه‌ای + نمودار |
 | `/licenses` | **جدید** — مجوزها و اعتبار |
-| `/about`, `/contact`, `/faq`, `/services`, `/rules`, `/cooperation`, `/login` | صفحات تکمیلی |
+| `/about`, `/contact`, `/faq`, `/services`, `/rules`, `/cooperation` | صفحات تکمیلی |
+| `/login` | هدایت خودکار به اپلیکیشن `https://app.arkan.gold` |
 
 ## هدر و فوتر
 
@@ -180,3 +182,45 @@ src/components/Icon.astro
 `src/data/rules.ts` را ویرایش کنید؛ افزودن یک بخش جدید به آرایه به‌طور خودکار هم در فهرست
 موضوعات و هم در محتوای صفحه ظاهر می‌شود.
 
+
+## تنظیمات مرکزی (`src/config/site.ts`)
+
+| ثابت | مقدار فعلی | کاربرد |
+|---|---|---|
+| `APP_URL` | `https://app.arkan.gold` | تمام دکمه‌های ورود/ثبت‌نام و ادامه معامله |
+| `TRADE_FEE_PERCENT` | `0.5` | کارمزد معامله در ماشین‌حساب‌ها، نمودار، فروشگاه و متن‌ها |
+| `BAR_PURITY` | `750` | عیار همه شمش‌ها (۱۸ عیار) |
+| `SHOP_API_URL` | `https://arkan.gold/mag/wp-json/wc/store/v1` | API فروشگاه واقعی (`PUBLIC_SHOP_API_URL`) |
+| `VERIFY_API_URL` | `https://arkan.gold/mag/wp-json/arkan/v1/verify-bar` | API استعلام اصالت (`PUBLIC_VERIFY_API_URL`) |
+
+## فروشگاه — اتصال به فروشگاه واقعی
+
+`src/lib/shop.ts` در زمان build محصولات و دسته‌بندی‌ها را از **WooCommerce Store API**
+می‌خواند (عمومی، بدون کلید). با هر build جدید، محصولات و دسته‌بندی‌های فروشگاه واقعی روی
+`/shop` و صفحه‌ی هر محصول منتشر می‌شوند. اگر API در دسترس نباشد، کاتالوگ پشتیبان
+`src/data/products.ts` (شمش طلا، شمش هدیه، کارت هدیه سازمانی) نمایش داده می‌شود و در لاگ
+build هشدار `[shop]` چاپ می‌شود.
+
+ویژگی‌های محصول در ووکامرس (Attributes) که خوانده می‌شوند:
+
+- **وزن** (یا weight): وزن طلا به گرم — اگر نبود از نام محصول مثل «۱ گرمی» استخراج می‌شود
+- **عیار** (یا purity): پیش‌فرض ۷۵۰
+- **اجرت** (یا wage): درصد اجرت ضرب/بسته‌بندی (اختیاری)
+- بقیه ویژگی‌ها همان‌طور که هستند در جدول «مشخصات فنی» صفحه محصول نمایش داده می‌شوند.
+
+**قیمت‌ها لحظه‌ای هستند:** `src/lib/productPricing.ts` در مرورگر قیمت هر محصول را از روی
+قیمت زنده‌ی هر گرم طلای ۱۸ عیار محاسبه می‌کند:
+`وزن × قیمت هر گرم × (عیار ÷ ۷۵۰) + اجرت + کارمزد ۰٫۵٪` و هر ۳۰ ثانیه بروزرسانی می‌شود.
+محصولی که وزن ندارد با قیمت ثابت ووکامرس نمایش داده می‌شود.
+دکمه‌ی خرید محصولات فروشگاه واقعی، محصول را (با تعداد انتخابی) به سبد خرید ووکامرس اضافه
+می‌کند (`?add-to-cart=ID&quantity=N`).
+
+## استعلام اصالت شمش (`/verify`)
+
+- فرم استعلام با شماره سریال و کد امنیتی اختیاری؛ اعداد فارسی و فاصله‌ها خودکار یکسان‌سازی می‌شوند.
+- لینک مستقیم برای QR روی کارت شمش: `https://arkan.gold/verify?serial=AG750-000123`
+- سمت سرور: افزونه‌ی وردپرس `wordpress/arkan-bar-verify/` را در `wp-content/plugins` کپی و فعال
+  کنید. منوی «شمش‌های آرکان» برای ثبت دستی سریال‌ها و زیرمنوی «درون‌ریزی CSV» برای ثبت گروهی
+  (`serial,code,product,weight,purity,manufactured_at,status`) اضافه می‌شود.
+- API: `GET /wp-json/arkan/v1/verify-bar?serial=...&code=...` — محدودیت ۳۰ درخواست در ۱۰ دقیقه
+  برای هر IP؛ هیچ اطلاعاتی از خریدار برگردانده نمی‌شود.

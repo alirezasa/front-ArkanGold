@@ -1,5 +1,6 @@
 ---
 import Icon from '../Icon.astro';
+import { APP_URL, TRADE_FEE_LABEL } from '../../config/site';
 
 const trustItems = [
   'مجوز فینتک',
@@ -11,7 +12,7 @@ const trustItems = [
 
 const miniCards = [
   { title: 'کسب درآمد', desc: 'پاداش معرفی به ازای هر خرید', icon: 'gift-card' },
-  { title: 'تحویل فیزیکی', desc: 'دریافت شمش، سکه یا مصنوعات', icon: 'gold-bar' },
+  { title: 'تحویل فیزیکی', desc: 'دریافت شمش ۷۵۰ عیار آرکان', icon: 'gold-bar' },
   { title: 'پشتیبانی سریع', desc: 'پاسخگویی تمام روزهای هفته', icon: 'headset' },
 ];
 ---
@@ -26,10 +27,10 @@ const miniCards = [
         <div class="relative">
           <div class="absolute inset-0 -z-10 brand-glow-bg blur-xl"></div>
           <img
-            src="/images/hero-gold-vault.jpg"
-            alt="مکعب طلای آرکان گلد، نمادی از خزانه امن طلای آب‌شده مشتریان"
-            width="520"
-            height="440"
+            src="/images/hero-arkan-bullion.svg"
+            alt="شمش‌های ۷۵۰ عیار آرکان گلد و طلای آب‌شده در کنار صندوق ایمن"
+            width="560"
+            height="480"
             class="w-full max-w-md drop-shadow-xl floaty-img"
             loading="eager"
             fetchpriority="high"
@@ -48,19 +49,20 @@ const miniCards = [
           خرید و فروش آنلاین طلای آب‌شده با پشتوانه واقعی
         </h1>
         <p class="mt-4 text-base leading-8 text-ink-soft">
-          خرید آنلاین طلای آب‌شده به امکان تحویل فیزیکی، شمش طلا، مصنوعات طلا و ارائه فاکتور
-          رسمی با ضمانت اصالت.
+          خرید آنلاین طلای آب‌شده بدون مالیات با امکان تحویل فیزیکی، و خرید شمش طلای ۷۵۰ عیار
+          آرکان با فاکتور رسمی و سریال قابل استعلام.
         </p>
 
         <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
-          <a href="/sell-gold" class="btn-primary">
+          <a href="/verify" class="btn-outline">
+            <Icon name="shield" class="h-4.5 w-4.5" />
+            استعلام اصالت شمش
+          </a>
+          <a href="/shop" class="btn-primary shine-hover">
             خرید شمش طلا
           </a>
           <a href="/buy-gold" class="btn-primary shine-hover">
             خرید طلای آب‌شده
-          </a>
-           <a href="/shop" class="btn-primary shine-hover">
-            خرید مصنوعات طلا
           </a>
         </div>
       </div>
@@ -117,7 +119,7 @@ const miniCards = [
           </button>
 
           <div>
-            <label for="hero-toman" class="block mb-1.5 text-sm font-medium text-ink-soft">مبلغ (تومان)</label>
+            <label for="hero-toman" class="block mb-1.5 text-sm font-medium text-ink-soft">مبلغ با کارمزد (تومان)</label>
             <div class="relative">
               <input
                 id="hero-toman"
@@ -132,10 +134,10 @@ const miniCards = [
         </div>
 
         <p id="hero-calc-note" class="mt-4 text-xs text-ink-soft/70">
-          خرید شما با قیمت لحظه‌ای انجام می‌شود.
+          خرید شما با قیمت لحظه‌ای و {TRADE_FEE_LABEL}٪ کارمزد انجام می‌شود.
         </p>
 
-        <a href="/login" id="hero-cta" class="btn-primary mt-5 w-full shine-hover">
+        <a href={APP_URL} id="hero-cta" class="btn-primary mt-5 w-full shine-hover">
           ادامه و پرداخت
         </a>
       </div>
@@ -186,7 +188,8 @@ const miniCards = [
 </style>
 
 <script>
-  import { subscribeGoldPrice, formatToman, type NormalizedGoldPrice } from '../../lib/goldPrice';
+  import { subscribeGoldPrice, formatToman, calcTradeFee, type NormalizedGoldPrice } from '../../lib/goldPrice';
+  import { TRADE_FEE_LABEL } from '../../config/site';
 
   const gramsInput = document.getElementById('hero-grams') as HTMLInputElement | null;
   const tomanInput = document.getElementById('hero-toman') as HTMLInputElement | null;
@@ -201,7 +204,9 @@ const miniCards = [
 
   function updateTotal() {
     const grams = parseFloat(gramsInput?.value || '0') || 0;
-    const total = Math.max(0, grams) * unitPrice;
+    const goldValue = Math.max(0, grams) * unitPrice;
+    const fee = calcTradeFee(goldValue);
+    const total = mode === 'buy' ? goldValue + fee : goldValue - fee;
     if (tomanInput) tomanInput.value = formatToman(total).replace(' تومان', '');
   }
 
@@ -210,8 +215,9 @@ const miniCards = [
     tabBuy?.setAttribute('data-active', String(next === 'buy'));
     tabSell?.setAttribute('data-active', String(next === 'sell'));
     if (note) note.textContent = next === 'buy'
-      ? 'خرید شما با قیمت لحظه‌ای انجام می‌شود.'
-      : 'فروش شما با قیمت لحظه‌ای ثبت و طی ۲۴ ساعت تسویه می‌شود.';
+      ? `خرید شما با قیمت لحظه‌ای و ${TRADE_FEE_LABEL}٪ کارمزد انجام می‌شود.`
+      : `فروش شما با قیمت لحظه‌ای و ${TRADE_FEE_LABEL}٪ کارمزد ثبت و در چند ساعت کاری تسویه می‌شود.`;
+    updateTotal();
     if (cta) cta.textContent = next === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخواست فروش';
   }
 

@@ -1,11 +1,11 @@
 ---
 import Icon from '../Icon.astro';
 
-const badges = [
+const badges: { label: string; icon: string; href?: string }[] = [
   { label: 'مجوز فینوتک', icon: 'bank' },
   { label: 'نماد اعتماد', icon: 'seal' },
   { label: 'تاییدیه بانک مرکزی', icon: 'shield' },
-  { label: 'گواهی اصالت کالا', icon: 'gold-bar' },
+  { label: 'استعلام اصالت شمش', icon: 'gold-bar', href: '/verify' },
   { label: 'امنیت SSL', icon: 'lock' },
   { label: 'خزانه بیمه‌شده', icon: 'vault' },
 ];
@@ -21,7 +21,7 @@ const badges = [
     </div>
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       {badges.map((b) => (
-        <a href="/licenses" class="flex flex-col items-center gap-2 rounded-xl2 border border-brand-100/30 bg-white px-3 py-4 text-center card-lift">
+        <a href={b.href ?? '/licenses'} class="flex flex-col items-center gap-2 rounded-xl2 border border-brand-100/30 bg-white px-3 py-4 text-center card-lift">
           <span class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
             <Icon name={b.icon as any} class="h-5 w-5" />
           </span>

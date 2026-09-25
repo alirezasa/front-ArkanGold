@@ -1,5 +1,6 @@
 ---
 import Icon from '../Icon.astro';
+import { APP_URL, TRADE_FEE_LABEL } from '../../config/site';
 
 interface Props {
   mode: 'buy' | 'sell';
@@ -36,31 +37,44 @@ const ctaLabel = mode === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخ�
     aria-describedby={`gold-total-desc-${mode}`}
   />
 
-  <div class="relative mt-4 flex items-center justify-between rounded-lg bg-canvas-100 px-4 py-3.5">
-    <span class="text-sm text-ink-soft" id={`gold-total-desc-${mode}`}>مبلغ قابل پرداخت</span>
-    <span class="calc-total-price font-bold text-brand tnum text-lg">۰ تومان</span>
-  </div>
+  <dl class="relative mt-4 rounded-lg bg-canvas-100 px-4 py-3.5 space-y-2 text-sm">
+    <div class="flex items-center justify-between text-ink-soft">
+      <dt>ارزش طلا</dt>
+      <dd class="calc-gold-value tnum">۰ تومان</dd>
+    </div>
+    <div class="flex items-center justify-between text-ink-soft">
+      <dt>کارمزد معامله ({TRADE_FEE_LABEL}٪)</dt>
+      <dd class="calc-fee tnum">۰ تومان</dd>
+    </div>
+    <div class="flex items-center justify-between border-t border-brand-100/40 pt-2">
+      <dt class="text-ink-soft" id={`gold-total-desc-${mode}`}>{mode === 'buy' ? 'مبلغ قابل پرداخت' : 'مبلغ قابل دریافت'}</dt>
+      <dd class="calc-total-price font-bold text-brand tnum text-lg">۰ تومان</dd>
+    </div>
+  </dl>
 
   <button
     type="button"
     class="calc-cta-btn btn-primary relative mt-6 w-full shine-hover"
     data-mode={mode}
+    data-app-url={APP_URL}
   >
     <Icon name="wallet" class="h-4.5 w-4.5" />
     {ctaLabel}
   </button>
   <p class="relative mt-3 text-[12px] text-ink-soft/70 text-center">
-    برای تکمیل معامله، ابتدا باید وارد حساب کاربری خود شوید.
+    برای تکمیل معامله وارد اپلیکیشن آرکان گلد (app.arkan.gold) می‌شوید.
   </p>
 </div>
 
 <script>
-  import { subscribeGoldPrice, formatToman, type NormalizedGoldPrice } from '../../lib/goldPrice';
+  import { subscribeGoldPrice, formatToman, calcTradeFee, type NormalizedGoldPrice } from '../../lib/goldPrice';
 
   document.querySelectorAll<HTMLElement>('[data-calc-mode]').forEach((container) => {
     const mode = container.dataset.calcMode as 'buy' | 'sell';
     const gramsInput = container.querySelector<HTMLInputElement>('.calc-grams-input');
     const totalEl = container.querySelector<HTMLElement>('.calc-total-price');
+    const goldValueEl = container.querySelector<HTMLElement>('.calc-gold-value');
+    const feeEl = container.querySelector<HTMLElement>('.calc-fee');
     const ctaBtn = container.querySelector<HTMLButtonElement>('.calc-cta-btn');
     const disabledNote = container.querySelector<HTMLElement>('#calc-disabled-note');
 
@@ -68,7 +82,11 @@ const ctaLabel = mode === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخ�
 
     function updateTotal() {
       const grams = parseFloat(gramsInput?.value || '0') || 0;
-      const total = Math.max(0, grams) * currentUnitPrice;
+      const goldValue = Math.max(0, grams) * currentUnitPrice;
+      const fee = calcTradeFee(goldValue);
+      const total = mode === 'buy' ? goldValue + fee : goldValue - fee;
+      if (goldValueEl) goldValueEl.textContent = formatToman(goldValue);
+      if (feeEl) feeEl.textContent = formatToman(fee);
       if (totalEl) totalEl.textContent = formatToman(total);
     }
 
@@ -95,7 +113,7 @@ const ctaLabel = mode === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخ�
     gramsInput?.addEventListener('input', updateTotal);
     ctaBtn?.addEventListener('click', () => {
       if (ctaBtn.hasAttribute('disabled')) return;
-      window.location.href = '/login';
+      window.location.href = ctaBtn.dataset.appUrl || '/login';
     });
   });
 </script>

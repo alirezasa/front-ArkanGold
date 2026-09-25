@@ -1,0 +1,63 @@
+---
+import type { Product } from '../data/products';
+import ProductVisual from './ProductVisual.astro';
+
+interface Props {
+  product: Product;
+  headingLevel?: 'h2' | 'h3';
+}
+const { product: p, headingLevel = 'h2' } = Astro.props;
+const Heading = headingLevel;
+const href = `/shop/${p.slug}`;
+---
+
+<article
+  class="product-card group flex flex-col rounded-card bg-white border border-brand-100/40 shadow-card overflow-hidden card-lift"
+  data-category={p.categorySlug}
+  data-weight={p.weightGram ?? ''}
+  data-live-product
+  data-purity={p.purity}
+  data-wage={p.wagePercent}
+  data-fixed-price={p.fixedPriceToman ?? ''}
+>
+  <a href={href} class="relative block aspect-[4/3] bg-canvas-100 overflow-hidden" tabindex="-1" aria-hidden="true">
+    {p.images[0] ? (
+      <img
+        src={p.images[0].src}
+        alt={p.images[0].alt}
+        loading="lazy"
+        width="400"
+        height="300"
+        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+    ) : (
+      <ProductVisual visual={p.visual} weightGram={p.weightGram} purity={p.purity} class="h-full w-full transition-transform duration-500 group-hover:scale-105" />
+    )}
+    <span class="absolute top-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-brand shadow-sm tnum">
+      عیار {p.purity.toLocaleString('fa-IR')}
+    </span>
+    {!p.inStock && (
+      <span class="absolute top-3 left-3 rounded-full bg-danger px-2.5 py-1 text-[11px] font-semibold text-white">ناموجود</span>
+    )}
+  </a>
+
+  <div class="flex flex-1 flex-col p-5">
+    <p class="text-[11px] text-brand-300 mb-1">{p.categoryName}</p>
+    <Heading class="font-semibold text-brand mb-2 leading-7">
+      <a href={href} class="hover:underline">{p.name}</a>
+    </Heading>
+    {p.shortDescription && <p class="text-xs leading-6 text-ink-soft line-clamp-2 mb-3">{p.shortDescription}</p>}
+
+    <div class="mt-auto flex items-end justify-between gap-3 border-t border-brand-100/30 pt-3 mb-4">
+      <div class="text-xs text-ink-soft">
+        {p.weightGram ? <>وزن: <span class="tnum font-medium text-ink">{p.weightGram.toLocaleString('fa-IR')} گرم</span></> : <>&nbsp;</>}
+      </div>
+      <div class="text-left">
+        <p class="text-[11px] text-ink-soft flex items-center gap-1 justify-end"><span class="live-dot scale-75"></span> قیمت لحظه‌ای</p>
+        <p class="font-bold text-brand tnum" data-product-total>در حال استعلام...</p>
+      </div>
+    </div>
+
+    <a href={href} class="btn-primary block text-center !py-2.5 text-xs">مشاهده جزئیات و خرید</a>
+  </div>
+</article>

@@ -18,6 +18,8 @@
  * فعلاً یک ضریب پیش‌فرض گذاشته‌ایم که با هماهنگی بعدی قابل تغییر است.
  */
 
+import { TRADE_FEE_PERCENT } from '../config/site';
+
 export interface GoldPriceResponse {
   price: string;
   minOrderValue: number;
@@ -146,6 +148,14 @@ export function pushPriceHistoryPoint(point: NormalizedGoldPrice) {
 
 export function getPriceHistory() {
   return [...priceHistory];
+}
+
+/**
+ * کارمزد معامله (۰٫۵ درصد) — در خرید به مبلغ اضافه و در فروش از مبلغ کسر می‌شود.
+ * نرخ فقط در src/config/site.ts تعریف شده است.
+ */
+export function calcTradeFee(value: number): number {
+  return (Math.max(0, value) * TRADE_FEE_PERCENT) / 100;
 }
 
 /**

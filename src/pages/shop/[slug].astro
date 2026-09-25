@@ -1,57 +1,337 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { products } from '../../data/products';
+import Icon from '../../components/Icon.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import ProductVisual from '../../components/ProductVisual.astro';
+import { loadCatalog } from '../../lib/shop';
+import type { Product } from '../../data/products';
+import { SUPPORT_PHONE, SUPPORT_PHONE_FA, TRADE_FEE_LABEL } from '../../config/site';
 
-export function getStaticPaths() {
-  return products.map((p) => ({ params: { slug: p.slug }, props: { product: p } }));
+export async function getStaticPaths() {
+  const { products } = await loadCatalog();
+  return products.map((p) => ({
+    params: { slug: p.slug },
+    props: {
+      product: p,
+      related: products.filter((r) => r.categorySlug === p.categorySlug && r.id !== p.id).slice(0, 4),
+    },
+  }));
 }
 
-const { product } = Astro.props;
-const priceFmt = new Intl.NumberFormat('fa-IR');
+interface Props {
+  product: Product;
+  related: Product[];
+}
+const { product, related } = Astro.props;
+const url = `https://arkan.gold/shop/${encodeURIComponent(product.slug)}`;
+const isStoreCart = product.source === 'store' && product.buyUrl.includes('add-to-cart=');
+const weightFa = product.weightGram?.toLocaleString('fa-IR');
 
-const productSchema = {
+const productSchema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'Product',
   name: product.name,
-  category: product.category,
-  offers: {
-    '@type': 'Offer',
-    priceCurrency: 'IRT',
-    price: product.priceToman,
-    availability: 'https://schema.org/InStock',
-    url: `https://arkan.gold/shop/${product.slug}`,
-  },
+  description: product.shortDescription,
+  category: product.categoryName,
+  brand: { '@type': 'Brand', name: 'آرکان گلد' },
+  url,
+  ...(product.sku ? { sku: product.sku } : {}),
+  ...(product.images.length ? { image: product.images.map((i) => i.src) } : {}),
+  ...(product.weightGram ? { weight: { '@type': 'QuantitativeValue', value: product.weightGram, unitCode: 'GRM' } } : {}),
+  // قیمت محصولات وزنی لحظه‌ای است و در HTML استاتیک ثابت نیست؛ فقط قیمت ثابت فروشگاه در schema می‌آید
+  ...(product.fixedPriceToman
+    ? {
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'IRR',
+          price: product.fixedPriceToman * 10,
+          availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          url,
+        },
+      }
+    : {}),
 };
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'آرکان گلد', item: 'https://arkan.gold/' },
+    { '@type': 'ListItem', position: 2, name: 'فروشگاه', item: 'https://arkan.gold/shop' },
+    { '@type': 'ListItem', position: 3, name: product.categoryName, item: `https://arkan.gold/shop?category=${encodeURIComponent(product.categorySlug)}` },
+    { '@type': 'ListItem', position: 4, name: product.name, item: url },
+  ],
+};
+
+const services = [
+  { icon: 'shield', title: 'استعلام اصالت', desc: 'بررسی آنلاین با شماره سریال شمش', href: '/verify' },
+  { icon: 'location', title: 'تحویل فیزیکی', desc: 'ارسال بیمه‌شده یا تحویل حضوری', href: '/services' },
+  { icon: 'invoice', title: 'فاکتور رسمی', desc: 'صدور فاکتور معتبر برای هر خرید', href: '/licenses' },
+  { icon: 'trend-up', title: 'فروش مجدد', desc: 'فروش به آرکان گلد با قیمت لحظه‌ای', href: '/sell-gold' },
+];
 ---
 
 <BaseLayout
-  title={product.name}
-  description={`خرید ${product.name} (${product.weightGram} گرم) با فاکتور رسمی و امکان تحویل فیزیکی از آرکان گلد.`}
+  title={`${product.name} | قیمت لحظه‌ای`}
+  description={`خرید ${product.name}${weightFa ? ` (${weightFa} گرم، عیار ۷۵۰)` : ''} با قیمت لحظه‌ای، فاکتور رسمی و سریال قابل استعلام از آرکان گلد.`}
   path={`/shop/${product.slug}`}
-  jsonLd={productSchema}
+  image={product.images[0]?.src}
+  jsonLd={[productSchema, breadcrumbSchema]}
 >
-  <section class="container-page py-12 grid gap-10 md:grid-cols-2 items-start">
-    <div class="aspect-square rounded-card bg-cream-100 flex items-center justify-center text-brand-200 text-sm shadow-card">
-      تصویر محصول
+  <nav aria-label="مسیر صفحه" class="container-page pt-6 text-xs text-ink-soft">
+    <ol class="flex flex-wrap items-center gap-1.5">
+      <li><a href="/" class="hover:text-brand">خانه</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a href="/shop" class="hover:text-brand">فروشگاه</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a href={`/shop?category=${encodeURIComponent(product.categorySlug)}`} class="hover:text-brand">{product.categoryName}</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-brand font-medium" aria-current="page">{product.name}</li>
+    </ol>
+  </nav>
+
+  <section class="container-page py-8 grid gap-10 lg:grid-cols-2 items-start">
+    <!-- گالری تصاویر -->
+    <div class="lg:sticky lg:top-32">
+      <div class="aspect-square rounded-xl2 bg-white border border-brand-100/40 shadow-card overflow-hidden">
+        {product.images.length ? (
+          <img id="product-main-image" src={product.images[0].src} alt={product.images[0].alt} class="h-full w-full object-contain" width="640" height="640" />
+        ) : (
+          <ProductVisual visual={product.visual} weightGram={product.weightGram} purity={product.purity} class="h-full w-full" title={product.name} />
+        )}
+      </div>
+      {product.images.length > 1 && (
+        <div class="mt-3 grid grid-cols-5 gap-2">
+          {product.images.map((img, i) => (
+            <button
+              type="button"
+              class="gallery-thumb aspect-square rounded-lg border-2 overflow-hidden bg-white data-[active=true]:border-brand border-transparent"
+              data-src={img.src}
+              data-alt={img.alt}
+              data-active={i === 0 ? 'true' : 'false'}
+              aria-label={`نمایش تصویر ${i + 1}`}
+            >
+              <img src={img.src} alt="" class="h-full w-full object-cover" loading="lazy" width="120" height="120" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
 
+    <!-- اطلاعات و خرید -->
     <div>
-      <p class="text-xs text-brand mb-2">{product.category}</p>
-      <h1 class="text-2xl font-bold text-brand mb-4">{product.name}</h1>
-      <p class="text-sm text-ink-soft mb-1">وزن: <span class="tnum">{product.weightGram}</span> گرم</p>
-      <p class="text-2xl font-extrabold text-brand tnum mb-6">
-        {priceFmt.format(product.priceToman)} تومان
-      </p>
-      <a
-        href="/login"
-        class="btn-primary shine-hover"
+      <p class="text-xs text-brand-300 mb-2">{product.categoryName}</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-brand mb-3 leading-[1.5]">{product.name}</h1>
+
+      <div class="flex flex-wrap items-center gap-2 mb-5 text-[11px]">
+        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand tnum">عیار {product.purity.toLocaleString('fa-IR')}</span>
+        {weightFa && <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand tnum">{weightFa} گرم</span>}
+        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand">سریال قابل استعلام</span>
+        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand">فاکتور رسمی</span>
+        {product.inStock ? (
+          <span class="rounded-full bg-success-50 px-3 py-1 font-semibold text-success">موجود</span>
+        ) : (
+          <span class="rounded-full bg-danger-50 px-3 py-1 font-semibold text-danger">ناموجود</span>
+        )}
+        {product.sku && <span class="text-ink-soft">کد محصول: <span class="latin-digits">{product.sku}</span></span>}
+      </div>
+
+      {product.shortDescription && <p class="text-sm leading-8 text-ink-soft mb-6">{product.shortDescription}</p>}
+
+      <!-- باکس قیمت لحظه‌ای -->
+      <div
+        id="product-price-box"
+        class="rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover p-5 md:p-6"
+        data-live-product
+        data-weight={product.weightGram ?? ''}
+        data-purity={product.purity}
+        data-wage={product.wagePercent}
+        data-fixed-price={product.fixedPriceToman ?? ''}
+        data-qty="1"
       >
-        افزودن به سبد خرید
-      </a>
-      <p class="mt-6 text-xs leading-6 text-ink-soft max-w-md">
-        این محصول دارای فاکتور رسمی و ضمانت اصالت است. امکان تحویل فیزیکی از بخش «تحویل
-        فیزیکی» حساب کاربری شما فراهم است.
-      </p>
+        <div class="flex items-center justify-between mb-4">
+          <p class="flex items-center gap-1.5 text-xs text-ink-soft"><span class="live-dot"></span> استعلام لحظه‌ای قیمت</p>
+          <p class="text-[11px] text-ink-soft tnum">بروزرسانی: <span data-price-bind="fetchedAt">--</span></p>
+        </div>
+
+        {product.weightGram ? (
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between text-ink-soft">
+              <dt>قیمت هر گرم طلای ۱۸ عیار</dt>
+              <dd class="tnum" data-price-bind="pricePerGram" data-price-format="toman">--</dd>
+            </div>
+            <div class="flex justify-between text-ink-soft">
+              <dt>ارزش طلا ({weightFa} گرم)</dt>
+              <dd class="tnum" data-product-gold>--</dd>
+            </div>
+            {product.wagePercent > 0 && (
+              <div class="flex justify-between text-ink-soft">
+                <dt>اجرت ضرب و بسته‌بندی ({product.wagePercent.toLocaleString('fa-IR')}٪)</dt>
+                <dd class="tnum" data-product-wage>--</dd>
+              </div>
+            )}
+            <div class="flex justify-between text-ink-soft">
+              <dt>کارمزد معامله ({TRADE_FEE_LABEL}٪)</dt>
+              <dd class="tnum" data-product-fee>--</dd>
+            </div>
+          </dl>
+        ) : null}
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-brand-100/40 pt-4">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-ink-soft">تعداد</span>
+            <div class="flex items-center rounded-lg border border-brand-100/60">
+              <button type="button" id="qty-plus" class="h-10 w-10 text-lg text-brand hover:bg-brand-50 rounded-r-lg" aria-label="افزایش تعداد">+</button>
+              <input id="qty-input" type="number" min="1" max="99" value="1" inputmode="numeric" class="h-10 w-12 border-x border-brand-100/60 text-center text-sm tnum focus:outline-none" aria-label="تعداد" />
+              <button type="button" id="qty-minus" class="h-10 w-10 text-lg text-brand hover:bg-brand-50 rounded-l-lg" aria-label="کاهش تعداد">−</button>
+            </div>
+          </div>
+          <div class="text-left">
+            <p class="text-[11px] text-ink-soft">مبلغ قابل پرداخت</p>
+            <p class="text-2xl font-extrabold text-brand tnum" data-product-total>در حال استعلام...</p>
+          </div>
+        </div>
+
+        <a
+          id="buy-btn"
+          href={product.inStock ? product.buyUrl : undefined}
+          data-base-href={product.buyUrl}
+          data-store-cart={isStoreCart ? 'true' : 'false'}
+          class:list={['btn-primary shine-hover mt-5 w-full', !product.inStock && 'opacity-50 pointer-events-none']}
+          aria-disabled={!product.inStock ? 'true' : undefined}
+        >
+          <Icon name="wallet" class="h-4.5 w-4.5" />
+          {product.buyLabel}
+        </a>
+        <p class="mt-3 text-[11px] leading-6 text-ink-soft/80 text-center">
+          قیمت نهایی هنگام پرداخت بر اساس نرخ لحظه‌ای طلا محاسبه و پیش از تأیید به شما نمایش داده می‌شود.
+        </p>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <a href="/verify" class="btn-outline !py-3 text-xs"><Icon name="shield" class="h-4 w-4" /> استعلام اصالت شمش</a>
+        <a href={`tel:${SUPPORT_PHONE}`} class="btn-outline !py-3 text-xs"><Icon name="headset" class="h-4 w-4" /> مشاوره خرید <span class="tnum">{SUPPORT_PHONE_FA}</span></a>
+      </div>
     </div>
   </section>
+
+  <!-- مشخصات، توضیحات، ویژگی‌ها -->
+  <section class="container-page pb-6 grid gap-6 lg:grid-cols-[1fr_380px] items-start">
+    <div class="space-y-6">
+      {product.descriptionHtml && (
+        <article class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-6 md:p-8">
+          <h2 class="text-xl font-bold text-brand mb-4">توضیحات محصول</h2>
+          <div class="product-description text-sm leading-8 text-ink-soft" set:html={product.descriptionHtml} />
+        </article>
+      )}
+
+      {product.features.length > 0 && (
+        <article class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-6 md:p-8">
+          <h2 class="text-xl font-bold text-brand mb-4">ویژگی‌ها</h2>
+          <ul class="grid gap-3 sm:grid-cols-2 text-sm text-ink-soft">
+            {product.features.map((f) => (
+              <li class="flex items-start gap-2"><Icon name="shield" class="h-4.5 w-4.5 shrink-0 text-brand mt-1" /> {f}</li>
+            ))}
+          </ul>
+        </article>
+      )}
+    </div>
+
+    <aside class="rounded-xl2 bg-white border border-brand-100/40 shadow-card overflow-hidden">
+      <h2 class="text-lg font-bold text-brand px-6 pt-6 pb-3">مشخصات فنی</h2>
+      <table class="w-full text-sm">
+        <tbody class="divide-y divide-brand-100/30">
+          {product.specs.map((s) => (
+            <tr>
+              <th scope="row" class="px-6 py-3 text-right font-medium text-ink-soft w-2/5">{s.label}</th>
+              <td class="px-6 py-3 text-ink tnum">{s.label === 'کد محصول' ? <span class="latin-digits">{s.value}</span> : s.value}</td>
+            </tr>
+          ))}
+          <tr>
+            <th scope="row" class="px-6 py-3 text-right font-medium text-ink-soft">موجودی</th>
+            <td class="px-6 py-3 text-ink">{product.inStock ? 'موجود' : 'ناموجود'}</td>
+          </tr>
+          <tr>
+            <th scope="row" class="px-6 py-3 text-right font-medium text-ink-soft">قیمت‌گذاری</th>
+            <td class="px-6 py-3 text-ink">{product.weightGram ? 'لحظه‌ای بر اساس نرخ طلای ۱۸ عیار' : 'قیمت ثابت فروشگاه'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </aside>
+  </section>
+
+  <section class="container-page py-6">
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      {services.map((s) => (
+        <a href={s.href} class="flex items-center gap-3 rounded-xl2 bg-white border border-brand-100/40 shadow-card px-4 py-4 card-lift">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name={s.icon as any} class="h-5 w-5" /></span>
+          <span>
+            <span class="block text-sm font-semibold text-brand">{s.title}</span>
+            <span class="block text-[11px] text-ink-soft">{s.desc}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {related.length > 0 && (
+    <section class="container-page py-10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-brand">محصولات مشابه</h2>
+        <a href={`/shop?category=${encodeURIComponent(product.categorySlug)}`} class="text-sm text-brand hover:underline">مشاهده همه {product.categoryName}</a>
+      </div>
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {related.map((r) => <ProductCard product={r} headingLevel="h3" />)}
+      </div>
+    </section>
+  )}
 </BaseLayout>
+
+<style is:global>
+  .product-description p { margin-bottom: 0.9rem; }
+  .product-description ul { list-style: disc; padding-right: 1.25rem; margin-bottom: 0.9rem; }
+  .product-description ol { list-style: decimal; padding-right: 1.25rem; margin-bottom: 0.9rem; }
+  .product-description h2, .product-description h3 { color: #330509; font-weight: 700; margin: 1rem 0 0.5rem; }
+  .product-description img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; }
+  .product-description a { color: #7a171e; text-decoration: underline; }
+  .product-description table { width: 100%; margin-bottom: 1rem; }
+  .product-description td, .product-description th { border: 1px solid #e6c2c5; padding: 0.4rem 0.6rem; }
+</style>
+
+<script>
+  import '../../lib/priceBinding';
+  import { renderProductPrices } from '../../lib/productPricing';
+
+  const box = document.getElementById('product-price-box');
+  const qtyInput = document.getElementById('qty-input') as HTMLInputElement | null;
+  const buyBtn = document.getElementById('buy-btn') as HTMLAnchorElement | null;
+
+  function setQty(next: number) {
+    const qty = Math.min(99, Math.max(1, Math.floor(next) || 1));
+    if (qtyInput) qtyInput.value = String(qty);
+    if (box) box.dataset.qty = String(qty);
+    // برای سبد خرید فروشگاه واقعی، تعداد هم به لینک افزودن به سبد اضافه می‌شود
+    if (buyBtn?.dataset.storeCart === 'true' && buyBtn.hasAttribute('href')) {
+      const url = new URL(buyBtn.dataset.baseHref!, location.href);
+      url.searchParams.set('quantity', String(qty));
+      buyBtn.href = url.toString();
+    }
+    renderProductPrices();
+  }
+
+  document.getElementById('qty-plus')?.addEventListener('click', () => setQty(Number(qtyInput?.value) + 1));
+  document.getElementById('qty-minus')?.addEventListener('click', () => setQty(Number(qtyInput?.value) - 1));
+  qtyInput?.addEventListener('change', () => setQty(Number(qtyInput.value)));
+
+  // گالری تصاویر
+  const mainImage = document.getElementById('product-main-image') as HTMLImageElement | null;
+  document.querySelectorAll<HTMLButtonElement>('.gallery-thumb').forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      if (!mainImage) return;
+      mainImage.src = thumb.dataset.src!;
+      mainImage.alt = thumb.dataset.alt || '';
+      document.querySelectorAll('.gallery-thumb').forEach((t) => t.setAttribute('data-active', 'false'));
+      thumb.dataset.active = 'true';
+    });
+  });
+</script>

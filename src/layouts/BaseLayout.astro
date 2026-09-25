@@ -25,7 +25,7 @@ const organizationSchema = {
   url: 'https://arkan.gold',
   logo: 'https://arkan.gold/images/logo.png',
   description:
-    'خرید و فروش آنلاین طلای آب‌شده، شمش طلا و مصنوعات طلا با پشتوانه واقعی، فاکتور رسمی و امکان تحویل فیزیکی.',
+    'خرید و فروش آنلاین طلای آب‌شده و شمش طلای ۷۵۰ عیار با پشتوانه واقعی، فاکتور رسمی و امکان تحویل فیزیکی.',
   telephone: '+982198765431',
   address: {
     '@type': 'PostalAddress',
@@ -55,6 +55,7 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
     {schemas.map((schema) => (
       <script type="application/ld+json" set:html={JSON.stringify(schema)} />
     ))}
+    <slot name="head" />
   </head>
   <body>
     <Header />

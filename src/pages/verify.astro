@@ -1,0 +1,327 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import { SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import { faqIntro } from '../data/faq';
+
+const steps = [
+  { title: 'سریال را پیدا کنید', desc: 'شماره سریال روی پشت کارت پلمپ شمش و در فاکتور خرید درج شده است.' },
+  { title: 'سریال و کد را وارد کنید', desc: 'سریال را دقیقاً مطابق کارت وارد کنید. اگر کارت کد امنیتی دارد، آن را هم وارد نمایید.' },
+  { title: 'مشخصات را تطبیق دهید', desc: 'وزن، عیار و نام محصول نمایش‌داده‌شده را با شمش و کارت آن مقایسه کنید.' },
+];
+
+const checks = [
+  'پلمپ و کارت شمش سالم، بدون خراش، باز شدگی یا چسب‌کاری مجدد باشد.',
+  'شماره سریال روی کارت با سریال فاکتور یکسان باشد.',
+  'وزن و عیار ۷۵۰ نمایش‌داده‌شده در استعلام با مشخصات درج‌شده روی کارت یکی باشد.',
+  'در صورت هرگونه مغایرت، از خرید یا دریافت شمش خودداری کرده و با پشتیبانی تماس بگیرید.',
+];
+
+const verifyFaq = [
+  {
+    question: 'شماره سریال شمش آرکان گلد کجا درج شده است؟',
+    answer: 'شماره سریال هر شمش روی پشت کارت پلمپ شمش و همچنین در فاکتور رسمی خرید چاپ شده است. سریال‌ها با پیشوند مخصوص آرکان گلد و به‌صورت یکتا صادر می‌شوند.',
+  },
+  {
+    question: 'اگر نتیجه استعلام «یافت نشد» بود چه کنم؟',
+    answer: 'ابتدا سریال را دوباره و با دقت (بدون فاصله اضافی) وارد کنید. اگر باز هم یافت نشد، شمش را خریداری یا دریافت نکنید و موضوع را از طریق تماس تلفنی یا تیکت به پشتیبانی آرکان گلد اطلاع دهید.',
+  },
+  {
+    question: 'آیا استعلام اصالت هزینه دارد؟',
+    answer: 'خیر، استعلام اصالت شمش در آرکان گلد رایگان و بدون نیاز به ثبت‌نام است و در هر ساعت از شبانه‌روز امکان‌پذیر است.',
+  },
+  {
+    question: 'عیار شمش‌های آرکان گلد چند است؟',
+    answer: 'تمامی شمش‌های آرکان گلد ۷۵۰ عیار (معادل طلای ۱۸ عیار) هستند و عیار هر شمش در نتیجه استعلام نمایش داده می‌شود.',
+  },
+];
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'استعلام اصالت شمش آرکان گلد',
+  url: 'https://arkan.gold/verify',
+};
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: verifyFaq.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer },
+  })),
+};
+---
+
+<BaseLayout
+  title="استعلام اصالت شمش"
+  description="استعلام آنلاین و رایگان اصالت شمش طلای ۷۵۰ عیار آرکان گلد با شماره سریال درج‌شده روی کارت پلمپ؛ مشاهده وزن، عیار و وضعیت شمش."
+  path="/verify"
+  jsonLd={[pageSchema, faqSchema]}
+>
+  <section class="relative overflow-hidden py-12 md:py-16">
+    <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-30 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"></div>
+
+    <div class="container-page relative grid gap-10 lg:grid-cols-[1fr_1.1fr] items-start">
+      <div class="text-center lg:text-right">
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-brand-100/40 bg-white/70 px-3 py-1.5 text-xs font-medium text-brand shadow-sm">
+          <Icon name="shield" class="h-4 w-4" />
+          رایگان و بدون نیاز به ثبت‌نام
+        </span>
+        <h1 class="mt-4 text-3xl md:text-4xl font-bold text-brand leading-[1.4]">استعلام اصالت شمش آرکان گلد</h1>
+        <p class="mt-4 text-base leading-8 text-ink-soft max-w-xl mx-auto lg:mx-0">
+          هر شمش ۷۵۰ عیار آرکان گلد دارای شماره سریال یکتا است. با وارد کردن سریال درج‌شده روی
+          کارت پلمپ، از اصالت شمش و تطابق وزن و عیار آن با اطلاعات ثبت‌شده در سامانه مطمئن شوید.
+        </p>
+
+        <!-- راهنمای محل سریال -->
+        <figure class="mt-8 hidden lg:block">
+          <svg viewBox="0 0 420 220" class="w-full max-w-md" role="img" aria-label="محل درج شماره سریال روی پشت کارت شمش">
+            <defs>
+              <linearGradient id="vf-brand" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#5a0d13" /><stop offset="1" stop-color="#1a0204" />
+              </linearGradient>
+            </defs>
+            <rect x="20" y="16" width="170" height="188" rx="12" fill="url(#vf-brand)" />
+            <text x="105" y="46" text-anchor="middle" fill="#e9cf8f" font-size="12" font-weight="700" letter-spacing="2" font-family="Tahoma">ARKAN GOLD</text>
+            <rect x="40" y="62" width="130" height="58" rx="6" fill="#ffffff" fill-opacity="0.08" />
+            <text x="105" y="88" text-anchor="middle" fill="#ffffff" fill-opacity="0.7" font-size="10" font-family="Tahoma">WEIGHT 1 g • 750</text>
+            <text x="105" y="106" text-anchor="middle" fill="#ffffff" fill-opacity="0.5" font-size="9" font-family="Tahoma">BACK SIDE</text>
+            <rect x="36" y="150" width="138" height="30" rx="6" fill="none" stroke="#c5a059" stroke-width="2" stroke-dasharray="5 4" />
+            <text x="105" y="170" text-anchor="middle" fill="#ffffff" font-size="12" letter-spacing="1" font-family="Tahoma">AG750-000123</text>
+            <path d="M178 165 C230 165 240 120 280 120" fill="none" stroke="#330509" stroke-width="2" marker-end="url(#vf-arrow)" />
+            <defs>
+              <marker id="vf-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#330509" />
+              </marker>
+            </defs>
+            <text x="292" y="112" text-anchor="end" fill="#330509" font-size="15" font-weight="700">شماره سریال</text>
+            <text x="292" y="136" text-anchor="end" fill="#5c5449" font-size="12">پشت کارت پلمپ شمش</text>
+          </svg>
+        </figure>
+      </div>
+
+      <!-- فرم استعلام -->
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover p-6 md:p-8">
+        <h2 class="text-lg font-bold text-brand mb-1">استعلام با شماره سریال</h2>
+        <p class="text-xs text-ink-soft mb-6">سریال را دقیقاً مطابق کارت شمش وارد کنید (مثال: <span class="latin-digits">AG750-000123</span>).</p>
+
+        <form id="verify-form" novalidate class="space-y-4">
+          <div>
+            <label for="serial" class="block mb-1.5 text-sm font-medium text-ink-soft">شماره سریال شمش <span class="text-danger">*</span></label>
+            <input
+              id="serial"
+              name="serial"
+              type="text"
+              dir="ltr"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              required
+              maxlength="40"
+              placeholder="AG750-000123"
+              class="latin-digits w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-base tracking-wider text-center focus:border-brand focus:outline-none focus:shadow-glow transition-shadow"
+              aria-describedby="serial-error"
+            />
+            <p id="serial-error" class="hidden mt-1.5 text-xs text-danger" role="alert"></p>
+          </div>
+          <div>
+            <label for="code" class="block mb-1.5 text-sm font-medium text-ink-soft">کد امنیتی <span class="text-ink-soft/60 text-xs">(در صورت وجود روی کارت)</span></label>
+            <input
+              id="code"
+              name="code"
+              type="text"
+              dir="ltr"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="20"
+              placeholder="----"
+              class="latin-digits w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-base tracking-[0.3em] text-center focus:border-brand focus:outline-none focus:shadow-glow transition-shadow"
+            />
+          </div>
+          <button id="verify-submit" type="submit" class="btn-primary w-full shine-hover">
+            <Icon name="shield" class="h-4.5 w-4.5" />
+            <span data-label>استعلام اصالت</span>
+          </button>
+        </form>
+
+        <!-- نتیجه استعلام -->
+        <div id="verify-result" class="mt-6 hidden" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page py-10">
+    <h2 class="text-2xl font-bold text-brand text-center mb-8">استعلام در ۳ قدم</h2>
+    <ol class="grid gap-5 md:grid-cols-3">
+      {steps.map((s, i) => (
+        <li class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-6 card-lift">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-cta-gradient text-white font-bold tnum shadow-glow-brand mb-4">{(i + 1).toLocaleString('fa-IR')}</span>
+          <h3 class="font-semibold text-brand text-lg mb-1.5">{s.title}</h3>
+          <p class="text-sm leading-7 text-ink-soft">{s.desc}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="container-page py-10 grid gap-8 lg:grid-cols-2 items-start">
+    <div class="rounded-xl2 bg-brand-radial text-white p-7 md:p-9 shadow-glow-brand">
+      <h2 class="text-xl font-bold mb-4">نکات مهم هنگام خرید یا دریافت شمش</h2>
+      <ul class="space-y-3 text-sm leading-7 text-white/85">
+        {checks.map((c) => (
+          <li class="flex items-start gap-2.5"><Icon name="shield" class="h-4.5 w-4.5 shrink-0 mt-1 text-gold" /> {c}</li>
+        ))}
+      </ul>
+      <a href={`tel:${SUPPORT_PHONE}`} class="btn-light mt-6">
+        <Icon name="headset" class="h-4.5 w-4.5" /> گزارش مغایرت: <span class="tnum">{SUPPORT_PHONE_FA}</span>
+      </a>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-brand mb-2">سوالات متداول استعلام</h2>
+      <p class="text-sm text-ink-soft mb-5">{faqIntro}</p>
+      <FaqAccordion items={verifyFaq} idPrefix="verify-faq" />
+    </div>
+  </section>
+</BaseLayout>
+
+<template id="tpl-result">
+  <div class="rounded-xl2 border p-5" data-box>
+    <div class="flex items-start gap-3">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white text-xl font-bold" data-badge></span>
+      <div class="min-w-0">
+        <p class="font-bold text-lg" data-title></p>
+        <p class="text-sm leading-7 text-ink-soft" data-text></p>
+      </div>
+    </div>
+    <dl class="mt-4 hidden divide-y divide-brand-100/30 rounded-lg bg-white/80 text-sm" data-details></dl>
+  </div>
+</template>
+
+<script>
+  import { verifyBar, normalizeSerial, isValidSerialFormat, type VerifyResult } from '../lib/barVerify';
+
+  const form = document.getElementById('verify-form') as HTMLFormElement;
+  const serialInput = document.getElementById('serial') as HTMLInputElement;
+  const codeInput = document.getElementById('code') as HTMLInputElement;
+  const submitBtn = document.getElementById('verify-submit') as HTMLButtonElement;
+  const submitLabel = submitBtn.querySelector('[data-label]') as HTMLElement;
+  const serialError = document.getElementById('serial-error') as HTMLElement;
+  const resultEl = document.getElementById('verify-result') as HTMLElement;
+  const tpl = document.getElementById('tpl-result') as HTMLTemplateElement;
+
+  const faNum = (n: number) => n.toLocaleString('fa-IR');
+
+  function formatDate(value: string): string {
+    // تاریخ میلادی ISO به شمسی تبدیل می‌شود؛ تاریخ شمسی همان‌طور نمایش داده می‌شود
+    if (/^\d{4}-\d{2}-\d{2}/.test(value) && parseInt(value, 10) > 1700) {
+      const d = new Date(value);
+      if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return value;
+  }
+
+  const views: Record<VerifyResult['status'], { tone: 'ok' | 'bad' | 'warn'; title: string; text: string }> = {
+    valid: { tone: 'ok', title: 'شمش اصل است', text: 'این شماره سریال در سامانه آرکان گلد ثبت شده است. مشخصات زیر را با شمش و کارت آن تطبیق دهید.' },
+    not_found: { tone: 'bad', title: 'سریال یافت نشد', text: 'شمشی با این شماره سریال در سامانه آرکان گلد ثبت نشده است. سریال را دوباره بررسی کنید و در صورت تکرار، از خرید یا دریافت شمش خودداری کرده و با پشتیبانی تماس بگیرید.' },
+    code_required: { tone: 'warn', title: 'کد امنیتی لازم است', text: 'برای این شمش کد امنیتی ثبت شده است. لطفاً کد امنیتی درج‌شده روی کارت را هم وارد کنید.' },
+    revoked: { tone: 'bad', title: 'شمش نامعتبر است', text: 'این شماره سریال در سامانه به‌عنوان نامعتبر یا مفقودی ثبت شده است. لطفاً فوراً با پشتیبانی آرکان گلد تماس بگیرید.' },
+    rate_limited: { tone: 'warn', title: 'تعداد درخواست‌ها زیاد است', text: 'لطفاً چند دقیقه دیگر دوباره تلاش کنید.' },
+    error: { tone: 'warn', title: 'استعلام انجام نشد', text: 'ارتباط با سامانه استعلام برقرار نشد. اتصال اینترنت خود را بررسی و دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.' },
+  };
+
+  const toneClass = {
+    ok: { box: ['border-success/30', 'bg-success-50'], badge: 'bg-success', title: 'text-success', mark: '✓' },
+    bad: { box: ['border-danger/30', 'bg-danger-50'], badge: 'bg-danger', title: 'text-danger', mark: '✕' },
+    warn: { box: ['border-gold/40', 'bg-gold-50'], badge: 'bg-gold-500', title: 'text-gold-600', mark: '!' },
+  };
+
+  function renderResult(r: VerifyResult) {
+    const view = views[r.status];
+    const tone = toneClass[view.tone];
+    const node = tpl.content.cloneNode(true) as DocumentFragment;
+    const box = node.querySelector('[data-box]') as HTMLElement;
+    box.classList.add(...tone.box);
+    const badge = node.querySelector('[data-badge]') as HTMLElement;
+    badge.classList.add(tone.badge);
+    badge.textContent = tone.mark;
+    const title = node.querySelector('[data-title]') as HTMLElement;
+    title.classList.add(tone.title);
+    title.textContent = view.title;
+    (node.querySelector('[data-text]') as HTMLElement).textContent = r.message || view.text;
+
+    if (r.status === 'valid') {
+      const rows: [string, string][] = [['شماره سریال', r.serial]];
+      if (r.product) rows.push(['محصول', r.product]);
+      if (r.weight) rows.push(['وزن', `${faNum(r.weight)} گرم`]);
+      rows.push(['عیار', `${faNum(r.purity ?? 750)}${(r.purity ?? 750) === 750 ? ' (۱۸ عیار)' : ''}`]);
+      if (r.manufacturedAt) rows.push(['تاریخ تولید', formatDate(r.manufacturedAt)]);
+      rows.push(['زمان استعلام', new Date().toLocaleString('fa-IR')]);
+
+      const dl = node.querySelector('[data-details]') as HTMLElement;
+      dl.classList.remove('hidden');
+      for (const [k, v] of rows) {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-4 px-4 py-2.5';
+        const dt = document.createElement('dt');
+        dt.className = 'text-ink-soft';
+        dt.textContent = k;
+        const dd = document.createElement('dd');
+        dd.className = 'font-semibold text-ink tnum text-left';
+        dd.textContent = v;
+        if (k === 'شماره سریال') dd.classList.add('latin-digits');
+        row.append(dt, dd);
+        dl.append(row);
+      }
+    }
+
+    resultEl.replaceChildren(node);
+    resultEl.classList.remove('hidden');
+    if (r.status === 'code_required') codeInput.focus();
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showSerialError(msg: string) {
+    serialError.textContent = msg;
+    serialError.classList.toggle('hidden', !msg);
+    serialInput.classList.toggle('border-danger', !!msg);
+    serialInput.setAttribute('aria-invalid', msg ? 'true' : 'false');
+  }
+
+  async function run() {
+    const serial = normalizeSerial(serialInput.value);
+    serialInput.value = serial;
+    if (!serial) return showSerialError('شماره سریال را وارد کنید.');
+    if (!isValidSerialFormat(serial)) return showSerialError('سریال فقط شامل حروف انگلیسی، عدد و خط تیره (۴ تا ۳۲ کاراکتر) است.');
+    showSerialError('');
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70');
+    submitLabel.textContent = 'در حال استعلام...';
+
+    const url = new URL(location.href);
+    url.searchParams.set('serial', serial);
+    history.replaceState(null, '', url);
+
+    const result = await verifyBar(serial, codeInput.value);
+    renderResult(result);
+
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('opacity-70');
+    submitLabel.textContent = 'استعلام اصالت';
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    run();
+  });
+  serialInput.addEventListener('input', () => showSerialError(''));
+
+  // لینک مستقیم (مثلا QR روی کارت شمش): /verify?serial=AG750-000123
+  const preset = new URLSearchParams(location.search).get('serial');
+  if (preset) {
+    serialInput.value = preset;
+    run();
+  }
+</script>

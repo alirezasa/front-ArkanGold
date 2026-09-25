@@ -47,6 +47,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* سریال و کد محصول: فونت با ارقام لاتین تا با کارت شمش یکسان خوانده شود (Vazirmatn ارقام را فارسی می‌کند) */
+.latin-digits {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 /* ===== جلوه‌های زنده (بدون تغییر منطق، فقط ظاهر) ===== */
 
 .shine-hover {

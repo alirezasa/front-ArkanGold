@@ -104,6 +104,10 @@ export default {
       maxWidth: {
         content: '1360px',
       },
+      spacing: {
+        4.5: '1.125rem',
+        5.5: '1.375rem',
+      },
       keyframes: {
         floaty: {
           '0%, 100%': { transform: 'translateY(0px)' },

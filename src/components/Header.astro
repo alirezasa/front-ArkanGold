@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import { APP_URL } from '../config/site';
 
 const nav = [
   {
@@ -7,15 +8,16 @@ const nav = [
     href: '/services',
     children: [
       { label: 'خرید طلای آب‌شده', href: '/buy-gold', desc: 'خرید آنلاین با قیمت لحظه‌ای', icon: 'gold-drop' },
-      { label: 'فروش طلا و شمش', href: '/sell-gold', desc: 'فروش سریع، واریز طی ۲۴ ساعت', icon: 'trend-up' },
+      { label: 'فروش طلا و شمش', href: '/sell-gold', desc: 'فروش سریع، تسویه در چند ساعت کاری', icon: 'trend-up' },
       { label: 'خزانه امن بانکی', href: '/services', desc: 'نگهداری دارایی در خزانه رسمی', icon: 'vault' },
       { label: 'تحویل فیزیکی', href: '/services', desc: 'دریافت فیزیکی طلا در آدرس شما', icon: 'location' },
     ],
   },
   { label: 'قیمت لحظه‌ای', href: '/price', icon: 'trend-up' },
   { label: 'فروشگاه', href: '/shop', icon: 'gold-bar' },
+  { label: 'استعلام اصالت شمش', href: '/verify', icon: 'shield' },
   { label: 'مجوزها و اعتبار', href: '/licenses', icon: 'seal' },
-  { label: 'مجله آرکان گلد', href: 'https://arkan.gold/mag', external: true, icon: 'document' },
+  { label: 'مجله', href: 'https://arkan.gold/mag', external: true, icon: 'document' },
   { label: 'سوالات متداول', href: '/faq', icon: 'question' },
 ];
 const currentPath = Astro.url.pathname;
@@ -38,19 +40,19 @@ const currentPath = Astro.url.pathname;
       <span class="hidden sm:block text-lg font-bold text-brand">آرکان گلد</span>
     </a>
 
-    <nav aria-label="ناوبری اصلی" class="hidden lg:flex items-center gap-1">
+    <nav aria-label="ناوبری اصلی" class="hidden xl:flex items-center gap-0.5">
       {nav.map((item) => (
         item.children ? (
           <div class="relative group">
             <button
               type="button"
               class:list={[
-                'flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm transition-colors',
+                'flex items-center gap-1.5 px-3 py-2.5 rounded-md text-sm whitespace-nowrap transition-colors',
                 currentPath === item.href ? 'text-brand font-semibold' : 'text-ink-soft hover:text-brand',
               ]}
               aria-haspopup="true"
             >
-              <Icon name={item.icon as any} class="h-4 w-4" />
+              <Icon name={item.icon as any} class="hidden 2xl:block h-4 w-4" />
               {item.label}
               <Icon name="chevron" class="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
             </button>
@@ -75,13 +77,13 @@ const currentPath = Astro.url.pathname;
             target={item.external ? '_blank' : undefined}
             rel={item.external ? 'noopener noreferrer' : undefined}
             class:list={[
-              'flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm transition-colors',
+              'flex items-center gap-1.5 px-3 py-2.5 rounded-md text-sm whitespace-nowrap transition-colors',
               currentPath === item.href
                 ? 'text-brand font-semibold'
                 : 'text-ink-soft hover:text-brand',
             ]}
           >
-            <Icon name={item.icon as any} class="h-4 w-4" />
+            <Icon name={item.icon as any} class="hidden 2xl:block h-4 w-4" />
             {item.label}
           </a>
         )
@@ -93,7 +95,7 @@ const currentPath = Astro.url.pathname;
       <div class="nav-download-item hidden md:inline-flex">
         <div class="nav-download-trigger">
           <Icon name="smartphone" class="h-4 w-4" />
-          <span class="nav-label">دانلود اپلیکیشن</span>
+          <span class="nav-label whitespace-nowrap">دانلود اپلیکیشن</span>
         </div>
         <div class="qr-dropdown-modal">
           <div class="qr-card">
@@ -116,14 +118,14 @@ const currentPath = Astro.url.pathname;
         </div>
       </div>
 
-      <a href="/login" class="btn-primary !px-5 !py-2.5 text-sm">
+      <a href={APP_URL} class="btn-primary !px-5 !py-2.5 text-sm whitespace-nowrap">
         ورود / ثبت نام
       </a>
 
       <button
         id="mobile-menu-btn"
         type="button"
-        class="lg:hidden rounded-md p-2 text-brand"
+        class="xl:hidden rounded-md p-2 text-brand"
         aria-expanded="false"
         aria-controls="mobile-menu"
         aria-label="باز کردن منو"
@@ -153,7 +155,7 @@ const currentPath = Astro.url.pathname;
   </div>
 
   <!-- منوی موبایل تمام‌صفحه -->
-  <div id="mobile-menu" class="fixed inset-0 z-[60] hidden lg:hidden bg-white">
+  <div id="mobile-menu" class="fixed inset-0 z-[60] hidden xl:hidden bg-white">
     <div class="absolute inset-0 bg-white flex flex-col h-screen">
       <div class="flex h-[72px] items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
         <a href="/" class="flex items-center gap-2.5">
@@ -233,7 +235,7 @@ const currentPath = Astro.url.pathname;
       </nav>
 
       <div class="shrink-0 border-t border-brand-100/50 p-5">
-        <a href="/login" class="btn-primary w-full">ورود / ثبت نام</a>
+        <a href={APP_URL} class="btn-primary w-full">ورود / ثبت نام</a>
       </div>
     </div>
   </div>

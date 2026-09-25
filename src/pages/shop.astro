@@ -1,8 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { products } from '../data/products';
+import ProductCard from '../components/ProductCard.astro';
+import Icon from '../components/Icon.astro';
+import { loadCatalog } from '../lib/shop';
+import { TRADE_FEE_LABEL } from '../config/site';
 
-const categories = ['همه', 'شمش طلا', 'سکه طلا', 'مصنوعات طلا'] as const;
+const { products, categories } = await loadCatalog();
+
+const counts = new Map<string, number>();
+for (const p of products) counts.set(p.categorySlug, (counts.get(p.categorySlug) ?? 0) + 1);
 
 const itemListSchema = {
   '@context': 'https://schema.org',
@@ -10,90 +16,160 @@ const itemListSchema = {
   itemListElement: products.map((p, i) => ({
     '@type': 'ListItem',
     position: i + 1,
-    item: {
-      '@type': 'Product',
-      name: p.name,
-      category: p.category,
-      offers: {
-        '@type': 'Offer',
-        priceCurrency: 'IRT',
-        price: p.priceToman,
-        availability: 'https://schema.org/InStock',
-      },
-    },
+    url: `https://arkan.gold/shop/${encodeURIComponent(p.slug)}`,
+    name: p.name,
   })),
 };
-
-const priceFmt = new Intl.NumberFormat('fa-IR');
 ---
 
 <BaseLayout
-  title="فروشگاه طلا | خرید شمش، سکه و مصنوعات طلا"
-  description="فروشگاه آنلاین آرکان گلد؛ خرید شمش طلا، سکه طلای امامی و مصنوعات طلای آب‌شده با فاکتور رسمی و امکان تحویل فیزیکی."
+  title="فروشگاه آرکان گلد | خرید شمش طلای ۷۵۰ عیار و شمش هدیه"
+  description="فروشگاه آنلاین آرکان گلد؛ خرید شمش طلای ۷۵۰ عیار، شمش هدیه و کارت هدیه سازمانی با قیمت لحظه‌ای، فاکتور رسمی، سریال قابل استعلام و امکان تحویل فیزیکی."
   path="/shop"
   jsonLd={itemListSchema}
 >
   <section class="container-page py-12">
-    <header class="text-center mb-10">
+    <header class="text-center mb-8">
       <p class="text-xs text-brand mb-2">فروشگاه آرکان گلد</p>
-      <h1 class="text-2xl md:text-3xl font-bold text-brand">خرید شمش، سکه و مصنوعات طلا</h1>
-      <p class="mt-2 text-sm text-ink-soft max-w-xl mx-auto">
-        تمام محصولات با فاکتور رسمی، ضمانت اصالت و امکان تحویل فیزیکی یا نگهداری در خزانه ارائه می‌شوند.
+      <h1 class="text-2xl md:text-3xl font-bold text-brand">خرید شمش طلای ۷۵۰ عیار و شمش هدیه</h1>
+      <p class="mt-2 text-sm text-ink-soft max-w-2xl mx-auto">
+        قیمت تمام محصولات به‌صورت لحظه‌ای بر اساس نرخ روز طلای ۱۸ عیار محاسبه می‌شود. همه شمش‌ها
+        دارای سریال یکتا، فاکتور رسمی و قابلیت استعلام اصالت هستند.
       </p>
     </header>
 
-    <div class="flex flex-wrap justify-center gap-2 mb-8" role="tablist" aria-label="دسته‌بندی محصولات">
-      {categories.map((c, i) => (
-        <button
-          type="button"
-          class="filter-btn rounded-full border border-brand-100/40 px-4 py-2 text-xs font-medium text-ink-soft transition-all hover:border-brand data-[active=true]:bg-brand data-[active=true]:text-cream-50 data-[active=true]:border-brand data-[active=true]:shadow-glow-brand"
-          data-category={c}
-          data-active={i === 0 ? 'true' : 'false'}
-        >
-          {c}
-        </button>
-      ))}
+    <!-- نوار قیمت مبنا -->
+    <div class="mb-8 grid gap-3 sm:grid-cols-3">
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name="trend-up" class="h-5 w-5" /></span>
+        <div>
+          <p class="text-[11px] text-ink-soft flex items-center gap-1.5"><span class="live-dot"></span> مبنای قیمت: هر گرم طلای ۱۸ عیار</p>
+          <p class="font-bold text-brand tnum" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</p>
+        </div>
+      </div>
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name="percent" class="h-5 w-5" /></span>
+        <div>
+          <p class="text-[11px] text-ink-soft">کارمزد معامله</p>
+          <p class="font-bold text-brand tnum">{TRADE_FEE_LABEL} درصد</p>
+        </div>
+      </div>
+      <a href="/verify" class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3 card-lift">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white"><Icon name="shield" class="h-5 w-5" /></span>
+        <div>
+          <p class="text-[11px] text-ink-soft">شمش آرکان دارید؟</p>
+          <p class="font-bold text-brand">استعلام اصالت شمش</p>
+        </div>
+      </a>
     </div>
 
-    <div id="product-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((p) => (
-        <article class="product-card rounded-card bg-white border border-brand-100/40 shadow-card overflow-hidden card-lift" data-category={p.category}>
-          <div class="aspect-[4/3] bg-cream-100 flex items-center justify-center text-brand-200 text-xs">
-            تصویر محصول
-          </div>
-          <div class="p-5">
-            <p class="text-[11px] text-brand mb-1">{p.category}</p>
-            <h2 class="font-semibold text-brand mb-2 leading-6">{p.name}</h2>
-            <div class="flex items-center justify-between text-xs text-ink-soft mb-4">
-              <span>وزن: {p.weightGram} گرم</span>
-              <span class="tnum">{priceFmt.format(p.priceToman)} تومان</span>
-            </div>
-            <a
-              href={`/shop/${p.slug}`}
-              class="btn-primary block text-center !py-2.5 text-xs"
-            >
-              مشاهده و خرید
-            </a>
-          </div>
-        </article>
-      ))}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="دسته‌بندی محصولات">
+        <button
+          type="button"
+          class="filter-btn rounded-full border border-brand-100/40 px-4 py-2 text-xs font-medium text-ink-soft transition-all hover:border-brand data-[active=true]:bg-brand data-[active=true]:text-white data-[active=true]:border-brand"
+          data-category="all"
+          data-active="true"
+          aria-pressed="true"
+        >
+          همه محصولات <span class="tnum opacity-70">({products.length.toLocaleString('fa-IR')})</span>
+        </button>
+        {categories.map((c) => (
+          <button
+            type="button"
+            class="filter-btn rounded-full border border-brand-100/40 px-4 py-2 text-xs font-medium text-ink-soft transition-all hover:border-brand data-[active=true]:bg-brand data-[active=true]:text-white data-[active=true]:border-brand"
+            data-category={c.slug}
+            data-active="false"
+            aria-pressed="false"
+          >
+            {c.name} <span class="tnum opacity-70">({(counts.get(c.slug) ?? 0).toLocaleString('fa-IR')})</span>
+          </button>
+        ))}
+      </div>
+
+      <label class="flex items-center gap-2 text-xs text-ink-soft">
+        مرتب‌سازی:
+        <select id="shop-sort" class="rounded-lg border border-brand-100/40 bg-white px-3 py-2 text-xs text-ink focus:border-brand focus:outline-none">
+          <option value="default">پیش‌فرض</option>
+          <option value="price-asc">ارزان‌ترین</option>
+          <option value="price-desc">گران‌ترین</option>
+          <option value="weight-asc">سبک‌ترین</option>
+          <option value="weight-desc">سنگین‌ترین</option>
+        </select>
+      </label>
     </div>
+
+    {categories.map((c) => c.description && (
+      <p class="category-desc hidden mb-6 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand" data-category-desc={c.slug}>{c.description}</p>
+    ))}
+
+    <div id="product-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {products.map((p) => <ProductCard product={p} />)}
+    </div>
+
+    <p id="shop-empty" class="hidden text-center text-sm text-ink-soft py-16">محصولی در این دسته‌بندی موجود نیست.</p>
   </section>
 </BaseLayout>
 
 <script>
-  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-  const cards = document.querySelectorAll<HTMLElement>('.product-card');
+  import '../lib/priceBinding';
+  import '../lib/productPricing';
 
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      buttons.forEach((b) => b.setAttribute('data-active', 'false'));
-      btn.setAttribute('data-active', 'true');
-      const category = btn.dataset.category;
-      cards.forEach((card) => {
-        const show = category === 'همه' || card.dataset.category === category;
-        card.classList.toggle('hidden', !show);
-      });
+  const grid = document.getElementById('product-grid')!;
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.product-card'));
+  const originalOrder = [...cards];
+  const sortSelect = document.getElementById('shop-sort') as HTMLSelectElement;
+  const empty = document.getElementById('shop-empty');
+
+  function applyFilter(category: string) {
+    let visible = 0;
+    buttons.forEach((b) => {
+      const active = b.dataset.category === category;
+      b.dataset.active = String(active);
+      b.setAttribute('aria-pressed', String(active));
     });
+    cards.forEach((card) => {
+      const show = category === 'all' || card.dataset.category === category;
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    document.querySelectorAll<HTMLElement>('[data-category-desc]').forEach((el) => {
+      el.classList.toggle('hidden', el.dataset.categoryDesc !== category);
+    });
+    empty?.classList.toggle('hidden', visible > 0);
+  }
+
+  function applySort() {
+    const mode = sortSelect.value;
+    const val = (el: HTMLElement, key: 'price' | 'weight') => parseFloat(el.dataset[key] || '') || Infinity;
+    const sorted =
+      mode === 'default'
+        ? originalOrder
+        : [...cards].sort((a, b) => {
+            const key = mode.startsWith('price') ? 'price' : 'weight';
+            const diff = val(a, key) - val(b, key);
+            return mode.endsWith('desc') ? -diff : diff;
+          });
+    sorted.forEach((c) => grid.appendChild(c));
+  }
+
+  buttons.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const category = btn.dataset.category || 'all';
+      applyFilter(category);
+      const url = new URL(location.href);
+      if (category === 'all') url.searchParams.delete('category');
+      else url.searchParams.set('category', category);
+      history.replaceState(null, '', url);
+    })
+  );
+  sortSelect.addEventListener('change', applySort);
+  // مرتب‌سازی بر اساس قیمت با هر بروزرسانی قیمت لحظه‌ای دوباره اعمال می‌شود
+  document.addEventListener('product-prices-updated', () => {
+    if (sortSelect.value.startsWith('price')) applySort();
   });
+
+  const initial = new URLSearchParams(location.search).get('category');
+  if (initial && Array.from(buttons).some((b) => b.dataset.category === initial)) applyFilter(initial);
 </script>
