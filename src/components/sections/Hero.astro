@@ -50,7 +50,7 @@ const miniCards = [
         </h1>
         <p class="mt-4 text-base leading-8 text-ink-soft">
           خرید آنلاین طلای آب‌شده بدون مالیات با امکان تحویل فیزیکی، و خرید شمش طلای ۷۵۰ عیار
-          آرکان با فاکتور رسمی و سریال قابل استعلام.
+          آرکان با فاکتور رسمی و کد اصالت قابل استعلام.
         </p>
 
         <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
@@ -201,6 +201,17 @@ const miniCards = [
 
   let mode: 'buy' | 'sell' = 'buy';
   let unitPrice = 0;
+  let disabled = { buy: false, sell: false };
+
+  /** وقتی API خرید یا فروش را غیرفعال کرده باشد (disableBuy / disableSell) */
+  function applyAvailability() {
+    const off = disabled[mode];
+    cta?.classList.toggle('opacity-50', off);
+    cta?.classList.toggle('pointer-events-none', off);
+    if (off) cta?.setAttribute('aria-disabled', 'true');
+    else cta?.removeAttribute('aria-disabled');
+    if (off && note) note.textContent = mode === 'buy' ? 'خرید در حال حاضر موقتاً غیرفعال است.' : 'فروش در حال حاضر موقتاً غیرفعال است.';
+  }
 
   function updateTotal() {
     const grams = parseFloat(gramsInput?.value || '0') || 0;
@@ -219,11 +230,14 @@ const miniCards = [
       : `فروش شما با قیمت لحظه‌ای و ${TRADE_FEE_LABEL}٪ کارمزد ثبت و در چند ساعت کاری تسویه می‌شود.`;
     updateTotal();
     if (cta) cta.textContent = next === 'buy' ? 'ادامه و پرداخت' : 'ثبت درخواست فروش';
+    applyAvailability();
   }
 
   subscribeGoldPrice((price: NormalizedGoldPrice) => {
     unitPrice = price.pricePerGram;
+    disabled = { buy: !!price.raw.disableBuy, sell: !!price.raw.disableSell };
     updateTotal();
+    applyAvailability();
   });
 
   gramsInput?.addEventListener('input', updateTotal);

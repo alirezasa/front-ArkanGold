@@ -1,13 +1,19 @@
 ---
-// نمودار لحظه‌ای قیمت طلا — Chart.js
+// نمودار قیمت طلا — Chart.js
 // -----------------------------------------------------------------
-// وضعیت فعلی: چون API فعلی (talasea) فقط قیمت لحظه‌ای برمی‌گرداند و بازه‌ی
-// زمانی (ساعتی/روزانه/هفتگی) ندارد، نمودار از تاریخچه‌ی محلی‌ای که هر ۳۰
-// ثانیه در src/lib/goldPrice.ts جمع می‌شود تغذیه می‌کند (تب «زنده»).
-// تب‌های «روزانه»، «هفتگی» و «ماهانه» فعلاً placeholder هستند تا وقتی
-// API بازه‌ی زمانی واقعی اضافه شود — نقطه‌ی اتصال آینده دقیقاً مشخص شده:
-// به تابع `fetchRangeData` در اسکریپت پایین همین فایل نگاه کنید.
+// داده‌ی هر بازه‌ی زمانی از API تاریخچه‌ی قیمت آرکان گلد خوانده می‌شود:
+//   GET {ARKAN_API_URL}/market/price/history?hours=24
+// بازه‌ها (بر حسب ساعت) در آرایه‌ی ranges پایین تعریف شده‌اند.
 import { TRADE_FEE_LABEL } from '../../config/site';
+
+const ranges = [
+  { hours: 1, label: '۱ ساعت' },
+  { hours: 6, label: '۶ ساعت' },
+  { hours: 24, label: '۲۴ ساعت' },
+  { hours: 168, label: 'هفتگی' },
+  { hours: 720, label: 'ماهانه' },
+];
+const defaultHours = 24;
 ---
 
 <section class="container-page py-14">
@@ -20,21 +26,27 @@ import { TRADE_FEE_LABEL } from '../../config/site';
       <h2 class="text-2xl font-bold text-brand">تحلیل لحظه‌ای بازار طلا</h2>
     </div>
 
-    <div class="flex gap-1 rounded-full bg-canvas-100 p-1 self-start scrollbar-thin overflow-x-auto" role="tablist" aria-label="بازه زمانی نمودار">
-      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="live" data-active="true">زنده</button>
-      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="day" data-active="false">روزانه</button>
-      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="week" data-active="false">هفتگی</button>
-      <button type="button" class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap" data-range="month" data-active="false">ماهانه</button>
+    <div class="flex gap-1 rounded-full bg-canvas-100 p-1 self-start scrollbar-thin overflow-x-auto" role="group" aria-label="بازه زمانی نمودار">
+      {ranges.map((r) => (
+        <button
+          type="button"
+          class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap"
+          data-hours={r.hours}
+          data-active={r.hours === defaultHours ? 'true' : 'false'}
+          aria-pressed={r.hours === defaultHours ? 'true' : 'false'}
+        >
+          {r.label}
+        </button>
+      ))}
     </div>
   </div>
 
   <div class="grid gap-5 lg:grid-cols-[1fr_300px]">
     <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-4 md:p-6">
-      <div id="chart-range-note" class="mb-3 hidden rounded-lg bg-brand-50 text-brand text-xs px-3 py-2">
-        این بازه‌ی زمانی هنوز به داده‌ی واقعی وصل نشده و به‌محض دریافت API بازه‌ای فعال می‌شود.
-      </div>
-      <div class="h-64 md:h-80">
-        <canvas id="gold-price-chart" role="img" aria-label="نمودار قیمت لحظه‌ای طلای آب‌شده"></canvas>
+      <div id="chart-range-note" class="mb-3 hidden rounded-lg bg-brand-50 text-brand text-xs px-3 py-2"></div>
+      <div class="relative h-64 md:h-80">
+        <p id="chart-loading" class="absolute inset-0 flex items-center justify-center text-xs text-ink-soft">در حال دریافت نمودار...</p>
+        <canvas id="gold-price-chart" role="img" aria-label="نمودار قیمت هر گرم طلای ۱۸ عیار"></canvas>
       </div>
 
       <div class="mt-5 grid grid-cols-3 gap-3 border-t border-brand-100/30 pt-4 text-center">
@@ -47,8 +59,8 @@ import { TRADE_FEE_LABEL } from '../../config/site';
           <p class="text-sm font-bold text-brand tnum" id="stat-max">--</p>
         </div>
         <div>
-          <p class="text-xs text-ink-soft mb-1">تغییر ۲۴ ساعته</p>
-          <p class="text-sm font-bold tnum" id="stat-change" data-price-bind="changePercent">--</p>
+          <p class="text-xs text-ink-soft mb-1">تغییر در این بازه</p>
+          <p class="text-sm font-bold tnum" id="stat-change">--</p>
         </div>
       </div>
     </div>
@@ -86,13 +98,26 @@ import { TRADE_FEE_LABEL } from '../../config/site';
 
 <script>
   import Chart from 'chart.js/auto';
-  import { subscribeGoldPrice, getPriceHistory, formatToman, type NormalizedGoldPrice } from '../../lib/goldPrice';
+  import { subscribeGoldPrice, fetchPriceHistory, formatToman, type PriceHistoryPoint } from '../../lib/goldPrice';
 
   const fmt = new Intl.NumberFormat('fa-IR');
   const canvas = document.getElementById('gold-price-chart') as HTMLCanvasElement | null;
   const rangeNote = document.getElementById('chart-range-note');
+  const loadingEl = document.getElementById('chart-loading');
+  const statMin = document.getElementById('stat-min');
+  const statMax = document.getElementById('stat-max');
+  const statChange = document.getElementById('stat-change');
+
+  /** حداکثر تعداد نقطه روی نمودار (بازه‌های طولانی کم‌نمونه می‌شوند) */
+  const MAX_POINTS = 240;
+  /** حداقل فاصله‌ی بروزرسانی تاریخچه‌ی بازه‌ی فعال */
+  const HISTORY_REFRESH_MS = 60_000;
+
   let chart: Chart | null = null;
-  let activeRange = 'live';
+  let activeHours = Number(document.querySelector<HTMLElement>('.chart-range-btn[data-active="true"]')?.dataset.hours) || 24;
+  let points: PriceHistoryPoint[] = [];
+  let lastFetchAt = 0;
+  let requestId = 0;
 
   function buildGradient(ctx: CanvasRenderingContext2D, area: { top: number; bottom: number }) {
     const gradient = ctx.createLinearGradient(0, area.top, 0, area.bottom);
@@ -101,120 +126,165 @@ import { TRADE_FEE_LABEL } from '../../config/site';
     return gradient;
   }
 
-  /**
-   * TODO (آینده): وقتی API بازه‌ی زمانی واقعی (روزانه/هفتگی/ماهانه) در
-   * دسترس قرار گرفت، این تابع را جایگزین کنید تا از آن API واقعی fetch کند.
-   * فعلاً فقط برای «زنده» داده‌ی واقعی از تاریخچه‌ی محلی نمایش داده می‌شود
-   * و بقیه‌ی بازه‌ها placeholder (تکرار آخرین نقطه) هستند.
-   */
-  function fetchRangeData(range: string): { labels: string[]; data: number[] } {
-    if (range === 'live') {
-      const history = getPriceHistory();
-      if (history.length === 0) return { labels: ['اکنون'], data: [0] };
-      return {
-        labels: history.map((h) => h.time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })),
-        data: history.map((h) => h.price),
-      };
-    }
-    // Placeholder تا زمان اتصال API بازه‌ی زمانی واقعی
-    const history = getPriceHistory();
-    const lastPrice = history.length ? history[history.length - 1].price : 0;
-    return { labels: ['--', '--', '--', '--'], data: [lastPrice, lastPrice, lastPrice, lastPrice] };
+  function downsample(list: PriceHistoryPoint[]): PriceHistoryPoint[] {
+    if (list.length <= MAX_POINTS) return list;
+    const step = list.length / MAX_POINTS;
+    const out: PriceHistoryPoint[] = [];
+    for (let i = 0; i < MAX_POINTS - 1; i++) out.push(list[Math.floor(i * step)]);
+    out.push(list[list.length - 1]);
+    return out;
   }
 
-  function renderChart(range: string) {
+  function label(time: Date, hours: number): string {
+    if (hours <= 24) return time.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    if (hours <= 168) return time.toLocaleString('fa-IR', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    return time.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+  }
+
+  function showNote(text: string) {
+    if (!rangeNote) return;
+    rangeNote.textContent = text;
+    rangeNote.classList.toggle('hidden', !text);
+  }
+
+  function renderChart() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const { labels, data } = fetchRangeData(range);
+    const series = downsample(points);
+    const labels = series.map((p) => label(p.time, activeHours));
+    const data = series.map((p) => p.price);
 
-    if (rangeNote) rangeNote.classList.toggle('hidden', range === 'live');
+    loadingEl?.classList.add('hidden');
 
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'قیمت هر گرم طلای ۱۸ عیار',
-            data,
-            borderColor: '#330509',
-            borderWidth: 2.5,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: '#330509',
-            tension: 0.4,
-            fill: true,
-            backgroundColor: (context) => {
-              const { ctx: c, chartArea } = context.chart;
-              if (!chartArea) return 'rgba(51,5,9,0.10)';
-              return buildGradient(c, chartArea);
+    if (chart) {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = data;
+      chart.update();
+    } else {
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'قیمت هر گرم طلای ۱۸ عیار',
+              data,
+              borderColor: '#330509',
+              borderWidth: 2.5,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              pointHoverBackgroundColor: '#330509',
+              tension: 0.35,
+              fill: true,
+              backgroundColor: (context) => {
+                const { ctx: c, chartArea } = context.chart;
+                if (!chartArea) return 'rgba(51,5,9,0.10)';
+                return buildGradient(c, chartArea);
+              },
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          animation: { duration: 600, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              rtl: true,
+              titleFont: { family: 'Vazirmatn' },
+              bodyFont: { family: 'Vazirmatn' },
+              backgroundColor: '#330509',
+              padding: 10,
+              callbacks: {
+                label: (item) => formatToman(Number(item.raw)),
+              },
             },
           },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        animation: { duration: 600, easing: 'easeOutQuart' },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            rtl: true,
-            titleFont: { family: 'Vazirmatn' },
-            bodyFont: { family: 'Vazirmatn' },
-            backgroundColor: '#330509',
-            padding: 10,
-            callbacks: {
-              label: (item) => formatToman(Number(item.raw)),
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Vazirmatn', size: 10 }, color: '#5C5449', maxTicksLimit: 8, maxRotation: 0 },
+            },
+            y: {
+              grid: { color: 'rgba(51,5,9,0.08)' },
+              ticks: {
+                font: { family: 'Vazirmatn', size: 10 },
+                color: '#5C5449',
+                callback: (value) => fmt.format(Number(value)),
+              },
             },
           },
         },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { family: 'Vazirmatn', size: 10 }, color: '#5C5449' },
-          },
-          y: {
-            grid: { color: 'rgba(51,5,9,0.08)' },
-            ticks: {
-              font: { family: 'Vazirmatn', size: 10 },
-              color: '#5C5449',
-              callback: (value) => fmt.format(Number(value)),
-            },
-          },
-        },
-      },
-    });
+      });
+    }
 
-    if (data.length && data.some((d) => d > 0)) {
-      const min = Math.min(...data.filter((d) => d > 0));
+    if (data.length) {
+      const min = Math.min(...data);
       const max = Math.max(...data);
-      const statMin = document.getElementById('stat-min');
-      const statMax = document.getElementById('stat-max');
       if (statMin) statMin.textContent = fmt.format(min);
       if (statMax) statMax.textContent = fmt.format(max);
+      const first = points[0].price;
+      const last = points[points.length - 1].price;
+      const change = first ? ((last - first) / first) * 100 : 0;
+      if (statChange) {
+        statChange.textContent = `${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toLocaleString('fa-IR', { maximumFractionDigits: 2 })}٪`;
+        statChange.classList.toggle('text-success', change >= 0);
+        statChange.classList.toggle('text-danger', change < 0);
+      }
+    } else {
+      [statMin, statMax, statChange].forEach((el) => el && (el.textContent = '--'));
+    }
+  }
+
+  async function loadRange(hours: number) {
+    const id = ++requestId;
+    lastFetchAt = Date.now();
+    try {
+      const history = await fetchPriceHistory(hours);
+      if (id !== requestId) return; // بازه در این فاصله عوض شده است
+      points = history;
+      showNote(history.length ? '' : 'برای این بازه‌ی زمانی داده‌ای ثبت نشده است.');
+      renderChart();
+    } catch (err) {
+      if (id !== requestId) return;
+      console.error('[price-chart] history fetch failed:', err);
+      loadingEl?.classList.add('hidden');
+      showNote('دریافت تاریخچه‌ی قیمت انجام نشد. چند لحظه دیگر دوباره تلاش کنید.');
     }
   }
 
   document.querySelectorAll<HTMLButtonElement>('.chart-range-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.chart-range-btn').forEach((b) => b.setAttribute('data-active', 'false'));
+      document.querySelectorAll('.chart-range-btn').forEach((b) => {
+        b.setAttribute('data-active', 'false');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.setAttribute('data-active', 'true');
-      activeRange = btn.dataset.range || 'live';
-      renderChart(activeRange);
+      btn.setAttribute('aria-pressed', 'true');
+      activeHours = Number(btn.dataset.hours) || 24;
+      loadRange(activeHours);
     });
   });
 
-  subscribeGoldPrice((_price: NormalizedGoldPrice) => {
-    if (activeRange === 'live') renderChart('live');
-  });
+  loadRange(activeHours);
 
-  renderChart('live');
+  // با هر قیمت لحظه‌ای جدید: هر دقیقه تاریخچه دوباره خوانده می‌شود و در فاصله‌ی
+  // بین آن‌ها آخرین قیمت به انتهای نمودار اضافه می‌شود
+  subscribeGoldPrice((price) => {
+    if (Date.now() - lastFetchAt >= HISTORY_REFRESH_MS) {
+      loadRange(activeHours);
+      return;
+    }
+    const last = points[points.length - 1];
+    if (last && price.fetchedAt.getTime() > last.time.getTime()) {
+      points = [...points, { time: price.fetchedAt, price: price.pricePerGram }];
+      renderChart();
+    }
+  });
 </script>
 
 <script>

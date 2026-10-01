@@ -2,13 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
-import { loadCatalog } from '../lib/shop';
-import { TRADE_FEE_LABEL } from '../config/site';
+import { loadIngotCatalog } from '../lib/goldIngots';
+import { ingotDetailPath } from '../lib/ingotCard';
 
-const { products, categories } = await loadCatalog();
-
-const counts = new Map<string, number>();
-for (const p of products) counts.set(p.categorySlug, (counts.get(p.categorySlug) ?? 0) + 1);
+const { products, serviceEnabled } = await loadIngotCatalog();
 
 const itemListSchema = {
   '@context': 'https://schema.org',
@@ -16,25 +13,25 @@ const itemListSchema = {
   itemListElement: products.map((p, i) => ({
     '@type': 'ListItem',
     position: i + 1,
-    url: `https://arkan.gold/shop/${encodeURIComponent(p.slug)}`,
+    url: `https://arkan.gold${ingotDetailPath(p.slug)}`,
     name: p.name,
   })),
 };
 ---
 
 <BaseLayout
-  title="فروشگاه آرکان گلد | خرید شمش طلای ۷۵۰ عیار و شمش هدیه"
-  description="فروشگاه آنلاین آرکان گلد؛ خرید شمش طلای ۷۵۰ عیار، شمش هدیه و کارت هدیه سازمانی با قیمت لحظه‌ای، فاکتور رسمی، سریال قابل استعلام و امکان تحویل فیزیکی."
+  title="فروشگاه آرکان گلد | خرید شمش طلا با قیمت لحظه‌ای"
+  description="فروشگاه آنلاین آرکان گلد؛ خرید شمش طلای ۱۸ عیار (۷۵۰) آرکان گلد با قیمت لحظه‌ای، فاکتور رسمی، کد ۶ رقمی قابل استعلام اصالت و امکان تحویل فیزیکی."
   path="/shop"
   jsonLd={itemListSchema}
 >
   <section class="container-page py-12">
     <header class="text-center mb-8">
       <p class="text-xs text-brand mb-2">فروشگاه آرکان گلد</p>
-      <h1 class="text-2xl md:text-3xl font-bold text-brand">خرید شمش طلای ۷۵۰ عیار و شمش هدیه</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-brand">خرید شمش طلا آرکان گلد</h1>
       <p class="mt-2 text-sm text-ink-soft max-w-2xl mx-auto">
-        قیمت تمام محصولات به‌صورت لحظه‌ای بر اساس نرخ روز طلای ۱۸ عیار محاسبه می‌شود. همه شمش‌ها
-        دارای سریال یکتا، فاکتور رسمی و قابلیت استعلام اصالت هستند.
+        قیمت تمام شمش‌ها به‌صورت لحظه‌ای بر اساس نرخ روز طلای ۱۸ عیار محاسبه می‌شود. همه‌ی شمش‌ها
+        دارای فاکتور رسمی، کارت پلمپ امنیتی و کد هولوگرام قابل استعلام اصالت هستند.
       </p>
     </header>
 
@@ -43,50 +40,34 @@ const itemListSchema = {
       <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name="trend-up" class="h-5 w-5" /></span>
         <div>
-          <p class="text-[11px] text-ink-soft flex items-center gap-1.5"><span class="live-dot"></span> مبنای قیمت: هر گرم طلای ۱۸ عیار</p>
+          <p class="text-[11px] text-ink-soft flex items-center gap-1.5"><span class="live-dot"></span> هر گرم طلای ۱۸ عیار</p>
           <p class="font-bold text-brand tnum" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</p>
         </div>
       </div>
       <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3">
-        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name="percent" class="h-5 w-5" /></span>
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name="gold-bar" class="h-5 w-5" /></span>
         <div>
-          <p class="text-[11px] text-ink-soft">کارمزد معامله</p>
-          <p class="font-bold text-brand tnum">{TRADE_FEE_LABEL} درصد</p>
+          <p class="text-[11px] text-ink-soft">قیمت‌گذاری شمش‌ها</p>
+          <p class="font-bold text-brand">لحظه‌ای — بروزرسانی <span class="tnum" data-price-bind="fetchedAt">--</span></p>
         </div>
       </div>
       <a href="/verify" class="rounded-xl2 bg-white border border-brand-100/40 shadow-card px-5 py-4 flex items-center gap-3 card-lift">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white"><Icon name="shield" class="h-5 w-5" /></span>
         <div>
           <p class="text-[11px] text-ink-soft">شمش آرکان دارید؟</p>
-          <p class="font-bold text-brand">استعلام اصالت شمش</p>
+          <p class="font-bold text-brand">استعلام اصالت با کد ۶ رقمی</p>
         </div>
       </a>
     </div>
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-      <div class="flex flex-wrap gap-2" role="group" aria-label="دسته‌بندی محصولات">
-        <button
-          type="button"
-          class="filter-btn rounded-full border border-brand-100/40 px-4 py-2 text-xs font-medium text-ink-soft transition-all hover:border-brand data-[active=true]:bg-brand data-[active=true]:text-white data-[active=true]:border-brand"
-          data-category="all"
-          data-active="true"
-          aria-pressed="true"
-        >
-          همه محصولات <span class="tnum opacity-70">({products.length.toLocaleString('fa-IR')})</span>
-        </button>
-        {categories.map((c) => (
-          <button
-            type="button"
-            class="filter-btn rounded-full border border-brand-100/40 px-4 py-2 text-xs font-medium text-ink-soft transition-all hover:border-brand data-[active=true]:bg-brand data-[active=true]:text-white data-[active=true]:border-brand"
-            data-category={c.slug}
-            data-active="false"
-            aria-pressed="false"
-          >
-            {c.name} <span class="tnum opacity-70">({(counts.get(c.slug) ?? 0).toLocaleString('fa-IR')})</span>
-          </button>
-        ))}
-      </div>
+    <p id="shop-service-off" class:list={['mb-6 rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger text-center', serviceEnabled && 'hidden']}>
+      فروش آنلاین شمش در حال حاضر موقتاً غیرفعال است. لطفاً بعداً مراجعه کنید یا با پشتیبانی تماس بگیرید.
+    </p>
 
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <p class="text-sm text-ink-soft">
+        <span id="shop-count" class="tnum font-semibold text-brand">{products.length.toLocaleString('fa-IR')}</span> شمش موجود
+      </p>
       <label class="flex items-center gap-2 text-xs text-ink-soft">
         مرتب‌سازی:
         <select id="shop-sort" class="rounded-lg border border-brand-100/40 bg-white px-3 py-2 text-xs text-ink focus:border-brand focus:outline-none">
@@ -99,46 +80,33 @@ const itemListSchema = {
       </label>
     </div>
 
-    {categories.map((c) => c.description && (
-      <p class="category-desc hidden mb-6 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand" data-category-desc={c.slug}>{c.description}</p>
-    ))}
-
     <div id="product-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((p) => <ProductCard product={p} />)}
+      {products.map((p) => <ProductCard product={p} serviceEnabled={serviceEnabled} />)}
     </div>
 
-    <p id="shop-empty" class="hidden text-center text-sm text-ink-soft py-16">محصولی در این دسته‌بندی موجود نیست.</p>
+    <p id="shop-loading" class:list={['text-center text-sm text-ink-soft py-16', products.length > 0 && 'hidden']}>
+      در حال دریافت محصولات...
+    </p>
+    <p id="shop-empty" class="hidden text-center text-sm text-ink-soft py-16">در حال حاضر شمش موجودی برای فروش وجود ندارد.</p>
   </section>
 </BaseLayout>
 
 <script>
   import '../lib/priceBinding';
-  import '../lib/productPricing';
+  import { watchIngotList } from '../lib/liveIngots';
+  import { ingotCardHtml, updateIngotCard } from '../lib/ingotCard';
 
   const grid = document.getElementById('product-grid')!;
-  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-  const cards = Array.from(document.querySelectorAll<HTMLElement>('.product-card'));
-  const originalOrder = [...cards];
   const sortSelect = document.getElementById('shop-sort') as HTMLSelectElement;
+  const loading = document.getElementById('shop-loading');
   const empty = document.getElementById('shop-empty');
+  const countEl = document.getElementById('shop-count');
+  const serviceOff = document.getElementById('shop-service-off');
 
-  function applyFilter(category: string) {
-    let visible = 0;
-    buttons.forEach((b) => {
-      const active = b.dataset.category === category;
-      b.dataset.active = String(active);
-      b.setAttribute('aria-pressed', String(active));
-    });
-    cards.forEach((card) => {
-      const show = category === 'all' || card.dataset.category === category;
-      card.classList.toggle('hidden', !show);
-      if (show) visible++;
-    });
-    document.querySelectorAll<HTMLElement>('[data-category-desc]').forEach((el) => {
-      el.classList.toggle('hidden', el.dataset.categoryDesc !== category);
-    });
-    empty?.classList.toggle('hidden', visible > 0);
-  }
+  const cards = () => Array.from(grid.querySelectorAll<HTMLElement>('.product-card'));
+  // صفحه‌ی جزئیات فقط برای شمش‌هایی که در build وجود داشتند ساخته شده است
+  const prebuilt = new Set(cards().map((c) => c.dataset.slug));
+  let originalOrder = cards();
 
   function applySort() {
     const mode = sortSelect.value;
@@ -146,7 +114,7 @@ const itemListSchema = {
     const sorted =
       mode === 'default'
         ? originalOrder
-        : [...cards].sort((a, b) => {
+        : [...cards()].sort((a, b) => {
             const key = mode.startsWith('price') ? 'price' : 'weight';
             const diff = val(a, key) - val(b, key);
             return mode.endsWith('desc') ? -diff : diff;
@@ -154,22 +122,34 @@ const itemListSchema = {
     sorted.forEach((c) => grid.appendChild(c));
   }
 
-  buttons.forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const category = btn.dataset.category || 'all';
-      applyFilter(category);
-      const url = new URL(location.href);
-      if (category === 'all') url.searchParams.delete('category');
-      else url.searchParams.set('category', category);
-      history.replaceState(null, '', url);
-    })
-  );
-  sortSelect.addEventListener('change', applySort);
-  // مرتب‌سازی بر اساس قیمت با هر بروزرسانی قیمت لحظه‌ای دوباره اعمال می‌شود
-  document.addEventListener('product-prices-updated', () => {
-    if (sortSelect.value.startsWith('price')) applySort();
-  });
+  watchIngotList(
+    ({ products, serviceEnabled }) => {
+      const bySlug = new Map(products.map((p) => [p.slug, p]));
 
-  const initial = new URLSearchParams(location.search).get('category');
-  if (initial && Array.from(buttons).some((b) => b.dataset.category === initial)) applyFilter(initial);
+      for (const card of cards()) updateIngotCard(card, bySlug.get(card.dataset.slug!) ?? null, serviceEnabled);
+
+      // شمش‌هایی که بعد از آخرین build اضافه شده‌اند
+      const existing = new Set(cards().map((c) => c.dataset.slug));
+      for (const p of products) {
+        if (existing.has(p.slug)) continue;
+        const tpl = document.createElement('template');
+        tpl.innerHTML = ingotCardHtml(p, { hasPage: prebuilt.has(p.slug), serviceEnabled });
+        const card = tpl.content.firstElementChild as HTMLElement;
+        grid.appendChild(card);
+        originalOrder.push(card);
+      }
+
+      const available = cards().filter((c) => bySlug.has(c.dataset.slug!)).length;
+      if (countEl) countEl.textContent = available.toLocaleString('fa-IR');
+      serviceOff?.classList.toggle('hidden', serviceEnabled);
+      loading?.classList.add('hidden');
+      empty?.classList.toggle('hidden', cards().length > 0);
+      if (sortSelect.value !== 'default') applySort();
+    },
+    () => {
+      if (!cards().length && loading) loading.textContent = 'دریافت محصولات انجام نشد. لطفاً صفحه را دوباره بارگذاری کنید.';
+    }
+  );
+
+  sortSelect.addEventListener('change', applySort);
 </script>

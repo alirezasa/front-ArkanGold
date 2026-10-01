@@ -19,18 +19,20 @@ export const SUPPORT_PHONE = '02198765431';
 export const SUPPORT_PHONE_FA = '۰۲۱۹۸۷۶۵۴۳۱';
 
 /**
- * API فروشگاه واقعی (WooCommerce Store API روی وردپرس آرکان گلد).
- * محصولات و دسته‌بندی‌ها در زمان build از این آدرس خوانده می‌شوند؛
- * اگر در دسترس نبود، کاتالوگ پشتیبان src/data/products.ts نمایش داده می‌شود.
- * با متغیر محیطی PUBLIC_SHOP_API_URL قابل تغییر است.
+ * API اصلی آرکان گلد — قیمت لحظه‌ای طلا، تاریخچه‌ی قیمت و محصولات فروشگاه (شمش طلا)
+ * همگی از همین آدرس خوانده می‌شوند:
+ *   GET {ARKAN_API_URL}/market/price
+ *   GET {ARKAN_API_URL}/market/price/history?hours=24
+ *   GET {ARKAN_API_URL}/public/gold-ingots?page=1&limit=50&inStock=true
+ *   GET {ARKAN_API_URL}/public/gold-ingots/{slug}
+ * با متغیر محیطی PUBLIC_ARKAN_API_URL قابل تغییر است.
  */
-export const SHOP_API_URL: string =
-  import.meta.env.PUBLIC_SHOP_API_URL || 'https://arkan.gold/mag/wp-json/wc/store/v1';
+export const ARKAN_API_URL: string = (import.meta.env.PUBLIC_ARKAN_API_URL || 'https://api.arkan.gold').replace(/\/$/, '');
 
 /**
- * API استعلام اصالت شمش. سریال (و در صورت وجود کد امنیتی) به‌صورت query ارسال می‌شود:
- *   GET {VERIFY_API_URL}?serial=AG750-...&code=1234
- * پیاده‌سازی سمت وردپرس در wordpress/arkan-bar-verify/ موجود است.
+ * API استعلام اصالت شمش (افزونه‌ی وردپرس wordpress/arkan-bar-verify/).
+ * کد ۶ رقمی هولوگرام به‌صورت query ارسال می‌شود:
+ *   GET {VERIFY_API_URL}?code=123456
  * با متغیر محیطی PUBLIC_VERIFY_API_URL قابل تغییر است.
  */
 export const VERIFY_API_URL: string =
