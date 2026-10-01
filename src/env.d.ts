@@ -4,7 +4,7 @@
 interface ImportMetaEnv {
   readonly PUBLIC_GA4_ID?: string;
   readonly PUBLIC_YEKTANET_ID?: string;
-  readonly PUBLIC_SHOP_API_URL?: string;
+  readonly PUBLIC_ARKAN_API_URL?: string;
   readonly PUBLIC_VERIFY_API_URL?: string;
 }
 

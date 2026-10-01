@@ -7,7 +7,7 @@
  *   <span data-price-bind="pricePerGram" data-price-format="toman">--</span>
  *   <script>import '../../lib/priceBinding';</script>
  */
-import { subscribeGoldPrice, formatToman, pushPriceHistoryPoint, type NormalizedGoldPrice } from './goldPrice';
+import { subscribeGoldPrice, formatToman, type NormalizedGoldPrice } from './goldPrice';
 
 function applyBindings(price: NormalizedGoldPrice) {
   document.querySelectorAll<HTMLElement>('[data-price-bind]').forEach((el) => {
@@ -40,8 +40,5 @@ function applyBindings(price: NormalizedGoldPrice) {
 }
 
 if (typeof window !== 'undefined') {
-  subscribeGoldPrice((price) => {
-    pushPriceHistoryPoint(price);
-    applyBindings(price);
-  });
+  subscribeGoldPrice(applyBindings);
 }
