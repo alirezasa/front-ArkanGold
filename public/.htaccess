@@ -1,0 +1,19 @@
+# تنظیمات سرور (LiteSpeed / Apache) برای خروجی ایستای سایت آرکان گلد
+# این فایل در build به ریشه‌ی dist کپی می‌شود. اگر روی هاست از قبل .htaccess دارید
+# (مثلا برای ریدایرکت https)، این خطوط را به همان فایل اضافه کنید.
+
+# صفحه‌ی ۴۰۴ اختصاصی سایت به‌جای صفحه‌ی پیش‌فرض سرور
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # صفحه‌ی محصول: /shop/{slug}
+  # اگر صفحه‌ی ایستای این شمش وجود نداشته باشد (شمشی که بعد از آخرین build اضافه شده،
+  # یا پوشه‌ای با نام فارسی که هنگام آپلود/استخراج zip خراب شده)، صفحه‌ی جزئیاتی که
+  # در مرورگر از API ساخته می‌شود با همان آدرس نمایش داده می‌شود.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^shop/([^/]+)/?$ shop/item/index.html [L]
+</IfModule>
