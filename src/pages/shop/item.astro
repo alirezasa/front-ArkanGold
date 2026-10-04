@@ -1,0 +1,73 @@
+---
+// صفحه‌ی جزئیات شمش‌هایی که بعد از آخرین build به API اضافه شده‌اند: /shop/item?slug=...
+// محتوا در مرورگر با همان ingotDetailHtml صفحه‌های ایستا ساخته می‌شود.
+// این صفحه noindex است؛ نسخه‌ی قابل ایندکس هر شمش، صفحه‌ی ایستای /shop/{slug} است که در build بعدی ساخته می‌شود.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="جزئیات شمش طلا"
+  description="مشخصات کامل، قیمت لحظه‌ای و خرید شمش طلای آرکان گلد."
+  path="/shop/item"
+  noindex={true}
+>
+  <div id="ingot-root">
+    <p id="ingot-status" class="container-page py-24 text-center text-sm text-ink-soft">در حال دریافت اطلاعات محصول...</p>
+  </div>
+
+  <section id="ingot-related" class="hidden container-page py-10">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-brand">شمش‌های مشابه</h2>
+      <a href="/shop" class="text-sm text-brand hover:underline">مشاهده همه</a>
+    </div>
+    <div data-grid class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"></div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { fetchIngot, fetchIngotList } from '../../lib/goldIngots';
+  import { ingotDetailHtml, ingotSeo } from '../../lib/ingotDetail';
+  import { initIngotDetail } from '../../lib/ingotDetailClient';
+  import { compareIngots, ingotCardHtml } from '../../lib/ingotCard';
+
+  const root = document.getElementById('ingot-root')!;
+  const status = document.getElementById('ingot-status')!;
+  const slug = (new URLSearchParams(location.search).get('slug') || '').trim();
+
+  function fail(message: string) {
+    status.innerHTML = `${message}<br><a href="/shop" class="btn-primary mt-6">بازگشت به فروشگاه</a>`;
+  }
+
+  async function load() {
+    if (!slug) return fail('محصول موردنظر مشخص نشده است.');
+    try {
+      const res = await fetchIngot(slug);
+      const product = res.data;
+      if (!product?.slug) return fail('این محصول پیدا نشد یا دیگر در فروشگاه موجود نیست.');
+      const serviceEnabled = res.serviceEnabled !== false;
+      const seo = ingotSeo(product, serviceEnabled);
+
+      document.title = `${seo.title} | آرکان گلد`;
+      document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description);
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', seo.url);
+
+      root.innerHTML = ingotDetailHtml(product, { serviceEnabled });
+      initIngotDetail({ slug: product.slug, serviceEnabled, product });
+
+      const list = await fetchIngotList(true).catch(() => null);
+      const others = (list?.products ?? []).filter((p) => p.slug !== product.slug).sort(compareIngots('price-asc')).slice(0, 4);
+      if (others.length) {
+        const related = document.getElementById('ingot-related')!;
+        related.querySelector('[data-grid]')!.innerHTML = others
+          .map((p) => ingotCardHtml(p, { hasPage: false, serviceEnabled: list!.serviceEnabled, headingTag: 'h3' }))
+          .join('');
+        related.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.error('[shop] product load failed:', err);
+      fail('دریافت اطلاعات محصول انجام نشد. لطفاً صفحه را دوباره بارگذاری کنید.');
+    }
+  }
+
+  load();
+</script>

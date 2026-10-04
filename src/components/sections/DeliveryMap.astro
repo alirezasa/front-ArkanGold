@@ -1,10 +1,11 @@
 ---
 import Icon from '../Icon.astro';
+import { OFFICE_ADDRESS } from '../../config/site';
 ---
 
 <section class="container-page py-14">
   <div class="rounded-xl2 overflow-hidden border border-brand-100/40 shadow-card-hover grid lg:grid-cols-2">
-    <div class="p-8 md:p-10 flex flex-col justify-center bg-white">
+    <div class="p-6 sm:p-8 md:p-10 flex flex-col justify-center bg-white">
       <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand mb-4">
         تضمین امنیت دارایی
       </span>
@@ -19,9 +20,9 @@ import Icon from '../Icon.astro';
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white">
           <Icon name="location" class="h-5 w-5" />
         </span>
-        <div class="text-right">
-          <p class="text-xs text-ink-soft">آدرس شعبه مرکزی تحویل طلا</p>
-          <p class="text-sm font-semibold text-brand">تهران، اختیاریه، مجتمع تجاری پلاک ۱</p>
+        <div class="min-w-0 text-right">
+          <p class="text-xs text-ink-soft">آدرس دفتر مرکزی و تحویل طلا</p>
+          <p class="text-sm font-semibold leading-7 text-brand">{OFFICE_ADDRESS}</p>
         </div>
       </div>
 

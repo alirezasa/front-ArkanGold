@@ -17,3 +17,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </a>
   </section>
 </BaseLayout>
+
+<script>
+  // لینک شمشی که بعد از آخرین build اضافه شده (/shop/{slug}) هنوز صفحه‌ی ایستا ندارد؛
+  // کاربر به صفحه‌ی جزئیاتی که در مرورگر از API ساخته می‌شود منتقل می‌شود.
+  const match = location.pathname.match(/^\/shop\/([^/]+)\/?$/);
+  if (match && match[1] !== 'item') {
+    const params = new URLSearchParams(location.search);
+    params.set('slug', decodeURIComponent(match[1]));
+    location.replace(`/shop/item?${params}`);
+  }
+</script>

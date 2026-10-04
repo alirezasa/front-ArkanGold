@@ -14,7 +14,8 @@ export default defineConfig({
     }),
     sitemap({
       // صفحات بلاگ خارج از این پروژه (وردپرس) هستند، در sitemap این پروژه نباید بیایند
-      filter: (page) => !page.includes('/mag'),
+      // صفحه‌ی /shop/item (جزئیات شمش‌های جدید در مرورگر) noindex است
+      filter: (page) => !page.includes('/mag') && !page.includes('/shop/item'),
     }),
   ],
   i18n: {

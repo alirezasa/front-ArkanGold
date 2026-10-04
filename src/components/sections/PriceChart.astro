@@ -26,11 +26,11 @@ const defaultHours = 24;
       <h2 class="text-2xl font-bold text-brand">تحلیل لحظه‌ای بازار طلا</h2>
     </div>
 
-    <div class="flex gap-1 rounded-full bg-canvas-100 p-1 self-start scrollbar-thin overflow-x-auto" role="group" aria-label="بازه زمانی نمودار">
+    <div class="flex w-full max-w-full gap-1 rounded-full bg-canvas-100 p-1 sm:w-auto sm:self-start scrollbar-thin overflow-x-auto" role="group" aria-label="بازه زمانی نمودار">
       {ranges.map((r) => (
         <button
           type="button"
-          class="chart-range-btn rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap"
+          class="chart-range-btn flex-1 sm:flex-none rounded-full px-2.5 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold whitespace-nowrap"
           data-hours={r.hours}
           data-active={r.hours === defaultHours ? 'true' : 'false'}
           aria-pressed={r.hours === defaultHours ? 'true' : 'false'}
