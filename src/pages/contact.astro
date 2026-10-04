@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { OFFICE_ADDRESS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 
 const contactSchema = {
   '@context': 'https://schema.org',
@@ -9,10 +10,10 @@ const contactSchema = {
 };
 
 const details = [
-  { label: 'تلفن پشتیبانی', value: '02191697394', href: 'tel:02191697394' },
+  { label: 'تلفن تماس', value: SUPPORT_PHONE_FA, href: `tel:${SUPPORT_PHONE}` },
   { label: 'ایمیل', value: 'info@arkan.gold', href: 'mailto:info@arkan.gold' },
   { label: 'ساعت کاری', value: 'شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲' },
-  { label: 'آدرس', value: 'تهران، اختیاریه' },
+  { label: 'آدرس دفتر مرکزی', value: OFFICE_ADDRESS },
 ];
 ---
 
@@ -33,9 +34,9 @@ const details = [
 
       <dl class="space-y-4">
         {details.map((d) => (
-          <div class="flex items-center justify-between rounded-card bg-white border border-brand-100/40 px-5 py-4 shadow-card card-lift">
-            <dt class="text-xs text-ink-soft">{d.label}</dt>
-            <dd class="text-sm font-semibold text-brand tnum">
+          <div class="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 rounded-card bg-white border border-brand-100/40 px-5 py-4 shadow-card card-lift">
+            <dt class="shrink-0 text-xs text-ink-soft">{d.label}</dt>
+            <dd class="min-w-0 text-sm font-semibold leading-7 text-brand tnum sm:text-left">
               {d.href ? <a href={d.href} class="hover:text-brand">{d.value}</a> : d.value}
             </dd>
           </div>

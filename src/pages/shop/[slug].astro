@@ -1,31 +1,25 @@
 ---
+// صفحه‌ی اختصاصی هر شمش — در build برای همه‌ی شمش‌های API ساخته می‌شود (سئو).
+// HTML از ingotDetailHtml و متادیتا/schema از ingotSeo می‌آید (src/lib/ingotDetail.ts).
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Icon from '../../components/Icon.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import {
-  loadIngotCatalog,
-  ingotImages,
-  ingotWeights,
-  karatLabel,
-  formatGrams,
-  sanitizeDescription,
-  specValue,
-  toNumber,
-  weightLabel,
-  type GoldIngot,
-} from '../../lib/goldIngots';
-import { ingotDetailPath, safeHref, INGOT_PLACEHOLDER_IMAGE } from '../../lib/ingotCard';
-import { formatToman } from '../../lib/goldPrice';
-import { SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../../config/site';
+import { loadIngotCatalog, type GoldIngot } from '../../lib/goldIngots';
+import { ingotDetailHtml, ingotSeo } from '../../lib/ingotDetail';
+import { compareIngots } from '../../lib/ingotCard';
 
 export async function getStaticPaths() {
   const { products, serviceEnabled } = await loadIngotCatalog();
+  const sorted = [...products].sort(compareIngots('price-asc'));
   return products.map((p) => ({
     params: { slug: p.slug },
     props: {
       product: p,
       serviceEnabled,
-      related: products.filter((r) => r.id !== p.id).slice(0, 4),
+      // شمش‌های مشابه: اول هم‌دسته‌ها، بعد بقیه — به ترتیب قیمت
+      related: [
+        ...sorted.filter((r) => r.id !== p.id && r.category?.slug === p.category?.slug),
+        ...sorted.filter((r) => r.id !== p.id && r.category?.slug !== p.category?.slug),
+      ].slice(0, 4),
     },
   }));
 }
@@ -36,267 +30,25 @@ interface Props {
   related: GoldIngot[];
 }
 const { product, serviceEnabled, related } = Astro.props;
-const path = ingotDetailPath(product.slug);
-const url = `https://arkan.gold${path}`;
-const images = ingotImages(product);
-const weights = ingotWeights(product);
-const productCode = specValue(product, 'کد محصول');
-const descriptionHtml = sanitizeDescription(product.description);
-const variants = [...(product.variants ?? [])].sort((a, b) => toNumber(a.weightGrams) - toNumber(b.weightGrams));
-const initialVariant = variants.find((v) => v.inStock) ?? variants[0];
-const packaging = product.packagingOptions ?? [];
-const categoryName = product.category?.name || 'شمش طلا';
-
-const productSchema: Record<string, unknown> = {
-  '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: product.name,
-  description: product.shortDescription || product.name,
-  category: categoryName,
-  brand: { '@type': 'Brand', name: 'آرکان گلد' },
-  url,
-  ...(productCode ? { sku: productCode } : {}),
-  ...(specValue(product, 'کد GTIN') ? { gtin: specValue(product, 'کد GTIN') } : {}),
-  ...(images.length ? { image: images.map((i) => i.src) } : {}),
-  ...(weights.length === 1 ? { weight: { '@type': 'QuantitativeValue', value: weights[0], unitCode: 'GRM' } } : {}),
-};
-
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'آرکان گلد', item: 'https://arkan.gold/' },
-    { '@type': 'ListItem', position: 2, name: 'فروشگاه', item: 'https://arkan.gold/shop' },
-    { '@type': 'ListItem', position: 3, name: product.name, item: url },
-  ],
-};
-
-const services = [
-  { icon: 'shield', title: 'استعلام اصالت', desc: 'با کد ۶ رقمی هولوگرام شمش', href: '/verify' },
-  { icon: 'location', title: 'تحویل فیزیکی', desc: 'ارسال بیمه‌شده یا تحویل حضوری', href: '/services' },
-  { icon: 'invoice', title: 'فاکتور رسمی', desc: 'صدور فاکتور معتبر برای هر خرید', href: '/licenses' },
-  { icon: 'trend-up', title: 'فروش مجدد', desc: 'فروش به آرکان گلد با قیمت لحظه‌ای', href: '/sell-gold' },
-];
-
-const packagingPrice = (priceToman: string) => {
-  const n = toNumber(priceToman);
-  return n > 0 ? formatToman(n) : 'رایگان';
-};
-const canBuyInitially = serviceEnabled && !!initialVariant?.inStock && !!safeHref(initialVariant?.buyUrl);
+const seo = ingotSeo(product, serviceEnabled);
 ---
 
 <BaseLayout
-  title={`${product.name} | قیمت لحظه‌ای`}
-  description={product.shortDescription || `خرید ${product.name} با قیمت لحظه‌ای، فاکتور رسمی و کد قابل استعلام اصالت از آرکان گلد.`}
-  path={path}
-  image={images[0]?.src}
-  jsonLd={[productSchema, breadcrumbSchema]}
+  title={seo.title}
+  description={seo.description}
+  path={seo.path}
+  image={seo.image}
+  imageAlt={seo.imageAlt}
+  ogType="product"
+  meta={seo.meta}
+  jsonLd={seo.schemas}
 >
-  <nav aria-label="مسیر صفحه" class="container-page pt-6 text-xs text-ink-soft">
-    <ol class="flex flex-wrap items-center gap-1.5">
-      <li><a href="/" class="hover:text-brand">خانه</a></li>
-      <li aria-hidden="true">/</li>
-      <li><a href="/shop" class="hover:text-brand">فروشگاه</a></li>
-      <li aria-hidden="true">/</li>
-      <li class="text-brand font-medium" aria-current="page">{product.name}</li>
-    </ol>
-  </nav>
-
-  <section class="container-page py-8 grid gap-10 lg:grid-cols-2 items-start">
-    <!-- گالری تصاویر -->
-    <div class="lg:sticky lg:top-32">
-      <div class="aspect-square rounded-xl2 bg-white border border-brand-100/40 shadow-card overflow-hidden">
-        <img
-          id="product-main-image"
-          src={images[0]?.src || INGOT_PLACEHOLDER_IMAGE}
-          alt={images[0]?.alt || product.name}
-          class="h-full w-full object-contain p-4"
-          width="640"
-          height="640"
-          onerror={`this.onerror=null;this.src='${INGOT_PLACEHOLDER_IMAGE}'`}
-        />
-      </div>
-      {images.length > 1 && (
-        <div class="mt-3 grid grid-cols-5 gap-2">
-          {images.map((img, i) => (
-            <button
-              type="button"
-              class="gallery-thumb aspect-square rounded-lg border-2 overflow-hidden bg-white data-[active=true]:border-brand border-transparent"
-              data-src={img.src}
-              data-alt={img.alt}
-              data-active={i === 0 ? 'true' : 'false'}
-              aria-label={`نمایش تصویر ${i + 1}`}
-            >
-              <img src={img.src} alt="" class="h-full w-full object-contain" loading="lazy" width="120" height="120" />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-
-    <!-- اطلاعات و خرید -->
-    <div>
-      <p class="text-xs text-brand-300 mb-2">{categoryName}</p>
-      <h1 class="text-2xl md:text-3xl font-bold text-brand mb-3 leading-[1.5]">{product.name}</h1>
-
-      <div class="flex flex-wrap items-center gap-2 mb-5 text-[11px]">
-        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand tnum">{karatLabel(product.purityKarat)}</span>
-        {weights.length > 0 && <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand tnum">{weightLabel(product)}</span>}
-        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand">قابل استعلام اصالت</span>
-        <span class="rounded-full bg-brand-50 px-3 py-1 font-semibold text-brand">فاکتور رسمی</span>
-        <span id="stock-badge" class:list={['rounded-full px-3 py-1 font-semibold', product.inStock ? 'bg-success-50 text-success' : 'bg-danger-50 text-danger']}>
-          {product.inStock ? 'موجود' : 'ناموجود'}
-        </span>
-        {productCode && <span class="text-ink-soft">کد محصول: <span class="latin-digits">{productCode}</span></span>}
-      </div>
-
-      {product.shortDescription && <p class="text-sm leading-8 text-ink-soft mb-6">{product.shortDescription}</p>}
-
-      <!-- باکس قیمت لحظه‌ای و خرید -->
-      <div id="product-price-box" class="rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover p-5 md:p-6">
-        <div class="flex items-center justify-between mb-4">
-          <p class="flex items-center gap-1.5 text-xs text-ink-soft"><span class="live-dot"></span> قیمت لحظه‌ای</p>
-          <p class="text-[11px] text-ink-soft tnum">طلای ۱۸ عیار هر گرم: <span data-price-bind="pricePerGram" data-price-format="toman">--</span></p>
-        </div>
-
-        <p id="service-off" class:list={['mb-4 rounded-lg bg-danger-50 px-3 py-2 text-xs text-danger', serviceEnabled && 'hidden']}>
-          فروش آنلاین شمش در حال حاضر موقتاً غیرفعال است.
-        </p>
-
-        {variants.length > 0 && (
-          <fieldset>
-            <legend class="mb-2 text-xs font-medium text-ink-soft">انتخاب وزن</legend>
-            <div class="grid gap-2 sm:grid-cols-2" role="radiogroup">
-              {variants.map((v) => (
-                <button
-                  type="button"
-                  role="radio"
-                  class="variant-btn flex items-center justify-between gap-3 rounded-lg border-2 px-4 py-3 text-right transition-colors border-brand-100/40 hover:border-brand/60 data-[active=true]:border-brand data-[active=true]:bg-brand-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-variant-id={v.id}
-                  data-buy-url={safeHref(v.buyUrl)}
-                  data-active={v.id === initialVariant?.id ? 'true' : 'false'}
-                  aria-checked={v.id === initialVariant?.id ? 'true' : 'false'}
-                  disabled={!v.inStock}
-                >
-                  <span class="font-semibold text-brand tnum">{formatGrams(toNumber(v.weightGrams))}</span>
-                  <span class="text-xs text-ink-soft tnum" data-variant-price>
-                    {v.inStock ? formatToman(toNumber(v.finalPriceToman)) : 'ناموجود'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-        )}
-
-        {packaging.length > 0 && (
-          <div class="mt-5">
-            <p class="mb-2 text-xs font-medium text-ink-soft">بسته‌بندی</p>
-            <ul class="space-y-2">
-              {packaging.map((o) => (
-                <li class="flex items-start gap-3 rounded-lg bg-canvas-100 px-4 py-3" data-packaging-id={o.id}>
-                  {safeHref(o.imageUrl) ? (
-                    <img src={safeHref(o.imageUrl)} alt={o.name} class="h-12 w-12 shrink-0 rounded-md object-cover bg-white" width="48" height="48" loading="lazy" />
-                  ) : (
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-white text-brand"><Icon name="gift-card" class="h-5 w-5" /></span>
-                  )}
-                  <div class="min-w-0 flex-1">
-                    <p class="flex flex-wrap items-center gap-2 text-sm font-semibold text-brand">
-                      {o.name}
-                      {o.isDefault && <span class="rounded-full bg-brand text-white px-2 py-0.5 text-[10px] font-medium">پیش‌فرض</span>}
-                    </p>
-                    {o.description && <p class="text-xs leading-6 text-ink-soft">{o.description}</p>}
-                    {toNumber(o.freeThresholdToman) > 0 && (
-                      <p class="text-[11px] text-success tnum">رایگان برای خرید بالای {formatToman(toNumber(o.freeThresholdToman))}</p>
-                    )}
-                  </div>
-                  <p class="shrink-0 text-xs font-semibold text-ink tnum text-left">
-                    <span data-packaging-price>{packagingPrice(o.priceToman)}</span>
-                    {o.perUnit && toNumber(o.priceToman) > 0 && <span class="block text-[10px] font-normal text-ink-soft">به ازای هر عدد</span>}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div class="mt-5 flex items-end justify-between gap-4 border-t border-brand-100/40 pt-4">
-          <div>
-            <p class="text-[11px] text-ink-soft">قیمت شمش <span id="selected-weight" class="tnum">{initialVariant ? `(${formatGrams(toNumber(initialVariant.weightGrams))})` : ''}</span></p>
-            <p class="text-[11px] text-ink-soft/80">بروزرسانی: <span id="price-updated" class="tnum">--</span></p>
-          </div>
-          <p id="selected-price" class="text-2xl font-extrabold text-brand tnum">
-            {initialVariant?.inStock ? formatToman(toNumber(initialVariant.finalPriceToman)) : 'ناموجود'}
-          </p>
-        </div>
-
-        <a
-          id="buy-btn"
-          href={canBuyInitially ? safeHref(initialVariant!.buyUrl) : undefined}
-          class:list={['btn-primary shine-hover mt-5 w-full', !canBuyInitially && 'opacity-50 pointer-events-none']}
-          aria-disabled={!canBuyInitially ? 'true' : undefined}
-        >
-          <Icon name="wallet" class="h-4.5 w-4.5" />
-          <span data-label>{!serviceEnabled ? 'فروش موقتاً غیرفعال است' : canBuyInitially ? 'خرید شمش' : 'ناموجود'}</span>
-        </a>
-        <p class="mt-3 text-[11px] leading-6 text-ink-soft/80 text-center">
-          با کلیک روی «خرید شمش» به داشبورد آرکان گلد منتقل می‌شوید و سفارش را با قیمت لحظه‌ای نهایی
-          و پرداخت آنلاین ثبت می‌کنید.
-        </p>
-      </div>
-
-      <div class="mt-4 grid grid-cols-2 gap-3">
-        <a href="/verify" class="btn-outline !py-3 text-xs"><Icon name="shield" class="h-4 w-4" /> استعلام اصالت شمش</a>
-        <a href={`tel:${SUPPORT_PHONE}`} class="btn-outline !py-3 text-xs"><Icon name="headset" class="h-4 w-4" /> مشاوره خرید <span class="tnum">{SUPPORT_PHONE_FA}</span></a>
-      </div>
-    </div>
-  </section>
-
-  <!-- مشخصات و توضیحات -->
-  <section class:list={['container-page pb-6 grid gap-6 items-start', descriptionHtml && 'lg:grid-cols-[1fr_420px]']}>
-    {descriptionHtml && (
-      <article class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-6 md:p-8">
-        <h2 class="text-xl font-bold text-brand mb-4">توضیحات محصول</h2>
-        <div class="product-description text-sm leading-8 text-ink-soft" set:html={descriptionHtml} />
-      </article>
-    )}
-
-    <aside class="rounded-xl2 bg-white border border-brand-100/40 shadow-card overflow-hidden">
-      <h2 class="text-lg font-bold text-brand px-6 pt-6 pb-3">مشخصات فنی</h2>
-      <table class="w-full text-sm">
-        <tbody class="divide-y divide-brand-100/30">
-          {product.specifications.map((s) => (
-            <tr>
-              <th scope="row" class="px-6 py-3 text-right font-medium text-ink-soft w-2/5">{s.label}</th>
-              <td class="px-6 py-3 text-ink tnum">{/^کد/.test(s.label) ? <span class="latin-digits">{s.value}</span> : s.value}</td>
-            </tr>
-          ))}
-          <tr>
-            <th scope="row" class="px-6 py-3 text-right font-medium text-ink-soft">موجودی</th>
-            <td class="px-6 py-3 text-ink" id="stock-cell">{product.inStock ? 'موجود' : 'ناموجود'}</td>
-          </tr>
-        </tbody>
-      </table>
-    </aside>
-  </section>
-
-  <section class="container-page py-6">
-    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
-      {services.map((s) => (
-        <a href={s.href} class="flex items-center gap-3 rounded-xl2 bg-white border border-brand-100/40 shadow-card px-4 py-4 card-lift">
-          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name={s.icon as any} class="h-5 w-5" /></span>
-          <span>
-            <span class="block text-sm font-semibold text-brand">{s.title}</span>
-            <span class="block text-[11px] text-ink-soft">{s.desc}</span>
-          </span>
-        </a>
-      ))}
-    </div>
-  </section>
+  <Fragment set:html={ingotDetailHtml(product, { serviceEnabled })} />
 
   {related.length > 0 && (
     <section class="container-page py-10">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-brand">شمش‌های دیگر</h2>
+        <h2 class="text-xl font-bold text-brand">شمش‌های مشابه</h2>
         <a href="/shop" class="text-sm text-brand hover:underline">مشاهده همه</a>
       </div>
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -308,146 +60,20 @@ const canBuyInitially = serviceEnabled && !!initialVariant?.inStock && !!safeHre
   <div id="ingot-meta" hidden data-slug={product.slug} data-service-enabled={serviceEnabled ? 'true' : 'false'}></div>
 </BaseLayout>
 
-<style is:global>
-  .product-description p { margin-bottom: 0.9rem; }
-  .product-description ul { list-style: disc; padding-right: 1.25rem; margin-bottom: 0.9rem; }
-  .product-description ol { list-style: decimal; padding-right: 1.25rem; margin-bottom: 0.9rem; }
-  .product-description h2, .product-description h3 { color: #330509; font-weight: 700; margin: 1rem 0 0.5rem; }
-  .product-description img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; }
-  .product-description a { color: #7a171e; text-decoration: underline; }
-</style>
-
 <script>
-  import '../../lib/priceBinding';
-  import { formatToman } from '../../lib/goldPrice';
-  import { formatGrams, toNumber, type GoldIngot } from '../../lib/goldIngots';
-  import { safeHref, updateIngotCard } from '../../lib/ingotCard';
-  import { watchIngot, watchIngotList } from '../../lib/liveIngots';
+  import { initIngotDetail } from '../../lib/ingotDetailClient';
+  import { updateIngotCard } from '../../lib/ingotCard';
+  import { watchIngotList } from '../../lib/liveIngots';
 
   const meta = document.getElementById('ingot-meta')!;
-  const slug = meta.dataset.slug!;
-  let serviceEnabled = meta.dataset.serviceEnabled === 'true';
+  initIngotDetail({ slug: meta.dataset.slug!, serviceEnabled: meta.dataset.serviceEnabled === 'true' });
 
-  const variantBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('.variant-btn'));
-  const buyBtn = document.getElementById('buy-btn') as HTMLAnchorElement;
-  const buyLabel = buyBtn.querySelector('[data-label]') as HTMLElement;
-  const selectedPrice = document.getElementById('selected-price')!;
-  const selectedWeight = document.getElementById('selected-weight')!;
-  const updatedEl = document.getElementById('price-updated')!;
-
-  let product: GoldIngot | null = null;
-  let selectedId = variantBtns.find((b) => b.dataset.active === 'true')?.dataset.variantId ?? '';
-
-  // لینک مستقیم به یک وزن خاص: /shop/{slug}?variant={id}
-  const preset = new URLSearchParams(location.search).get('variant');
-  if (preset && variantBtns.some((b) => b.dataset.variantId === preset && !b.disabled)) selectedId = preset;
-
-  function setText(el: HTMLElement, text: string) {
-    if (el.textContent === text) return;
-    el.textContent = text;
-    el.classList.remove('price-tick');
-    void el.offsetWidth;
-    el.classList.add('price-tick');
-  }
-
-  function render() {
-    const variant = product?.variants.find((v) => v.id === selectedId);
-    const btn = variantBtns.find((b) => b.dataset.variantId === selectedId);
-    const inStock = variant ? variant.inStock : !!btn && !btn.disabled;
-    const buyUrl = variant ? safeHref(variant.buyUrl) : btn?.dataset.buyUrl ?? '';
-
-    variantBtns.forEach((b) => {
-      const active = b.dataset.variantId === selectedId;
-      b.dataset.active = String(active);
-      b.setAttribute('aria-checked', String(active));
-    });
-
-    if (variant) {
-      selectedWeight.textContent = `(${formatGrams(toNumber(variant.weightGrams))})`;
-      setText(selectedPrice, variant.inStock ? formatToman(toNumber(variant.finalPriceToman)) : 'ناموجود');
-    } else if (btn) {
-      selectedWeight.textContent = `(${btn.querySelector('span')?.textContent ?? ''})`;
-      setText(selectedPrice, btn.querySelector('[data-variant-price]')?.textContent?.trim() ?? '');
-    }
-
-    const canBuy = serviceEnabled && inStock && !!buyUrl;
-    if (canBuy) {
-      buyBtn.href = buyUrl;
-      buyBtn.removeAttribute('aria-disabled');
-    } else {
-      buyBtn.removeAttribute('href');
-      buyBtn.setAttribute('aria-disabled', 'true');
-    }
-    buyBtn.classList.toggle('opacity-50', !canBuy);
-    buyBtn.classList.toggle('pointer-events-none', !canBuy);
-    buyLabel.textContent = !serviceEnabled ? 'فروش موقتاً غیرفعال است' : inStock ? 'خرید شمش' : 'ناموجود';
-  }
-
-  variantBtns.forEach((b) =>
-    b.addEventListener('click', () => {
-      if (b.disabled) return;
-      selectedId = b.dataset.variantId!;
-      const url = new URL(location.href);
-      url.searchParams.set('variant', selectedId);
-      history.replaceState(null, '', url);
-      render();
-    })
-  );
-
-  watchIngot(slug, (res) => {
-    if (!res.data) return;
-    product = res.data;
-    serviceEnabled = res.serviceEnabled !== false;
-    document.getElementById('service-off')?.classList.toggle('hidden', serviceEnabled);
-
-    for (const b of variantBtns) {
-      const v = product.variants.find((x) => x.id === b.dataset.variantId);
-      b.disabled = !v?.inStock;
-      if (v) b.dataset.buyUrl = safeHref(v.buyUrl);
-      const priceEl = b.querySelector<HTMLElement>('[data-variant-price]');
-      if (priceEl) setText(priceEl, v?.inStock ? formatToman(toNumber(v.finalPriceToman)) : 'ناموجود');
-    }
-    // اگر وزن انتخاب‌شده ناموجود شد، اولین وزن موجود انتخاب می‌شود
-    if (!product.variants.find((v) => v.id === selectedId)?.inStock) {
-      selectedId = product.variants.find((v) => v.inStock)?.id ?? selectedId;
-    }
-
-    for (const o of product.packagingOptions ?? []) {
-      const el = document.querySelector<HTMLElement>(`[data-packaging-id="${CSS.escape(o.id)}"] [data-packaging-price]`);
-      if (el) el.textContent = toNumber(o.priceToman) > 0 ? formatToman(toNumber(o.priceToman)) : 'رایگان';
-    }
-
-    const stockText = product.inStock ? 'موجود' : 'ناموجود';
-    const badge = document.getElementById('stock-badge')!;
-    badge.textContent = stockText;
-    badge.className = `rounded-full px-3 py-1 font-semibold ${product.inStock ? 'bg-success-50 text-success' : 'bg-danger-50 text-danger'}`;
-    document.getElementById('stock-cell')!.textContent = stockText;
-
-    const at = new Date(res.generatedAt);
-    updatedEl.textContent = (Number.isNaN(at.getTime()) ? new Date() : at).toLocaleTimeString('fa-IR');
-    render();
-  });
-
-  render();
-
-  // کارت‌های «شمش‌های دیگر» هم لحظه‌ای می‌شوند
+  // کارت‌های «شمش‌های مشابه» هم لحظه‌ای می‌شوند
   const relatedCards = Array.from(document.querySelectorAll<HTMLElement>('.product-card'));
   if (relatedCards.length) {
-    watchIngotList(({ products, serviceEnabled: enabled }) => {
+    watchIngotList(({ products, serviceEnabled }) => {
       const bySlug = new Map(products.map((p) => [p.slug, p]));
-      relatedCards.forEach((c) => updateIngotCard(c, bySlug.get(c.dataset.slug!) ?? null, enabled));
+      relatedCards.forEach((c) => updateIngotCard(c, bySlug.get(c.dataset.slug!) ?? null, serviceEnabled));
     });
   }
-
-  // گالری تصاویر
-  const mainImage = document.getElementById('product-main-image') as HTMLImageElement | null;
-  document.querySelectorAll<HTMLButtonElement>('.gallery-thumb').forEach((thumb) => {
-    thumb.addEventListener('click', () => {
-      if (!mainImage) return;
-      mainImage.src = thumb.dataset.src!;
-      mainImage.alt = thumb.dataset.alt || '';
-      document.querySelectorAll('.gallery-thumb').forEach((t) => t.setAttribute('data-active', 'false'));
-      thumb.dataset.active = 'true';
-    });
-  });
 </script>

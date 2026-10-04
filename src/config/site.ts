@@ -14,9 +14,31 @@ export const TRADE_FEE_PERCENT = 0.5;
 /** عیار تمام شمش‌های آرکان گلد (۷۵۰ = طلای ۱۸ عیار) */
 export const BAR_PURITY = 750;
 
-/** شماره پشتیبانی تلفنی */
-export const SUPPORT_PHONE = '02198765431';
-export const SUPPORT_PHONE_FA = '۰۲۱۹۸۷۶۵۴۳۱';
+/** شماره تماس شرکت / پشتیبانی تلفنی */
+export const SUPPORT_PHONE = '02191697394';
+export const SUPPORT_PHONE_FA = '۰۲۱۹۱۶۹۷۳۹۴';
+/** شماره در قالب بین‌المللی (برای schema.org) */
+export const SUPPORT_PHONE_INTL = '+982191697394';
+
+/** آدرس دفتر مرکزی */
+export const OFFICE_ADDRESS = 'تهران، اختیاریه، خیابان شهید مهدی میرفرشی، خیابان کاووس غربی، پلاک ۲';
+/** اجزای آدرس برای schema.org (PostalAddress) */
+export const OFFICE_ADDRESS_PARTS = {
+  streetAddress: 'اختیاریه، خیابان شهید مهدی میرفرشی، خیابان کاووس غربی، پلاک ۲',
+  addressLocality: 'تهران',
+  addressRegion: 'تهران',
+  addressCountry: 'IR',
+};
+
+/**
+ * نماد اعتماد الکترونیکی (اینماد)
+ * شناسه (id) و کد (Code) را از کد HTML نمادی که پنل enamad.ir می‌دهد بردارید:
+ *   https://trustseal.enamad.ir/?id=XXXXXX&Code=YYYYYYYYYYYYYYYY
+ * با متغیرهای محیطی PUBLIC_ENAMAD_ID و PUBLIC_ENAMAD_CODE هم قابل تنظیم است.
+ * تا وقتی خالی باشند، به‌جای تصویر نماد یک کادر جایگزین در فوتر نمایش داده می‌شود.
+ */
+export const ENAMAD_ID: string = import.meta.env.PUBLIC_ENAMAD_ID || '';
+export const ENAMAD_CODE: string = import.meta.env.PUBLIC_ENAMAD_CODE || '';
 
 /**
  * API اصلی آرکان گلد — قیمت لحظه‌ای طلا، تاریخچه‌ی قیمت و محصولات فروشگاه (شمش طلا)

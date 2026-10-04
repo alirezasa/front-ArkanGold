@@ -18,6 +18,16 @@ html {
 body {
   @apply bg-canvas text-ink font-sans antialiased;
   font-feature-settings: 'ss01' on;
+  /* جلوگیری از اسکرول افقی صفحه در موبایل اگر المانی از عرض صفحه بیرون بزند
+     (clip برخلاف hidden، position: sticky هدر را از کار نمی‌اندازد) */
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 /* فوکوس قابل‌مشاهده برای دسترسی‌پذیری با صفحه‌کلید */
@@ -177,3 +187,13 @@ body {
   stroke-dashoffset: 400;
   animation: drawIn 1.2s ease-out forwards;
 }
+
+/* توضیحات HTML محصول (صفحه‌ی جزئیات شمش) */
+.product-description p { margin-bottom: 0.9rem; }
+.product-description ul { list-style: disc; padding-right: 1.25rem; margin-bottom: 0.9rem; }
+.product-description ol { list-style: decimal; padding-right: 1.25rem; margin-bottom: 0.9rem; }
+.product-description h2,
+.product-description h3 { color: #330509; font-weight: 700; margin: 1rem 0 0.5rem; }
+.product-description img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; }
+.product-description a { color: #7a171e; text-decoration: underline; }
+.product-description table { display: block; max-width: 100%; overflow-x: auto; }

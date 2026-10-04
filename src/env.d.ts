@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly PUBLIC_YEKTANET_ID?: string;
   readonly PUBLIC_ARKAN_API_URL?: string;
   readonly PUBLIC_VERIFY_API_URL?: string;
+  readonly PUBLIC_ENAMAD_ID?: string;
+  readonly PUBLIC_ENAMAD_CODE?: string;
 }
 
 interface ImportMeta {

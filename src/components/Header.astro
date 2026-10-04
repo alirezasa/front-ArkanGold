@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { APP_URL } from '../config/site';
+import { APP_URL, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 
 const nav = [
   {
@@ -28,7 +28,7 @@ const currentPath = Astro.url.pathname;
 </a>
 
 <header class="sticky top-0 z-50 border-b border-brand-100/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
-  <div class="container-page flex h-[72px] items-center justify-between gap-6">
+  <div class="container-page flex h-16 sm:h-[72px] items-center justify-between gap-3 sm:gap-6">
     <a href="/" class="flex items-center gap-2.5 shrink-0 group" aria-label="آرکان گلد - صفحه اصلی">
       <img
         src="/images/logo.png"
@@ -90,7 +90,7 @@ const currentPath = Astro.url.pathname;
       ))}
     </nav>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
       <div class="nav-download-item hidden md:inline-flex">
         <div class="nav-download-trigger">
@@ -118,14 +118,14 @@ const currentPath = Astro.url.pathname;
         </div>
       </div>
 
-      <a href={APP_URL} class="btn-primary !px-5 !py-2.5 text-sm whitespace-nowrap">
+      <a href={APP_URL} class="btn-primary !px-3.5 sm:!px-5 !py-2 sm:!py-2.5 text-xs sm:text-sm whitespace-nowrap">
         ورود / ثبت نام
       </a>
 
       <button
         id="mobile-menu-btn"
         type="button"
-        class="xl:hidden rounded-md p-2 text-brand"
+        class="xl:hidden -ml-2 rounded-md p-2 text-brand"
         aria-expanded="false"
         aria-controls="mobile-menu"
         aria-label="باز کردن منو"
@@ -154,92 +154,98 @@ const currentPath = Astro.url.pathname;
     </div>
   </div>
 
-  <!-- منوی موبایل تمام‌صفحه -->
-  <div id="mobile-menu" class="fixed inset-0 z-[60] hidden xl:hidden bg-white">
-    <div class="absolute inset-0 bg-white flex flex-col h-screen">
-      <div class="flex h-[72px] items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
-        <a href="/" class="flex items-center gap-2.5">
-          <img src="/images/logo.png" alt="آرکان گلد" width="36" height="27" class="h-8 w-auto" />
-          <span class="text-lg font-bold text-brand">آرکان گلد</span>
-        </a>
-        <button id="mobile-menu-close" type="button" class="rounded-md p-2 text-brand" aria-label="بستن منو">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
-        </button>
-      </div>
+</header>
 
-      <!-- قیمت زنده هم بالای منوی موبایل تکرار می‌شود تا همیشه در دید باشد -->
-      <div class="shrink-0 bg-brand text-white/90 px-5 py-2.5 text-xs flex items-center gap-2">
-        <span class="live-dot"></span>
-        <span class="tnum">
-          طلای ۱۸ عیار: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
-        </span>
-      </div>
+<!-- منوی موبایل تمام‌صفحه — بیرون از <header> است چون backdrop-filter هدر، position:fixed فرزندان را
+     به خود هدر محدود می‌کند و منو بریده نمایش داده می‌شد -->
+<div id="mobile-menu" class="fixed inset-0 z-[70] hidden xl:hidden bg-white" role="dialog" aria-modal="true" aria-label="منوی سایت">
+  <div class="flex h-full max-h-[100dvh] flex-col bg-white">
+    <div class="flex h-16 items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
+      <a href="/" class="flex items-center gap-2.5">
+        <img src="/images/logo.png" alt="آرکان گلد" width="36" height="27" class="h-8 w-auto" />
+        <span class="text-lg font-bold text-brand">آرکان گلد</span>
+      </a>
+      <button id="mobile-menu-close" type="button" class="rounded-md p-2 text-brand" aria-label="بستن منو">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+      </button>
+    </div>
 
-      <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto px-5 py-4">
-        <ul class="flex flex-col divide-y divide-brand-100/40">
-          {nav.map((item) => (
-            item.children ? (
-              <li>
-                <details class="group/d">
-                  <summary class="flex cursor-pointer items-center justify-between py-4 text-base font-medium text-ink marker:content-none">
-                    <span class="flex items-center gap-3">
-                      <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
-                      {item.label}
-                    </span>
-                    <Icon name="chevron" class="h-4 w-4 transition-transform group-open/d:rotate-180" />
-                  </summary>
-                  <div class="flex flex-col gap-1 pb-3">
-                    {item.children.map((c) => (
-                      <a href={c.href} class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-soft hover:bg-canvas-100 hover:text-brand">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                          <Icon name={c.icon as any} class="h-4.5 w-4.5" />
-                        </span>
-                        {c.label}
-                      </a>
-                    ))}
-                  </div>
-                </details>
-              </li>
-            ) : (
-              <li>
-                <a
-                  href={item.href}
-                  target={item.external ? '_blank' : undefined}
-                  rel={item.external ? 'noopener noreferrer' : undefined}
-                  class="flex items-center gap-3 py-4 text-base font-medium text-ink hover:text-brand"
-                >
-                  <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
-                  {item.label}
-                </a>
-              </li>
-            )
-          ))}
-        </ul>
+    <!-- قیمت زنده هم بالای منوی موبایل تکرار می‌شود تا همیشه در دید باشد -->
+    <div class="shrink-0 bg-brand text-white/90 px-5 py-2.5 text-xs flex items-center gap-2">
+      <span class="live-dot"></span>
+      <span class="tnum">
+        طلای ۱۸ عیار: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+      </span>
+    </div>
 
-        <div class="mt-4 rounded-card border border-brand-100/50 bg-canvas-100 p-4 flex items-center gap-3">
-          <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=efeff1"
-            alt="اسکن جهت دانلود اپلیکیشن"
-            width="64"
-            height="64"
-            class="rounded-lg"
-            loading="lazy"
-          />
-          <div>
-            <p class="text-sm font-semibold text-brand">دانلود اپلیکیشن آرکان</p>
-            <a href="https://app.arkan.gold" target="_blank" rel="noopener noreferrer" class="text-xs text-brand-300 font-medium">
-              باز کردن مستقیم لینک ↗
-            </a>
-          </div>
+    <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto px-5 py-4">
+      <ul class="flex flex-col divide-y divide-brand-100/40">
+        {nav.map((item) => (
+          item.children ? (
+            <li>
+              <details class="group/d">
+                <summary class="flex cursor-pointer items-center justify-between py-4 text-base font-medium text-ink marker:content-none">
+                  <span class="flex items-center gap-3">
+                    <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                    {item.label}
+                  </span>
+                  <Icon name="chevron" class="h-4 w-4 transition-transform group-open/d:rotate-180" />
+                </summary>
+                <div class="flex flex-col gap-1 pb-3">
+                  {item.children.map((c) => (
+                    <a href={c.href} class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-soft hover:bg-canvas-100 hover:text-brand">
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                        <Icon name={c.icon as any} class="h-4.5 w-4.5" />
+                      </span>
+                      {c.label}
+                    </a>
+                  ))}
+                </div>
+              </details>
+            </li>
+          ) : (
+            <li>
+              <a
+                href={item.href}
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+                class="flex items-center gap-3 py-4 text-base font-medium text-ink hover:text-brand"
+              >
+                <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                {item.label}
+              </a>
+            </li>
+          )
+        ))}
+      </ul>
+
+      <div class="mt-4 rounded-card border border-brand-100/50 bg-canvas-100 p-4 flex items-center gap-3">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=efeff1"
+          alt="اسکن جهت دانلود اپلیکیشن"
+          width="64"
+          height="64"
+          class="h-16 w-16 shrink-0 rounded-lg bg-white"
+          loading="lazy"
+        />
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-brand">دانلود اپلیکیشن آرکان</p>
+          <a href="https://app.arkan.gold" target="_blank" rel="noopener noreferrer" class="text-xs text-brand-300 font-medium">
+            باز کردن مستقیم لینک ↗
+          </a>
         </div>
-      </nav>
-
-      <div class="shrink-0 border-t border-brand-100/50 p-5">
-        <a href={APP_URL} class="btn-primary w-full">ورود / ثبت نام</a>
       </div>
+    </nav>
+
+    <div class="shrink-0 border-t border-brand-100/50 px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] grid grid-cols-2 gap-3">
+      <a href={`tel:${SUPPORT_PHONE}`} class="btn-outline !px-3 !py-3 text-xs">
+        <Icon name="headset" class="h-4 w-4" />
+        <span class="tnum">{SUPPORT_PHONE_FA}</span>
+      </a>
+      <a href={APP_URL} class="btn-primary !px-3 !py-3 text-xs">ورود / ثبت نام</a>
     </div>
   </div>
-</header>
+</div>
 
 <style>
   /* ===== پاپ‌آپ QR دانلود اپلیکیشن (هاور) ===== */
@@ -344,17 +350,23 @@ const currentPath = Astro.url.pathname;
 
   function openMenu() {
     menu?.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     btn?.setAttribute('aria-expanded', 'true');
+    closeBtn?.focus();
   }
   function closeMenu() {
+    if (menu?.classList.contains('hidden')) return;
     menu?.classList.add('hidden');
-    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     btn?.setAttribute('aria-expanded', 'false');
   }
 
   btn?.addEventListener('click', openMenu);
   closeBtn?.addEventListener('click', closeMenu);
+  // با انتخاب یک لینک، کلید Escape یا بزرگ شدن صفحه (نمایش منوی دسکتاپ) منو بسته می‌شود
+  menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && closeMenu());
+  matchMedia('(min-width: 1280px)').addEventListener('change', (e) => e.matches && closeMenu());
 </script>
 
 <script>

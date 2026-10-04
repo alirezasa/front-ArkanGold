@@ -3,9 +3,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
 import { loadIngotCatalog } from '../lib/goldIngots';
-import { ingotDetailPath } from '../lib/ingotCard';
+import { compareIngots, DEFAULT_SORT, ingotDetailPath } from '../lib/ingotCard';
 
-const { products, serviceEnabled } = await loadIngotCatalog();
+const catalog = await loadIngotCatalog();
+const { serviceEnabled } = catalog;
+// ترتیب پیش‌فرض: ارزان‌ترین (و در قیمت برابر، سبک‌ترین) اول
+const products = [...catalog.products].sort(compareIngots(DEFAULT_SORT));
 
 const itemListSchema = {
   '@context': 'https://schema.org',
@@ -25,7 +28,7 @@ const itemListSchema = {
   path="/shop"
   jsonLd={itemListSchema}
 >
-  <section class="container-page py-12">
+  <section class="container-page py-8 sm:py-12">
     <header class="text-center mb-8">
       <p class="text-xs text-brand mb-2">فروشگاه آرکان گلد</p>
       <h1 class="text-2xl md:text-3xl font-bold text-brand">خرید شمش طلا آرکان گلد</h1>
@@ -64,15 +67,14 @@ const itemListSchema = {
       فروش آنلاین شمش در حال حاضر موقتاً غیرفعال است. لطفاً بعداً مراجعه کنید یا با پشتیبانی تماس بگیرید.
     </p>
 
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
       <p class="text-sm text-ink-soft">
         <span id="shop-count" class="tnum font-semibold text-brand">{products.length.toLocaleString('fa-IR')}</span> شمش موجود
       </p>
       <label class="flex items-center gap-2 text-xs text-ink-soft">
         مرتب‌سازی:
         <select id="shop-sort" class="rounded-lg border border-brand-100/40 bg-white px-3 py-2 text-xs text-ink focus:border-brand focus:outline-none">
-          <option value="default">پیش‌فرض</option>
-          <option value="price-asc">ارزان‌ترین</option>
+          <option value="price-asc" selected>ارزان‌ترین</option>
           <option value="price-desc">گران‌ترین</option>
           <option value="weight-asc">سبک‌ترین</option>
           <option value="weight-desc">سنگین‌ترین</option>
@@ -80,7 +82,7 @@ const itemListSchema = {
       </label>
     </div>
 
-    <div id="product-grid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div id="product-grid" class="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => <ProductCard product={p} serviceEnabled={serviceEnabled} />)}
     </div>
 
@@ -94,7 +96,7 @@ const itemListSchema = {
 <script>
   import '../lib/priceBinding';
   import { watchIngotList } from '../lib/liveIngots';
-  import { ingotCardHtml, updateIngotCard } from '../lib/ingotCard';
+  import { compareBy, ingotCardHtml, updateIngotCard, DEFAULT_SORT, type IngotSortMode } from '../lib/ingotCard';
 
   const grid = document.getElementById('product-grid')!;
   const sortSelect = document.getElementById('shop-sort') as HTMLSelectElement;
@@ -104,22 +106,22 @@ const itemListSchema = {
   const serviceOff = document.getElementById('shop-service-off');
 
   const cards = () => Array.from(grid.querySelectorAll<HTMLElement>('.product-card'));
-  // صفحه‌ی جزئیات فقط برای شمش‌هایی که در build وجود داشتند ساخته شده است
+  // صفحه‌ی جزئیات ایستا فقط برای شمش‌هایی که در build وجود داشتند ساخته شده است
   const prebuilt = new Set(cards().map((c) => c.dataset.slug));
-  let originalOrder = cards();
+
+  // بازگرداندن مرورگر به گزینه‌ی پیش‌فرض (برخی مرورگرها انتخاب قبلی فرم را نگه می‌دارند)
+  if (!sortSelect.value) sortSelect.value = DEFAULT_SORT;
 
   function applySort() {
-    const mode = sortSelect.value;
-    const val = (el: HTMLElement, key: 'price' | 'weight') => parseFloat(el.dataset[key] || '') || Infinity;
-    const sorted =
-      mode === 'default'
-        ? originalOrder
-        : [...cards()].sort((a, b) => {
-            const key = mode.startsWith('price') ? 'price' : 'weight';
-            const diff = val(a, key) - val(b, key);
-            return mode.endsWith('desc') ? -diff : diff;
-          });
-    sorted.forEach((c) => grid.appendChild(c));
+    const cmp = compareBy((sortSelect.value || DEFAULT_SORT) as IngotSortMode);
+    const keyOf = (el: HTMLElement) => ({
+      price: parseFloat(el.dataset.price || '') || 0,
+      weight: parseFloat(el.dataset.weight || '') || 0,
+      inStock: el.dataset.inStock !== 'false',
+    });
+    cards()
+      .sort((a, b) => cmp(keyOf(a), keyOf(b)))
+      .forEach((c) => grid.appendChild(c));
   }
 
   watchIngotList(
@@ -134,9 +136,7 @@ const itemListSchema = {
         if (existing.has(p.slug)) continue;
         const tpl = document.createElement('template');
         tpl.innerHTML = ingotCardHtml(p, { hasPage: prebuilt.has(p.slug), serviceEnabled });
-        const card = tpl.content.firstElementChild as HTMLElement;
-        grid.appendChild(card);
-        originalOrder.push(card);
+        grid.appendChild(tpl.content.firstElementChild as HTMLElement);
       }
 
       const available = cards().filter((c) => bySlug.has(c.dataset.slug!)).length;
@@ -144,7 +144,7 @@ const itemListSchema = {
       serviceOff?.classList.toggle('hidden', serviceEnabled);
       loading?.classList.add('hidden');
       empty?.classList.toggle('hidden', cards().length > 0);
-      if (sortSelect.value !== 'default') applySort();
+      applySort();
     },
     () => {
       if (!cards().length && loading) loading.textContent = 'دریافت محصولات انجام نشد. لطفاً صفحه را دوباره بارگذاری کنید.';
@@ -152,4 +152,5 @@ const itemListSchema = {
   );
 
   sortSelect.addEventListener('change', applySort);
+  applySort();
 </script>

@@ -8,14 +8,22 @@ interface Props {
   path?: string; // مسیر صفحه، مثلا "/shop"
   image?: string; // مسیر تصویر og، نسبت به public
   noindex?: boolean;
+  /** نوع og، مثلا product برای صفحه‌ی محصول */
+  ogType?: string;
+  imageAlt?: string;
+  /** متاتگ‌های og اضافه (مثلا product:price:amount) */
+  meta?: { property: string; content: string }[];
 }
 
 const {
   title,
   description,
   path = Astro.url.pathname,
-  image = '/og/og-default.jpg',
+  image = '/favicon-512.png',
   noindex = false,
+  ogType = 'website',
+  imageAlt,
+  meta = [],
 } = Astro.props;
 
 const canonicalURL = new URL(path, SITE_URL).toString();
@@ -26,16 +34,18 @@ const fullTitle = title.includes('آرکان گلد') ? title : `${title} | آر
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalURL} />
-{noindex && <meta name="robots" content="noindex, nofollow" />}
+<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
 
 <!-- Open Graph -->
-<meta property="og:type" content="website" />
+<meta property="og:type" content={ogType} />
 <meta property="og:site_name" content="آرکان گلد | Arkan Gold Gallery" />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:image" content={ogImageURL} />
+<meta property="og:image:alt" content={imageAlt || fullTitle} />
 <meta property="og:locale" content="fa_IR" />
+{meta.map((m) => <meta property={m.property} content={m.content} />)}
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />

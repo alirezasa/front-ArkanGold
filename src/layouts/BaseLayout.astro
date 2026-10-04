@@ -4,6 +4,7 @@ import Analytics from '../components/Analytics.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
+import { OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
 
 interface Props {
   title: string;
@@ -11,11 +12,14 @@ interface Props {
   path?: string;
   image?: string;
   noindex?: boolean;
+  ogType?: string;
+  imageAlt?: string;
+  meta?: { property: string; content: string }[];
   /** JSON-LD اضافی مخصوص همان صفحه (مثلا Product یا FAQPage) */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { title, description, path, image, noindex, jsonLd } = Astro.props;
+const { title, description, path, image, noindex, jsonLd, ogType, imageAlt, meta } = Astro.props;
 
 const organizationSchema = {
   '@context': 'https://schema.org',
@@ -26,12 +30,14 @@ const organizationSchema = {
   logo: 'https://arkan.gold/images/logo.png',
   description:
     'خرید و فروش آنلاین طلای آب‌شده و شمش طلای ۷۵۰ عیار با پشتوانه واقعی، فاکتور رسمی و امکان تحویل فیزیکی.',
-  telephone: '+982198765431',
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'تهران',
-    addressRegion: 'اختیاریه',
-    addressCountry: 'IR',
+  telephone: SUPPORT_PHONE_INTL,
+  address: { '@type': 'PostalAddress', ...OFFICE_ADDRESS_PARTS },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: SUPPORT_PHONE_INTL,
+    contactType: 'customer service',
+    areaServed: 'IR',
+    availableLanguage: ['fa'],
   },
   sameAs: [],
 };
@@ -49,7 +55,7 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://www.googletagmanager.com" />
 
-    <Seo title={title} description={description} path={path} image={image} noindex={noindex} />
+    <Seo title={title} description={description} path={path} image={image} noindex={noindex} ogType={ogType} imageAlt={imageAlt} meta={meta} />
     <Analytics />
 
     {schemas.map((schema) => (

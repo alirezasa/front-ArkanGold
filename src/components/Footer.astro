@@ -1,5 +1,8 @@
 ---
 import Icon from './Icon.astro';
+import { ENAMAD_CODE, ENAMAD_ID, OFFICE_ADDRESS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+
+const enamadQuery = ENAMAD_ID && ENAMAD_CODE ? `id=${encodeURIComponent(ENAMAD_ID)}&Code=${encodeURIComponent(ENAMAD_CODE)}` : '';
 
 const quickLinks = [
   { label: 'صفحه اصلی', href: '/' },
@@ -30,9 +33,9 @@ const socials = [
 <footer class="relative mt-16 bg-brand text-white/95">
   <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-[0.05]"></div>
 
-  <div class="container-page relative grid gap-10 py-14 md:grid-cols-3">
+  <div class="container-page relative grid grid-cols-2 gap-x-6 gap-y-10 py-12 md:py-14 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
     <!-- ستون ۱: برند و شبکه‌های اجتماعی -->
-    <div>
+    <div class="col-span-2 lg:col-span-1">
       <div class="flex items-center gap-2.5 mb-3">
         <img src="/images/logo-mark.png" alt="آرکان گلد" width="36" height="24" class="h-8 w-auto" />
         <p class="text-lg font-bold">آرکان گلد</p>
@@ -75,10 +78,10 @@ const socials = [
       </ul>
     </div>
 
-    <!-- ستون ۳: پشتیبانی و تماس -->
+    <!-- ستون ۳: پشتیبانی و راهنما -->
     <div>
       <p class="mb-4 font-semibold text-white">پشتیبانی و راهنما</p>
-      <ul class="space-y-2.5 text-sm text-white/80 mb-6">
+      <ul class="space-y-2.5 text-sm text-white/80">
         {supportLinks.map((l) => (
           <li>
             <a href={l.href} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
@@ -88,33 +91,81 @@ const socials = [
           </li>
         ))}
       </ul>
+    </div>
 
-      <div class="flex items-center gap-3 rounded-xl2 glass-panel px-4 py-3">
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
-          <Icon name="headset" class="h-4.5 w-4.5" />
-        </span>
-        <div>
-          <p class="text-[11px] text-white/60">پشتیبانی تلفنی</p>
-          <a href="tel:02191697394" class="text-sm font-semibold tnum hover:text-gold transition-colors">02191697394</a>
+    <!-- ستون ۴: اطلاعات تماس و نماد اعتماد -->
+    <div class="col-span-2 lg:col-span-1">
+      <p class="mb-4 font-semibold text-white">ارتباط با آرکان گلد</p>
+      <address class="not-italic space-y-3 text-sm text-white/85">
+        <div class="flex items-start gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
+            <Icon name="location" class="h-4.5 w-4.5" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-[11px] text-white/60">آدرس دفتر مرکزی</p>
+            <p class="leading-7">{OFFICE_ADDRESS}</p>
+          </div>
         </div>
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
+            <Icon name="headset" class="h-4.5 w-4.5" />
+          </span>
+          <div>
+            <p class="text-[11px] text-white/60">شماره تماس شرکت</p>
+            <a href={`tel:${SUPPORT_PHONE}`} class="font-semibold tnum hover:text-gold transition-colors">{SUPPORT_PHONE_FA}</a>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
+            <Icon name="clock" class="h-4.5 w-4.5" />
+          </span>
+          <div>
+            <p class="text-[11px] text-white/60">ساعت کاری</p>
+            <p>شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲</p>
+          </div>
+        </div>
+      </address>
+
+      <!-- نماد اعتماد الکترونیکی (اینماد) -->
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        {enamadQuery ? (
+          <a
+            href={`https://trustseal.enamad.ir/?${enamadQuery}`}
+            target="_blank"
+            referrerpolicy="origin"
+            rel="noopener"
+            class="flex h-[112px] w-[96px] items-center justify-center rounded-xl bg-white p-1.5 shadow-sm"
+            aria-label="نماد اعتماد الکترونیکی آرکان گلد"
+          >
+            <img
+              referrerpolicy="origin"
+              src={`https://trustseal.enamad.ir/logo.aspx?${enamadQuery}`}
+              alt="نماد اعتماد الکترونیکی"
+              width="84"
+              height="100"
+              loading="lazy"
+              class="h-full w-auto object-contain cursor-pointer"
+              code={ENAMAD_CODE}
+            />
+          </a>
+        ) : (
+          <a
+            href="/licenses"
+            class="flex h-[112px] w-[96px] flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-2 text-center text-brand shadow-sm"
+            aria-label="نماد اعتماد الکترونیکی آرکان گلد"
+          >
+            <Icon name="seal" class="h-8 w-8 text-gold" />
+            <span class="text-[10px] font-semibold leading-4">نماد اعتماد الکترونیکی</span>
+          </a>
+        )}
+        <p class="max-w-[14rem] text-xs leading-6 text-white/65">
+          آرکان گلد دارای نماد اعتماد الکترونیکی از مرکز توسعه تجارت الکترونیکی است.
+        </p>
       </div>
     </div>
   </div>
 
-  <div class="relative border-t border-white/10">
-    <div class="container-page flex flex-col gap-3 py-5 text-sm text-white/70 md:flex-row md:items-center md:justify-between">
-      <span class="flex items-center gap-2">
-        <Icon name="clock" class="h-4 w-4 text-gold" />
-        ساعت کاری: شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲
-      </span>
-      <span class="flex items-center gap-2">
-        <Icon name="location" class="h-4 w-4 text-gold" />
-        تهران - اختیاریه
-      </span>
-    </div>
-  </div>
-
-  <div class="relative border-t border-white/10 py-4 text-center text-xs text-white/50">
+  <div class="relative border-t border-white/10 px-5 py-4 text-center text-xs leading-6 text-white/50">
     کلیه حقوق برای آرکان گلد (گنجینه طلای پروانه زر) محفوظ است © {new Date().getFullYear()}
   </div>
 </footer>
