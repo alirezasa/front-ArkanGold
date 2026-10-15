@@ -36,16 +36,15 @@ const socials = [
   <div class="container-page relative grid grid-cols-2 gap-x-6 gap-y-10 py-12 md:py-14 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
     <!-- ستون ۱: برند و شبکه‌های اجتماعی -->
     <div class="col-span-2 lg:col-span-1">
-      <div class="flex items-center gap-2.5 mb-3">
-        <img src="/images/logo-mark.png" alt="آرکان گلد" width="36" height="24" class="h-8 w-auto" />
-        <p class="text-lg font-bold">آرکان گلد</p>
-      </div>
-      <p class="text-xs text-white/55 mb-4">Arkan Gold Gallery</p>
+      <a href="/" class="mb-5 inline-block" aria-label="آرکان گلد - صفحه اصلی">
+        <img src="/images/arkan-gold-logo.png" alt="آرکان گلد" width="480" height="388" loading="lazy" class="h-24 w-auto" />
+      </a>
       <p class="text-sm leading-7 text-white/80">
         ما در آرکان گلد تلاش کرده‌ایم تجربه‌ای مطمئن، ساده و قابل‌اتکا از معاملات طلا برای
         کاربران فراهم کنیم؛ تجربه‌ای که در آن اصالت کالا، شفافیت قیمت، امکان بررسی سفارش
         و قابلیت تحویل فیزیکی طلا در اولویت قرار دارد.
       </p>
+      <p class="brand-slogan mt-3 text-2xl sm:text-[1.75rem]">آرکان گلد ارزش ماندگار</p>
       <ul class="mt-5 flex gap-3">
         {socials.map((s) => (
           <li>

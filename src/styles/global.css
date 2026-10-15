@@ -10,6 +10,24 @@
   font-display: swap;
 }
 
+/* فونت نستعلیق شعار برند در فوتر (Noto Nastaliq Urdu — مجوز SIL OFL).
+   فایل فقط حروف شعار «آرکان گلد ارزش ماندگار» را دارد؛ با تغییر متن شعار، فایل را دوباره بسازید:
+   https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@600&text=... */
+@font-face {
+  font-family: 'Arkan Slogan';
+  src: url('/fonts/NotoNastaliq-slogan.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+.brand-slogan {
+  font-family: 'Arkan Slogan', 'Vazirmatn', Tahoma, sans-serif;
+  font-weight: 600;
+  /* رنگ طلایی لوگو */
+  color: #be9855;
+  line-height: 2.2;
+}
+
 html {
   direction: rtl;
   scroll-behavior: smooth;

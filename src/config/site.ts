@@ -9,7 +9,7 @@
 export const APP_URL = 'https://app.arkan.gold';
 
 /** کارمزد خرید و فروش طلای آب‌شده و محصولات فروشگاه (درصد) */
-export const TRADE_FEE_PERCENT = 0.5;
+export const TRADE_FEE_PERCENT = 1;
 
 /** عیار تمام شمش‌های آرکان گلد (۷۵۰ = طلای ۱۸ عیار) */
 export const BAR_PURITY = 750;
@@ -21,10 +21,10 @@ export const SUPPORT_PHONE_FA = '۰۲۱۹۱۶۹۷۳۹۴';
 export const SUPPORT_PHONE_INTL = '+982191697394';
 
 /** آدرس دفتر مرکزی */
-export const OFFICE_ADDRESS = 'تهران، اختیاریه، خیابان شهید مهدی میرفرشی، خیابان کاووس غربی، پلاک ۲';
+export const OFFICE_ADDRESS = 'تهران، شهرک غرب، بلوار شهید محمد مهدی فرحزادی، پلاک ۱۱۷، طبقه ۴، واحد ۱۸';
 /** اجزای آدرس برای schema.org (PostalAddress) */
 export const OFFICE_ADDRESS_PARTS = {
-  streetAddress: 'اختیاریه، خیابان شهید مهدی میرفرشی، خیابان کاووس غربی، پلاک ۲',
+  streetAddress: 'شهرک غرب، بلوار شهید محمد مهدی فرحزادی، پلاک ۱۱۷، طبقه ۴، واحد ۱۸',
   addressLocality: 'تهران',
   addressRegion: 'تهران',
   addressCountry: 'IR',
@@ -53,12 +53,12 @@ export const ARKAN_API_URL: string = (import.meta.env.PUBLIC_ARKAN_API_URL || 'h
 
 /**
  * API استعلام اصالت شمش (افزونه‌ی وردپرس wordpress/arkan-bar-verify/).
- * کد ۶ رقمی هولوگرام به‌صورت query ارسال می‌شود:
- *   GET {VERIFY_API_URL}?code=123456
+ * کد ۸ رقمی هولوگرام به‌صورت query ارسال می‌شود:
+ *   GET {VERIFY_API_URL}?code=12345678
  * با متغیر محیطی PUBLIC_VERIFY_API_URL قابل تغییر است.
  */
 export const VERIFY_API_URL: string =
   import.meta.env.PUBLIC_VERIFY_API_URL || 'https://arkan.gold/mag/wp-json/arkan/v1/verify-bar';
 
-/** فرمت فارسی درصد کارمزد، مثلا «۰٫۵» */
+/** فرمت فارسی درصد کارمزد، مثلا «۱» */
 export const TRADE_FEE_LABEL = TRADE_FEE_PERCENT.toLocaleString('fa-IR');

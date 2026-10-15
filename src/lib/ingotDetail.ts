@@ -63,7 +63,7 @@ export function ingotFaq(p: GoldIngot): { question: string; answer: string }[] {
     },
     {
       question: 'چطور از اصالت شمش آرکان گلد مطمئن شوم؟',
-      answer: 'هر شمش آرکان گلد یک کد ۶ رقمی یکتا روی هولوگرام کارت پلمپ دارد که در صفحه‌ی «استعلام اصالت شمش» سایت به‌صورت رایگان و آنلاین قابل بررسی است. همراه هر خرید فاکتور رسمی نیز صادر می‌شود.',
+      answer: 'هر شمش آرکان گلد یک کد ۸ رقمی یکتا روی هولوگرام کارت پلمپ دارد که در صفحه‌ی «استعلام اصالت شمش» سایت به‌صورت رایگان و آنلاین قابل بررسی است. همراه هر خرید فاکتور رسمی نیز صادر می‌شود.',
     },
     {
       question: 'مراحل خرید و تحویل شمش چگونه است؟',
@@ -159,7 +159,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
     manufacturer: { '@type': 'Organization', name: 'آرکان گلد', url: SITE },
     ...(code ? { sku: code, mpn: code } : {}),
     ...(gtin ? { gtin } : {}),
-    ...(images.length ? { image: images.map((i) => i.src) } : { image: `${SITE}/images/logo.png` }),
+    ...(images.length ? { image: images.map((i) => i.src) } : { image: `${SITE}/images/arkan-gold-logo.png` }),
     ...(weights.length === 1 ? { weight: { '@type': 'QuantitativeValue', value: weights[0], unitCode: 'GRM' } } : {}),
     additionalProperty: (p.specifications ?? []).map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
     ...(offers ? { offers } : {}),
@@ -234,7 +234,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
  * ------------------------------------------------------------------ */
 
 const services: { icon: IconName; title: string; desc: string; href: string }[] = [
-  { icon: 'shield', title: 'استعلام اصالت', desc: 'با کد ۶ رقمی هولوگرام شمش', href: '/verify' },
+  { icon: 'shield', title: 'استعلام اصالت', desc: 'با کد ۸ رقمی هولوگرام شمش', href: '/verify' },
   { icon: 'location', title: 'تحویل فیزیکی', desc: 'ارسال بیمه‌شده یا تحویل حضوری', href: '/services' },
   { icon: 'invoice', title: 'فاکتور رسمی', desc: 'صدور فاکتور معتبر برای هر خرید', href: '/licenses' },
   { icon: 'trend-up', title: 'فروش مجدد', desc: 'فروش به آرکان گلد با قیمت لحظه‌ای', href: '/sell-gold' },
@@ -257,7 +257,7 @@ function fallbackDescription(p: GoldIngot): string {
   const karat = karatLabel(p.purityKarat);
   const weights = weightLabel(p);
   return [
-    `<p>${esc(p.name)} محصول آرکان گلد، شمش طلای ${esc(karat)}${weights ? ` در وزن ${esc(weights)}` : ''} است که با قیمت لحظه‌ای و بر اساس نرخ روز طلا عرضه می‌شود. این شمش همراه با کارت پلمپ امنیتی، کد ۶ رقمی یکتا روی هولوگرام و فاکتور رسمی تحویل داده می‌شود.</p>`,
+    `<p>${esc(p.name)} محصول آرکان گلد، شمش طلای ${esc(karat)}${weights ? ` در وزن ${esc(weights)}` : ''} است که با قیمت لحظه‌ای و بر اساس نرخ روز طلا عرضه می‌شود. این شمش همراه با کارت پلمپ امنیتی، کد ۸ رقمی یکتا روی هولوگرام و فاکتور رسمی تحویل داده می‌شود.</p>`,
     '<p>شمش طلا یکی از مطمئن‌ترین روش‌ها برای پس‌انداز و حفظ ارزش دارایی است؛ چون هزینه‌ی ساخت و اجرت زیورآلات را ندارد و نقدشوندگی بالایی دارد. شمش‌های آرکان گلد را می‌توانید هر زمان با قیمت لحظه‌ای دوباره به آرکان گلد بفروشید.</p>',
     '<h3>ویژگی‌های شمش آرکان گلد</h3>',
     '<ul><li>عیار استاندارد و قابل استعلام آنلاین</li><li>کارت پلمپ امنیتی با هولوگرام و کد یکتا</li><li>فاکتور رسمی برای هر خرید</li><li>ارسال بیمه‌شده یا تحویل حضوری در دفتر مرکزی</li></ul>',
@@ -286,7 +286,7 @@ export function ingotDetailHtml(p: GoldIngot, { serviceEnabled }: DetailHtmlOpti
   const buyAttrs = canBuy ? `href="${esc(safeHref(first!.buyUrl))}"` : 'aria-disabled="true"';
 
   const gallery = `
-    <div class="min-w-0 lg:sticky lg:top-32">
+    <div class="min-w-0 lg:sticky lg:top-40">
       <div class="aspect-square rounded-xl2 bg-white border border-brand-100/40 shadow-card overflow-hidden">
         <img id="product-main-image" src="${esc(mainImage)}" alt="${esc(images[0]?.alt || p.name)}" class="h-full w-full object-contain p-4" width="640" height="640" fetchpriority="high" onerror="${onErr}" />
       </div>

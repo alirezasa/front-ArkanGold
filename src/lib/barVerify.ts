@@ -1,17 +1,17 @@
 /**
- * سرویس استعلام اصالت شمش با کد ۶ رقمی
+ * سرویس استعلام اصالت شمش با کد ۸ رقمی
  * ----------------------------------------------------
  * قرارداد API (پیاده‌سازی وردپرس: wordpress/arkan-bar-verify/):
  *
- *   GET {VERIFY_API_URL}?code=123456
+ *   GET {VERIFY_API_URL}?code=12345678
  *
- *   200 → { "valid": true, "status": "valid", "code": "123456",
+ *   200 → { "valid": true, "status": "valid", "code": "12345678",
  *           "product": "شمش طلا 100 گرمی (عیار 750)", "product_code": "6260320777981",
  *           "gtin": "2041231", "dimensions": "51 × 30/40 میلی‌متر / ضخامت 3/34 میلی‌متر",
  *           "weight": "100 گرم", "purity": "۷۵۰ (۱۸ عیار)", "country": "ایران",
  *           "manufacturer": "Zarmahan Gold", "brand": "آرکان گلد / ARKAN GOLD",
  *           "owner_name": "علی رضایی", "owned_at": "2026-10-01" }
- *   200 → { "valid": false, "status": "revoked", "code": "123456" }
+ *   200 → { "valid": false, "status": "revoked", "code": "12345678" }
  *   404 → کد یافت نشد          429 → تعداد درخواست بیش از حد مجاز
  */
 import { VERIFY_API_URL } from '../config/site';
@@ -36,7 +36,7 @@ export interface VerifyResult {
 }
 
 /** تعداد ارقام کد اصالت */
-export const VERIFY_CODE_LENGTH = 6;
+export const VERIFY_CODE_LENGTH = 8;
 
 /** یکسان‌سازی کد: اعداد فارسی/عربی → لاتین و حذف هر کاراکتر غیرعددی */
 export function normalizeCode(input: string): string {

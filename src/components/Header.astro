@@ -8,9 +8,8 @@ const nav = [
     href: '/services',
     children: [
       { label: 'خرید طلای آب‌شده', href: '/buy-gold', desc: 'خرید آنلاین با قیمت لحظه‌ای', icon: 'gold-drop' },
-      { label: 'فروش طلا و شمش', href: '/sell-gold', desc: 'فروش سریع، تسویه در چند ساعت کاری', icon: 'trend-up' },
-      { label: 'خزانه امن بانکی', href: '/services', desc: 'نگهداری دارایی در خزانه رسمی', icon: 'vault' },
-      { label: 'تحویل فیزیکی', href: '/services', desc: 'دریافت فیزیکی طلا در آدرس شما', icon: 'location' },
+      { label: 'خرید شمش طلا', href: '/shop', desc: 'شمش ۷۵۰ عیار آرکان با قیمت لحظه‌ای', icon: 'gold-bar' },
+      { label: 'تحویل فیزیکی', href: '/services', desc: 'تحویل فیزیکی طلا در آدرس شما', icon: 'location' },
     ],
   },
   { label: 'قیمت لحظه‌ای', href: '/price', icon: 'trend-up' },
@@ -28,14 +27,14 @@ const currentPath = Astro.url.pathname;
 </a>
 
 <header class="sticky top-0 z-50 border-b border-brand-100/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
-  <div class="container-page flex h-16 sm:h-[72px] items-center justify-between gap-3 sm:gap-6">
+  <div class="container-page flex h-[72px] sm:h-20 items-center justify-between gap-3 sm:gap-6">
     <a href="/" class="flex items-center gap-2.5 shrink-0 group" aria-label="آرکان گلد - صفحه اصلی">
       <img
-        src="/images/logo.png"
+        src="/images/arkan-gold-logo.png"
         alt="آرکان گلد"
-        width="40"
-        height="30"
-        class="h-9 w-auto transition-transform duration-300 group-hover:scale-105"
+        width="480"
+        height="388"
+        class="h-14 sm:h-16 w-auto transition-transform duration-300 group-hover:scale-105"
       />
       <span class="hidden sm:block text-lg font-bold text-brand">آرکان گلد</span>
     </a>
@@ -138,18 +137,19 @@ const currentPath = Astro.url.pathname;
   </div>
 
   <!-- نوار وضعیت زنده قیمت طلا — در همه‌ی سایزها از جمله موبایل نمایش داده می‌شود -->
-  <div class="border-t border-brand-100/40 bg-brand text-white/90">
-    <div class="container-page flex h-9 items-center gap-2 text-[11px] sm:text-[12px] overflow-x-auto scrollbar-thin">
-      <span class="live-dot shrink-0"></span>
-      <span class="shrink-0 font-medium whitespace-nowrap">نرخ زنده:</span>
-      <span class="tnum whitespace-nowrap">
-        طلای ۱۸ عیار هر گرم: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+  <div class="border-t border-brand-100/40 bg-brand text-white">
+    <div class="container-page flex min-h-[48px] sm:min-h-[52px] flex-wrap items-center justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-1 py-2 text-[13px] sm:text-[15px]">
+      <span class="flex items-center gap-2 whitespace-nowrap">
+        <span class="live-dot shrink-0"></span>
+        <span class="font-medium text-white/85"><span class="hidden sm:inline">نرخ زنده </span>طلای ۱۸ عیار<span class="hidden sm:inline"> هر گرم</span>:</span>
+        <b class="tnum text-[16px] sm:text-[19px] font-extrabold text-gold-300" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
       </span>
-      <span class="tnum whitespace-nowrap">
-        تغییر ۲۴ ساعته: <b class="font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
+      <span class="tnum flex items-center gap-1.5 whitespace-nowrap">
+        <span class="hidden sm:inline text-white/75">تغییر ۲۴ ساعته:</span>
+        <b class="text-[14px] sm:text-[16px] font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
       </span>
-      <span class="tnum whitespace-nowrap text-white/65 hidden md:inline">
-        آخرین بروزرسانی: <b data-price-bind="fetchedAt">--</b>
+      <span class="tnum whitespace-nowrap text-white/70 hidden md:inline">
+        آخرین بروزرسانی: <b class="font-semibold" data-price-bind="fetchedAt">--</b>
       </span>
     </div>
   </div>
@@ -160,9 +160,9 @@ const currentPath = Astro.url.pathname;
      به خود هدر محدود می‌کند و منو بریده نمایش داده می‌شد -->
 <div id="mobile-menu" class="fixed inset-0 z-[70] hidden xl:hidden bg-white" role="dialog" aria-modal="true" aria-label="منوی سایت">
   <div class="flex h-full max-h-[100dvh] flex-col bg-white">
-    <div class="flex h-16 items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
+    <div class="flex h-[72px] items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
       <a href="/" class="flex items-center gap-2.5">
-        <img src="/images/logo.png" alt="آرکان گلد" width="36" height="27" class="h-8 w-auto" />
+        <img src="/images/arkan-gold-logo.png" alt="آرکان گلد" width="480" height="388" class="h-14 w-auto" />
         <span class="text-lg font-bold text-brand">آرکان گلد</span>
       </a>
       <button id="mobile-menu-close" type="button" class="rounded-md p-2 text-brand" aria-label="بستن منو">
@@ -171,11 +171,12 @@ const currentPath = Astro.url.pathname;
     </div>
 
     <!-- قیمت زنده هم بالای منوی موبایل تکرار می‌شود تا همیشه در دید باشد -->
-    <div class="shrink-0 bg-brand text-white/90 px-5 py-2.5 text-xs flex items-center gap-2">
+    <div class="shrink-0 bg-brand text-white px-5 py-3 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
       <span class="live-dot"></span>
       <span class="tnum">
-        طلای ۱۸ عیار: <b class="font-bold" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+        طلای ۱۸ عیار: <b class="text-base font-extrabold text-gold-300" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
       </span>
+      <b class="tnum text-sm font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
     </div>
 
     <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto px-5 py-4">
