@@ -4,6 +4,8 @@
  * همین تابع هم در build (ProductCard.astro) و هم در مرورگر (افزودن شمش‌های جدیدی
  * که بعد از آخرین build به API اضافه شده‌اند) استفاده می‌شود تا ظاهر کارت‌ها یکسان بماند.
  * کارت همیشه کاربر را به صفحه‌ی جزئیات محصول می‌برد؛ دکمه‌ی خرید نهایی فقط در آن صفحه است.
+ * دکمه‌ی «مشاهده جزئیات و خرید» خودش لینک است، چون .btn-primary موقعیت relative دارد و روی
+ * لایه‌ی کلیک‌پذیر عنوان (after:inset-0) قرار می‌گیرد؛ اگر لینک نباشد کلیک روی آن بی‌اثر است.
  * updateIngotCard قیمت لحظه‌ای و موجودی یک کارت موجود را به‌روز می‌کند.
  */
 import { formatToman } from './goldPrice';
@@ -106,7 +108,7 @@ export function ingotCardHtml(p: GoldIngot, { hasPage, serviceEnabled, headingTa
         <p class="font-bold text-brand tnum" data-ingot-price>${esc(ingotPriceText(p))}</p>
       </div>
     </div>
-    <span data-ingot-cta class="btn-primary !py-2.5 text-xs group-hover:shadow-card-hover" aria-hidden="true">${esc(ingotCardCtaLabel(p, serviceEnabled))}</span>
+    <a href="${esc(detailHref)}" data-ingot-cta class="btn-primary z-10 !py-2.5 text-xs group-hover:shadow-card-hover" tabindex="-1" aria-hidden="true">${esc(ingotCardCtaLabel(p, serviceEnabled))}</a>
   </div>
 </article>`;
 }

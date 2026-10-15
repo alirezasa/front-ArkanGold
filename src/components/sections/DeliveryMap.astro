@@ -1,6 +1,8 @@
 ---
 import Icon from '../Icon.astro';
 import { OFFICE_ADDRESS } from '../../config/site';
+
+const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(OFFICE_ADDRESS)}`;
 ---
 
 <section class="container-page py-14">
@@ -43,7 +45,7 @@ import { OFFICE_ADDRESS } from '../../config/site';
       </div>
       <div class="absolute bottom-4 right-4 left-4 flex items-center justify-between rounded-lg bg-white/90 backdrop-blur px-4 py-2.5 text-xs shadow-card">
         <span class="text-ink-soft">مشاهده در نقشه و مسیریابی</span>
-        <a href="https://maps.google.com" target="_blank" rel="noopener" class="font-semibold text-brand hover:underline">باز کردن نقشه</a>
+        <a href={mapUrl} target="_blank" rel="noopener" class="font-semibold text-brand hover:underline">باز کردن نقشه</a>
       </div>
     </div>
   </div>

@@ -6,14 +6,14 @@ import { SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 import { faqIntro } from '../data/faq';
 
 const steps = [
-  { title: 'کد ۶ رقمی را پیدا کنید', desc: 'کد ۶ رقمی اصالت روی هولوگرام اختصاصی کارت پلمپ شمش درج شده است.' },
-  { title: 'کد را وارد کنید', desc: 'کد ۶ رقمی را دقیقاً مطابق هولوگرام وارد کنید؛ اعداد فارسی یا انگلیسی هر دو قابل قبول هستند.' },
+  { title: 'کد ۸ رقمی را پیدا کنید', desc: 'کد ۸ رقمی اصالت روی هولوگرام اختصاصی کارت پلمپ شمش درج شده است.' },
+  { title: 'کد را وارد کنید', desc: 'کد ۸ رقمی را دقیقاً مطابق هولوگرام وارد کنید؛ اعداد فارسی یا انگلیسی هر دو قابل قبول هستند.' },
   { title: 'مشخصات را تطبیق دهید', desc: 'نام محصول، وزن، عیار، ابعاد و نام مالک نمایش‌داده‌شده را با شمش، کارت و فاکتور آن مقایسه کنید.' },
 ];
 
 const checks = [
   'پلمپ و کارت شمش سالم، بدون خراش، باز شدگی یا چسب‌کاری مجدد باشد.',
-  'هولوگرام روی کارت سالم و بدون آسیب باشد و کد ۶ رقمی آن خوانا باشد.',
+  'هولوگرام روی کارت سالم و بدون آسیب باشد و کد ۸ رقمی آن خوانا باشد.',
   'وزن، عیار، ابعاد و کد محصول نمایش‌داده‌شده در استعلام با مشخصات درج‌شده روی کارت یکی باشد.',
   'هنگام خرید دست‌دوم، نام مالک ثبت‌شده در استعلام را با فروشنده تطبیق دهید.',
   'در صورت هرگونه مغایرت، از خرید یا دریافت شمش خودداری کرده و با پشتیبانی تماس بگیرید.',
@@ -21,12 +21,12 @@ const checks = [
 
 const verifyFaq = [
   {
-    question: 'کد ۶ رقمی اصالت شمش آرکان گلد کجا درج شده است؟',
-    answer: 'کد ۶ رقمی اصالت هر شمش روی هولوگرام اختصاصی کارت پلمپ شمش چاپ شده است. این کد برای هر شمش یکتا است و فقط از طریق سامانه آرکان گلد قابل استعلام است.',
+    question: 'کد ۸ رقمی اصالت شمش آرکان گلد کجا درج شده است؟',
+    answer: 'کد ۸ رقمی اصالت هر شمش روی هولوگرام اختصاصی کارت پلمپ شمش چاپ شده است. این کد برای هر شمش یکتا است و فقط از طریق سامانه آرکان گلد قابل استعلام است.',
   },
   {
     question: 'اگر نتیجه استعلام «یافت نشد» بود چه کنم؟',
-    answer: 'ابتدا کد ۶ رقمی را دوباره و با دقت وارد کنید. اگر باز هم یافت نشد، شمش را خریداری یا دریافت نکنید و موضوع را از طریق تماس تلفنی یا تیکت به پشتیبانی آرکان گلد اطلاع دهید.',
+    answer: 'ابتدا کد ۸ رقمی را دوباره و با دقت وارد کنید. اگر باز هم یافت نشد، شمش را خریداری یا دریافت نکنید و موضوع را از طریق تماس تلفنی یا تیکت به پشتیبانی آرکان گلد اطلاع دهید.',
   },
   {
     question: 'آیا استعلام اصالت هزینه دارد؟',
@@ -61,7 +61,7 @@ const faqSchema = {
 
 <BaseLayout
   title="استعلام اصالت شمش"
-  description="استعلام آنلاین و رایگان اصالت شمش طلای آرکان گلد با کد ۶ رقمی هولوگرام؛ مشاهده مشخصات شمش، وزن، عیار، مالک و تاریخ مالکیت."
+  description="استعلام آنلاین و رایگان اصالت شمش طلای آرکان گلد با کد ۸ رقمی هولوگرام؛ مشاهده مشخصات شمش، وزن، عیار، مالک و تاریخ مالکیت."
   path="/verify"
   jsonLd={[pageSchema, faqSchema]}
 >
@@ -76,13 +76,13 @@ const faqSchema = {
         </span>
         <h1 class="mt-4 text-3xl md:text-4xl font-bold text-brand leading-[1.4]">استعلام اصالت شمش آرکان گلد</h1>
         <p class="mt-4 text-base leading-8 text-ink-soft max-w-xl mx-auto lg:mx-0">
-          هر شمش آرکان گلد یک کد ۶ رقمی یکتا روی هولوگرام اختصاصی کارت پلمپ دارد. با وارد کردن این کد،
+          هر شمش آرکان گلد یک کد ۸ رقمی یکتا روی هولوگرام اختصاصی کارت پلمپ دارد. با وارد کردن این کد،
           اصالت شمش، مشخصات آن و مالک ثبت‌شده‌اش را با اطلاعات سامانه آرکان گلد تطبیق دهید.
         </p>
 
-        <!-- راهنمای محل کد ۶ رقمی -->
+        <!-- راهنمای محل کد ۸ رقمی -->
         <figure class="mt-8 hidden lg:block">
-          <svg viewBox="0 0 420 220" class="w-full max-w-md" role="img" aria-label="محل درج کد ۶ رقمی اصالت روی هولوگرام کارت شمش">
+          <svg viewBox="0 0 420 220" class="w-full max-w-md" role="img" aria-label="محل درج کد ۸ رقمی اصالت روی هولوگرام کارت شمش">
             <defs>
               <linearGradient id="vf-brand" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#5a0d13" /><stop offset="1" stop-color="#1a0204" />
@@ -100,9 +100,9 @@ const faqSchema = {
             <text x="105" y="88" text-anchor="middle" fill="#ffffff" fill-opacity="0.7" font-size="10" font-family="Tahoma">100 g • 750</text>
             <text x="105" y="106" text-anchor="middle" fill="#ffffff" fill-opacity="0.5" font-size="9" font-family="Tahoma">GOLD BAR</text>
             <rect x="40" y="140" width="130" height="44" rx="22" fill="url(#vf-holo)" stroke="#c5a059" stroke-width="2" stroke-dasharray="5 4" />
-            <text x="105" y="168" text-anchor="middle" fill="#330509" font-size="16" font-weight="700" letter-spacing="4" font-family="Tahoma">123456</text>
+            <text x="105" y="168" text-anchor="middle" fill="#330509" font-size="16" font-weight="700" letter-spacing="2" font-family="Tahoma">12345678</text>
             <path d="M178 162 C230 162 240 120 280 120" fill="none" stroke="#330509" stroke-width="2" marker-end="url(#vf-arrow)" />
-            <text x="292" y="112" text-anchor="end" fill="#330509" font-size="15" font-weight="700">کد ۶ رقمی اصالت</text>
+            <text x="292" y="112" text-anchor="end" fill="#330509" font-size="15" font-weight="700">کد ۸ رقمی اصالت</text>
             <text x="292" y="136" text-anchor="end" fill="#5c5449" font-size="12">روی هولوگرام کارت پلمپ</text>
           </svg>
         </figure>
@@ -110,12 +110,12 @@ const faqSchema = {
 
       <!-- فرم استعلام -->
       <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover p-6 md:p-8">
-        <h2 class="text-lg font-bold text-brand mb-1">استعلام با کد ۶ رقمی</h2>
-        <p class="text-xs text-ink-soft mb-6">کد ۶ رقمی روی هولوگرام کارت شمش را وارد کنید (مثال: <span class="latin-digits">123456</span>).</p>
+        <h2 class="text-lg font-bold text-brand mb-1">استعلام با کد ۸ رقمی</h2>
+        <p class="text-xs text-ink-soft mb-6">کد ۸ رقمی روی هولوگرام کارت شمش را وارد کنید (مثال: <span class="latin-digits">12345678</span>).</p>
 
         <form id="verify-form" novalidate class="space-y-4">
           <div>
-            <label for="code" class="block mb-1.5 text-sm font-medium text-ink-soft">کد ۶ رقمی اصالت <span class="text-danger">*</span></label>
+            <label for="code" class="block mb-1.5 text-sm font-medium text-ink-soft">کد ۸ رقمی اصالت <span class="text-danger">*</span></label>
             <input
               id="code"
               name="code"
@@ -125,10 +125,10 @@ const faqSchema = {
               autocomplete="off"
               spellcheck="false"
               required
-              maxlength="6"
-              pattern="[0-9]{6}"
-              placeholder="123456"
-              class="latin-digits w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-2xl font-bold tracking-[0.5em] text-center focus:border-brand focus:outline-none focus:shadow-glow transition-shadow"
+              maxlength="8"
+              pattern="[0-9]{8}"
+              placeholder="12345678"
+              class="latin-digits w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-2xl font-bold tracking-[0.3em] text-center focus:border-brand focus:outline-none focus:shadow-glow transition-shadow"
               aria-describedby="code-error"
             />
             <p id="code-error" class="hidden mt-1.5 text-xs text-danger" role="alert"></p>
@@ -292,7 +292,7 @@ const faqSchema = {
   async function run() {
     const code = normalizeCode(codeInput.value);
     codeInput.value = code;
-    if (!code) return showCodeError('کد ۶ رقمی را وارد کنید.');
+    if (!code) return showCodeError('کد ۸ رقمی را وارد کنید.');
     if (!isValidCode(code)) return showCodeError(`کد اصالت باید دقیقاً ${VERIFY_CODE_LENGTH.toLocaleString('fa-IR')} رقم باشد.`);
     showCodeError('');
 
@@ -317,13 +317,13 @@ const faqSchema = {
     run();
   });
   codeInput.addEventListener('input', () => {
-    // فقط عدد (فارسی یا انگلیسی) و حداکثر ۶ رقم
+    // فقط عدد (فارسی یا انگلیسی) و حداکثر ۸ رقم
     const clean = normalizeCode(codeInput.value).slice(0, VERIFY_CODE_LENGTH);
     if (codeInput.value !== clean) codeInput.value = clean;
     showCodeError('');
   });
 
-  // لینک مستقیم (مثلا QR روی کارت شمش): /verify?code=123456
+  // لینک مستقیم (مثلا QR روی کارت شمش): /verify?code=12345678
   const preset = new URLSearchParams(location.search).get('code');
   if (preset) {
     codeInput.value = normalizeCode(preset).slice(0, VERIFY_CODE_LENGTH);

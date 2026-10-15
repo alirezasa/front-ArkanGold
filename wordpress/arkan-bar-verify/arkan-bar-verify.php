@@ -1,20 +1,20 @@
 <?php
 /**
  * Plugin Name: Arkan Gold — استعلام اصالت شمش
- * Description: ثبت کد ۶ رقمی اصالت شمش‌های آرکان گلد (به همراه مشخصات شمش و مالک) و ارائه API عمومی استعلام برای صفحه arkan.gold/verify.
- * Version:     2.0.0
+ * Description: ثبت کد ۸ رقمی اصالت شمش‌های آرکان گلد (به همراه مشخصات شمش و مالک) و ارائه API عمومی استعلام برای صفحه arkan.gold/verify.
+ * Version:     2.1.0
  * Author:      Arkan Gold
  * Requires PHP: 7.4
  *
  * API:
- *   GET /wp-json/arkan/v1/verify-bar?code=123456
+ *   GET /wp-json/arkan/v1/verify-bar?code=12345678
  *
  * پاسخ‌ها:
- *   200 {"valid":true,"status":"valid","code":"123456","product":"...","product_code":"...","gtin":"...",
+ *   200 {"valid":true,"status":"valid","code":"12345678","product":"...","product_code":"...","gtin":"...",
  *        "dimensions":"...","weight":"100 گرم","purity":"۷۵۰ (۱۸ عیار)","country":"ایران",
  *        "manufacturer":"Zarmahan Gold","brand":"آرکان گلد / ARKAN GOLD",
  *        "owner_name":"...","owned_at":"2026-10-01"}
- *   200 {"valid":false,"status":"revoked","code":"123456"}   ← کد باطل/مفقودی اعلام شده
+ *   200 {"valid":false,"status":"revoked","code":"12345678"}   ← کد باطل/مفقودی اعلام شده
  *   404 {"valid":false,"status":"not_found"}
  *   429 {"valid":false,"status":"rate_limited"}
  */
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 const ARKAN_BAR_CPT = 'arkan_bar';
-const ARKAN_BAR_CODE_LENGTH = 6;
+const ARKAN_BAR_CODE_LENGTH = 8;
 const ARKAN_BAR_RATE_LIMIT = 30;          // حداکثر درخواست
 const ARKAN_BAR_RATE_WINDOW = 10 * 60;    // در هر ۱۰ دقیقه برای هر IP
 
@@ -80,7 +80,7 @@ add_action('init', function () {
 function arkan_bar_fields()
 {
     return [
-        '_ab_code'         => ['کد ۶ رقمی اصالت', 'code', '', 'فقط عدد، دقیقاً ۶ رقم — مثال: 123456'],
+        '_ab_code'         => ['کد ۸ رقمی اصالت', 'code', '', 'فقط عدد، دقیقاً ۸ رقم — مثال: 12345678'],
         '_ab_product'      => ['نام محصول', 'product', '', 'مثال: شمش طلا 100 گرمی (عیار 750)'],
         '_ab_product_code' => ['کد محصول', 'product_code', '', 'مثال: 6260320777981'],
         '_ab_gtin'         => ['کد GTIN', 'gtin', '', 'مثال: 2041231'],
@@ -110,7 +110,7 @@ function arkan_bar_render_meta_box($post)
             $value = $default;
         }
         $extra = $key === '_ab_code'
-            ? ' inputmode="numeric" maxlength="6" pattern="[0-9۰-۹]{6}" required dir="ltr" style="letter-spacing:4px;font-weight:bold"'
+            ? ' inputmode="numeric" maxlength="8" pattern="[0-9۰-۹]{8}" required dir="ltr" style="letter-spacing:4px;font-weight:bold"'
             : '';
         printf(
             '<tr><th><label for="%1$s">%2$s</label></th><td><input type="text" id="%1$s" name="%1$s" value="%3$s" class="regular-text"%4$s>%5$s</td></tr>',
@@ -176,7 +176,7 @@ add_action('save_post_' . ARKAN_BAR_CPT, function ($post_id) {
         $value = arkan_bar_clean_value($key, wp_unslash($_POST[$key]));
         if ($key === '_ab_code') {
             if (!arkan_bar_is_valid_code($value)) {
-                $error = 'کد اصالت باید دقیقاً ۶ رقم عددی باشد؛ کد ذخیره نشد.';
+                $error = 'کد اصالت باید دقیقاً ۸ رقم عددی باشد؛ کد ذخیره نشد.';
                 continue;
             }
             if (arkan_bar_find_by_code($value, $post_id)) {
@@ -312,7 +312,7 @@ function arkan_bar_render_import_page()
             }
             $data = array_combine($header, array_slice(array_pad($row, count($header), ''), 0, count($header)));
             $code = arkan_bar_normalize_code($data['code'] ?? '');
-            // اکسل صفرهای ابتدای کد را حذف می‌کند (012345 → 12345)
+            // اکسل صفرهای ابتدای کد را حذف می‌کند (01234567 → 1234567)
             if ($code !== '' && strlen($code) < ARKAN_BAR_CODE_LENGTH) {
                 $code = str_pad($code, ARKAN_BAR_CODE_LENGTH, '0', STR_PAD_LEFT);
             }

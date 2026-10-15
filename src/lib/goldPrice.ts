@@ -155,7 +155,7 @@ export async function fetchPriceHistory(hours: number): Promise<PriceHistoryPoin
 }
 
 /**
- * کارمزد معامله (۰٫۵ درصد) — در خرید به مبلغ اضافه و در فروش از مبلغ کسر می‌شود.
+ * کارمزد معامله (TRADE_FEE_PERCENT درصد) — در خرید به مبلغ اضافه و در فروش از مبلغ کسر می‌شود.
  * نرخ فقط در src/config/site.ts تعریف شده است.
  */
 export function calcTradeFee(value: number): number {
