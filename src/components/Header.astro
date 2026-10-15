@@ -51,16 +51,16 @@ const currentPath = Astro.url.pathname;
               ]}
               aria-haspopup="true"
             >
-              <Icon name={item.icon as any} class="hidden 2xl:block h-4 w-4" />
+              <Icon name={item.icon as any} class="hidden 2xl:block h-5 w-5 shrink-0" />
               {item.label}
-              <Icon name="chevron" class="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
+              <Icon name="chevron" class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-180" />
             </button>
 
             <div class="invisible absolute right-0 top-full z-50 w-96 translate-y-2 rounded-card border border-brand-100/50 bg-white p-2 opacity-0 shadow-card-hover transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
               {item.children.map((c) => (
                 <a href={c.href} class="flex items-start gap-3 rounded-lg px-4 py-3 hover:bg-canvas-100 transition-colors">
-                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                    <Icon name={c.icon as any} class="h-5 w-5" />
+                  <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                    <Icon name={c.icon as any} class="h-6 w-6" />
                   </span>
                   <span class="flex flex-col gap-0.5">
                     <span class="text-sm font-semibold text-brand">{c.label}</span>
@@ -82,7 +82,7 @@ const currentPath = Astro.url.pathname;
                 : 'text-ink-soft hover:text-brand',
             ]}
           >
-            <Icon name={item.icon as any} class="hidden 2xl:block h-4 w-4" />
+            <Icon name={item.icon as any} class="hidden 2xl:block h-5 w-5 shrink-0" />
             {item.label}
           </a>
         )
@@ -93,7 +93,7 @@ const currentPath = Astro.url.pathname;
       <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
       <div class="nav-download-item hidden md:inline-flex">
         <div class="nav-download-trigger">
-          <Icon name="smartphone" class="h-4 w-4" />
+          <Icon name="smartphone" class="h-5 w-5 shrink-0" />
           <span class="nav-label whitespace-nowrap">دانلود اپلیکیشن</span>
         </div>
         <div class="qr-dropdown-modal">
@@ -187,7 +187,7 @@ const currentPath = Astro.url.pathname;
               <details class="group/d">
                 <summary class="flex cursor-pointer items-center justify-between py-4 text-base font-medium text-ink marker:content-none">
                   <span class="flex items-center gap-3">
-                    <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                    <Icon name={item.icon as any} class="h-6 w-6 text-brand" />
                     {item.label}
                   </span>
                   <Icon name="chevron" class="h-4 w-4 transition-transform group-open/d:rotate-180" />
@@ -195,8 +195,8 @@ const currentPath = Astro.url.pathname;
                 <div class="flex flex-col gap-1 pb-3">
                   {item.children.map((c) => (
                     <a href={c.href} class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-soft hover:bg-canvas-100 hover:text-brand">
-                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                        <Icon name={c.icon as any} class="h-4.5 w-4.5" />
+                      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                        <Icon name={c.icon as any} class="h-5.5 w-5.5" />
                       </span>
                       {c.label}
                     </a>
@@ -212,7 +212,7 @@ const currentPath = Astro.url.pathname;
                 rel={item.external ? 'noopener noreferrer' : undefined}
                 class="flex items-center gap-3 py-4 text-base font-medium text-ink hover:text-brand"
               >
-                <Icon name={item.icon as any} class="h-5 w-5 text-brand" />
+                <Icon name={item.icon as any} class="h-6 w-6 text-brand" />
                 {item.label}
               </a>
             </li>
