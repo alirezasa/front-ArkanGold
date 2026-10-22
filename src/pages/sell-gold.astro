@@ -4,7 +4,8 @@ import { TRADE_FEE_LABEL } from '../config/site';
 import GoldCalculator from '../components/sections/GoldCalculator.astro';
 
 const points = [
-  `فروش طلای آب‌شده یا شمش با نرخ لحظه‌ای، فقط با ${TRADE_FEE_LABEL} درصد کارمزد`,
+  `فروش طلای آب‌شده با نرخ لحظه‌ای، فقط با ${TRADE_FEE_LABEL} درصد کارمزد`,
+  'فروش شمش به آرکان به نرخ روز و بدون کارمزد می‌باشد و در صورت سالم بودن بسته‌بندی، ۳۰٪ از هزینه بسته‌بندی و حق‌الضرب به فروشنده بازپرداخت می‌گردد.',
   'واریز مبلغ به حساب بانکی معمولاً بین ۳۰ دقیقه تا چند ساعت کاری',
   'امکان فروش بخشی از موجودی طلای خزانه‌شده',
   'استعلام رایگان و بدون تعهد قبل از فروش',
@@ -28,8 +29,8 @@ const points = [
       </p>
       <ul class="space-y-3 text-sm text-ink-soft max-w-md mx-auto md:mx-0">
         {points.map((p) => (
-          <li class="flex items-center gap-2 justify-center md:justify-start">
-            <span class="h-1.5 w-1.5 rounded-full bg-gold shrink-0"></span>
+          <li class="flex items-start gap-2 justify-center md:justify-start leading-7">
+            <span class="mt-3 h-1.5 w-1.5 rounded-full bg-gold shrink-0"></span>
             {p}
           </li>
         ))}

@@ -3,6 +3,7 @@ import Seo from '../components/Seo.astro';
 import Analytics from '../components/Analytics.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Goftino from '../components/Goftino.astro';
 import '../styles/global.css';
 import { OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
 
@@ -57,6 +58,7 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
 
     <Seo title={title} description={description} path={path} image={image} noindex={noindex} ogType={ogType} imageAlt={imageAlt} meta={meta} />
     <Analytics />
+    <Goftino />
 
     {schemas.map((schema) => (
       <script type="application/ld+json" set:html={JSON.stringify(schema)} />

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { OFFICE_ADDRESS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import { OFFICE_ADDRESS, OFFICE_HOURS, SUPPORT_HOURS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 
 const contactSchema = {
   '@context': 'https://schema.org',
@@ -12,7 +12,8 @@ const contactSchema = {
 const details = [
   { label: 'تلفن تماس', value: SUPPORT_PHONE_FA, href: `tel:${SUPPORT_PHONE}` },
   { label: 'ایمیل', value: 'info@arkan.gold', href: 'mailto:info@arkan.gold' },
-  { label: 'ساعت کاری', value: 'شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲' },
+  { label: 'ساعات کاری دفتر', value: OFFICE_HOURS },
+  { label: 'پشتیبانی', value: SUPPORT_HOURS },
   { label: 'آدرس دفتر مرکزی', value: OFFICE_ADDRESS },
 ];
 ---

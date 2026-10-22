@@ -1,0 +1,13 @@
+---
+/**
+ * ویجت چت آنلاین گفتینو — روی تمام صفحات (از طریق BaseLayout) بارگذاری می‌شود.
+ * شناسه‌ی ویجت از GOFTINO_WIDGET_ID در config/site.ts خوانده می‌شود.
+ */
+import { GOFTINO_WIDGET_ID } from '../config/site';
+---
+
+{GOFTINO_WIDGET_ID && (
+  <script is:inline type="text/javascript" define:vars={{ GOFTINO_WIDGET_ID }}>
+    !function(){var i=GOFTINO_WIDGET_ID,d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);g.type="text/javascript",g.async=!0,g.src=l?s+"?o="+l:s;d.getElementsByTagName("head")[0].appendChild(g);}();
+  </script>
+)}
