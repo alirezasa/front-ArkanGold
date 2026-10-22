@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { ENAMAD_CODE, ENAMAD_ID, OFFICE_ADDRESS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import { ENAMAD_CODE, ENAMAD_ID, OFFICE_ADDRESS, OFFICE_HOURS, SUPPORT_HOURS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 
 const enamadQuery = ENAMAD_ID && ENAMAD_CODE ? `id=${encodeURIComponent(ENAMAD_ID)}&Code=${encodeURIComponent(ENAMAD_CODE)}` : '';
 
@@ -119,8 +119,9 @@ const socials = [
             <Icon name="clock" class="h-4.5 w-4.5" />
           </span>
           <div>
-            <p class="text-[11px] text-white/60">ساعت کاری</p>
-            <p>شنبه تا پنج‌شنبه، ۱۰ الی ۱۴ و ۱۶ الی ۲۲</p>
+            <p class="text-[11px] text-white/60">ساعات کاری دفتر</p>
+            <p>{OFFICE_HOURS}</p>
+            <p class="mt-0.5 text-white/70">{SUPPORT_HOURS}</p>
           </div>
         </div>
       </address>

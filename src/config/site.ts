@@ -21,14 +21,22 @@ export const SUPPORT_PHONE_FA = '۰۲۱۹۱۶۹۷۳۹۴';
 export const SUPPORT_PHONE_INTL = '+982191697394';
 
 /** آدرس دفتر مرکزی */
-export const OFFICE_ADDRESS = 'تهران، شهرک غرب، بلوار شهید محمد مهدی فرحزادی، پلاک ۱۱۷، طبقه ۴، واحد ۱۸';
+export const OFFICE_ADDRESS = 'تهران، شهرک غرب، بلوار شهید محمد مهدی فرحزادی، (مجتمع تجاری ستین سنتر) پلاک ۱۱۷، طبقه ۴، واحد ۱۸';
 /** اجزای آدرس برای schema.org (PostalAddress) */
 export const OFFICE_ADDRESS_PARTS = {
-  streetAddress: 'شهرک غرب، بلوار شهید محمد مهدی فرحزادی، پلاک ۱۱۷، طبقه ۴، واحد ۱۸',
+  streetAddress: 'شهرک غرب، بلوار شهید محمد مهدی فرحزادی، (مجتمع تجاری ستین سنتر) پلاک ۱۱۷، طبقه ۴، واحد ۱۸',
   addressLocality: 'تهران',
   addressRegion: 'تهران',
   addressCountry: 'IR',
 };
+
+/** ساعات کاری دفتر */
+export const OFFICE_HOURS = '۹ الی ۱۸';
+/** ساعات پاسخگویی پشتیبانی */
+export const SUPPORT_HOURS = 'پشتیبانی ۲۴ ساعته';
+
+/** شناسه‌ی ویجت چت آنلاین گفتینو (goftino.com) — خالی بودن آن ویجت را غیرفعال می‌کند */
+export const GOFTINO_WIDGET_ID = 'DvT1ia';
 
 /**
  * نماد اعتماد الکترونیکی (اینماد)

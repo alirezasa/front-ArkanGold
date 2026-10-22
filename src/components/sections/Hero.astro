@@ -114,7 +114,7 @@ const miniCards = [
             </div>
           </div>
 
-          <button type="button" id="hero-swap" aria-label="جابه‌جایی واحد" class="mb-1 flex h-11 w-11 items-center justify-center self-end rounded-full border border-brand-100/40 text-brand hover:bg-brand-50 transition-colors">
+          <button type="button" id="hero-swap" aria-label="جابه‌جایی بین گرم و تومان" class="mb-1 flex h-11 w-11 items-center justify-center self-end rounded-full border border-brand-100/40 text-brand hover:bg-brand-50 transition-colors">
             <Icon name="trend-up" class="h-5 w-5 rotate-90" />
           </button>
 
@@ -125,8 +125,9 @@ const miniCards = [
                 id="hero-toman"
                 type="text"
                 inputmode="decimal"
+                autocomplete="off"
+                placeholder="۰"
                 class="w-full rounded-lg border border-brand-100/40 px-4 py-3.5 text-base tnum focus:border-gold focus:outline-none focus:shadow-glow transition-shadow"
-                readonly
               />
               <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-soft/60">تومان</span>
             </div>
@@ -213,12 +214,43 @@ const miniCards = [
     if (off && note) note.textContent = mode === 'buy' ? 'خرید در حال حاضر موقتاً غیرفعال است.' : 'فروش در حال حاضر موقتاً غیرفعال است.';
   }
 
-  function updateTotal() {
-    const grams = parseFloat(gramsInput?.value || '0') || 0;
+  /** فیلدی که کاربر آخرین بار تایپ کرده؛ با تغییر قیمت یا نوع معامله، فیلد مقابل از روی همین محاسبه می‌شود */
+  let source: 'grams' | 'toman' = 'grams';
+
+  const feeRate = () => calcTradeFee(1);
+
+  /** تبدیل ورودی کاربر (ارقام فارسی/عربی، جداکننده‌ی هزارگان) به عدد */
+  function parseNumber(value: string): number {
+    const normalized = value
+      .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+      .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+      .replace(/[٫]/g, '.')
+      .replace(/[^\d.]/g, '');
+    return parseFloat(normalized) || 0;
+  }
+
+  /** گرم ← مبلغ: خرید = ارزش + کارمزد، فروش = ارزش − کارمزد */
+  function gramsToToman(grams: number): number {
     const goldValue = Math.max(0, grams) * unitPrice;
     const fee = calcTradeFee(goldValue);
-    const total = mode === 'buy' ? goldValue + fee : goldValue - fee;
-    if (tomanInput) tomanInput.value = formatToman(total).replace(' تومان', '');
+    return mode === 'buy' ? goldValue + fee : goldValue - fee;
+  }
+
+  /** مبلغ ← گرم (معکوس gramsToToman) */
+  function tomanToGrams(toman: number): number {
+    const perGram = unitPrice * (mode === 'buy' ? 1 + feeRate() : 1 - feeRate());
+    return perGram > 0 ? Math.max(0, toman) / perGram : 0;
+  }
+
+  function updateTotal() {
+    if (!unitPrice) return;
+    if (source === 'grams') {
+      const total = gramsToToman(parseFloat(gramsInput?.value || '0') || 0);
+      if (tomanInput) tomanInput.value = formatToman(total).replace(' تومان', '');
+    } else {
+      const grams = tomanToGrams(parseNumber(tomanInput?.value || ''));
+      if (gramsInput) gramsInput.value = grams ? String(Math.round(grams * 1000) / 1000) : '';
+    }
   }
 
   function setMode(next: 'buy' | 'sell') {
@@ -240,12 +272,25 @@ const miniCards = [
     applyAvailability();
   });
 
-  gramsInput?.addEventListener('input', updateTotal);
+  gramsInput?.addEventListener('input', () => {
+    source = 'grams';
+    updateTotal();
+  });
+  tomanInput?.addEventListener('input', () => {
+    source = 'toman';
+    // نمایش مبلغ با جداکننده‌ی هزارگان در حین تایپ
+    const amount = Math.floor(parseNumber(tomanInput.value));
+    tomanInput.value = amount ? formatToman(amount).replace(' تومان', '') : '';
+    updateTotal();
+  });
   tabBuy?.addEventListener('click', () => setMode('buy'));
   tabSell?.addEventListener('click', () => setMode('sell'));
   swapBtn?.addEventListener('click', () => {
-    if (gramsInput) gramsInput.classList.add('animate-pulse');
-    setTimeout(() => gramsInput?.classList.remove('animate-pulse'), 300);
+    const target = source === 'grams' ? tomanInput : gramsInput;
+    target?.focus();
+    target?.select();
+    target?.classList.add('animate-pulse');
+    setTimeout(() => target?.classList.remove('animate-pulse'), 300);
   });
 </script>
 
