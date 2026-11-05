@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { APP_URL, MESSENGER_PHONE_FA, SUPPORT_PHONE, SUPPORT_PHONE_FA, WHATSAPP_URL } from '../config/site';
+import { APP_URL } from '../config/site';
 import { mainNav, type NavLink } from '../data/nav';
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -12,13 +12,6 @@ const LOGO_SRC = '/images/arkan-gold-logo-header.webp';
 const LOGO_W = 1124;
 const LOGO_H = 356;
 
-/** آیتم‌های منوی پشتیبانی (هدر دسکتاپ و منوی موبایل) */
-const supportItems = [
-  { label: 'پشتیبانی آنلاین', desc: 'گفتگوی آنلاین با کارشناسان', icon: 'chat' as const, chat: true },
-  { label: 'تماس تلفنی', desc: SUPPORT_PHONE_FA, icon: 'phone' as const, href: `tel:${SUPPORT_PHONE}`, tnum: true },
-  { label: 'واتس‌اپ', desc: MESSENGER_PHONE_FA, icon: 'chat' as const, href: WHATSAPP_URL, external: true, tnum: true },
-  { label: 'تماس با ما', desc: 'آدرس، ساعات کاری و فرم تماس', icon: 'location' as const, href: '/contact' },
-];
 ---
 
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-2 focus:z-50 focus:bg-brand focus:text-white focus:px-4 focus:py-2 focus:rounded">
@@ -35,7 +28,7 @@ const supportItems = [
         width={LOGO_W}
         height={LOGO_H}
         fetchpriority="high"
-        class="h-9 min-[400px]:h-10 sm:h-12 xl:h-[46px] min-[1440px]:h-[52px] w-auto transition-transform duration-300 group-hover:scale-[1.03]"
+        class="h-8 min-[360px]:h-9 min-[400px]:h-10 sm:h-12 xl:h-[46px] min-[1440px]:h-[52px] w-auto transition-transform duration-300 group-hover:scale-[1.03]"
       />
     </a>
 
@@ -83,48 +76,18 @@ const supportItems = [
       ))}
     </nav>
 
-    <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-      <!-- پشتیبانی — جایگزین آیکون شناور چت روی صفحات (فقط دسکتاپ؛ در موبایل داخل منو است) -->
-      <div class="nav-dd relative group hidden xl:block">
-        <button type="button" class="nav-link nav-support" aria-haspopup="true" aria-expanded="false">
-          <span class="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand">
-            <Icon name="headset" class="h-[18px] w-[18px]" />
-            <span class="absolute -top-0.5 -left-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success"></span>
-          </span>
-          پشتیبانی
-          <Icon name="chevron" class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" />
-        </button>
-        <div class="nav-dd-panel nav-dd-panel--end w-[19rem]">
-          {supportItems.map((s) => (
-            s.chat ? (
-              <button type="button" data-support-chat class="nav-dd-link w-full text-right">
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-                  <Icon name={s.icon} class="h-5.5 w-5.5" />
-                </span>
-                <span class="flex min-w-0 flex-col">
-                  <span class="text-sm font-semibold text-brand">{s.label}</span>
-                  <span class="text-xs text-ink-soft">{s.desc}</span>
-                </span>
-              </button>
-            ) : (
-              <a
-                href={s.href}
-                target={s.external ? '_blank' : undefined}
-                rel={s.external ? 'noopener noreferrer' : undefined}
-                class="nav-dd-link"
-              >
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                  <Icon name={s.icon} class="h-5.5 w-5.5" />
-                </span>
-                <span class="flex min-w-0 flex-col">
-                  <span class="text-sm font-semibold text-brand">{s.label}</span>
-                  <span class:list={['text-xs text-ink-soft', s.tnum && 'tnum']}>{s.desc}</span>
-                </span>
-              </a>
-            )
-          ))}
-        </div>
-      </div>
+    <div class="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2.5 shrink-0">
+      <!-- پشتیبانی آنلاین — فقط آیکون، در همه‌ی اندازه‌ها (بعد از لوگو و قبل از ورود) -->
+      <button
+        type="button"
+        data-support-chat
+        class="support-icon-btn"
+        aria-label="پشتیبانی آنلاین"
+        title="پشتیبانی آنلاین"
+      >
+        <Icon name="headset" class="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
+        <span class="support-dot" aria-hidden="true"></span>
+      </button>
 
       <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
       <div class="nav-download-item hidden md:inline-flex">
@@ -153,14 +116,14 @@ const supportItems = [
         </div>
       </div>
 
-      <a href={APP_URL} class="btn-primary !px-3 min-[400px]:!px-4 sm:!px-5 !py-2 sm:!py-2.5 text-xs sm:text-sm whitespace-nowrap">
+      <a href={APP_URL} class="btn-primary !px-2.5 min-[360px]:!px-3 min-[400px]:!px-4 sm:!px-5 !py-2 sm:!py-2.5 text-[11px] min-[360px]:text-xs sm:text-sm whitespace-nowrap">
         ورود / ثبت نام
       </a>
 
       <button
         id="mobile-menu-btn"
         type="button"
-        class="xl:hidden flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 text-brand transition-colors hover:bg-brand-50"
+        class="xl:hidden flex h-9 w-9 min-[360px]:h-10 min-[360px]:w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 text-brand transition-colors hover:bg-brand-50"
         aria-expanded="false"
         aria-controls="mobile-menu"
         aria-label="باز کردن منو"
@@ -259,27 +222,20 @@ const supportItems = [
             </li>
           )
         ))}
+        <!-- پشتیبانی آنلاین — تنها دسترسی پشتیبانی داخل منوی باز شده -->
+        <li>
+          <button type="button" data-support-chat class="m-row w-full rounded-xl border border-brand-100/40 bg-white text-right">
+            <span class="m-icon relative">
+              <Icon name="headset" class="h-5 w-5" />
+              <span class="support-dot" aria-hidden="true"></span>
+            </span>
+            <span class="flex-1">پشتیبانی آنلاین</span>
+            <span class="rounded-full bg-success-50 px-2 py-0.5 text-[11px] font-semibold text-success">آنلاین</span>
+          </button>
+        </li>
       </ul>
 
-      <!-- پشتیبانی داخل منوی موبایل -->
-      <div class="mt-4 rounded-xl border border-brand-100/40 bg-white p-3">
-        <p class="mb-2 flex items-center gap-2 px-1 text-sm font-bold text-brand">
-          <Icon name="headset" class="h-5 w-5" />
-          پشتیبانی آرکان گلد
-        </p>
-        <div class="grid grid-cols-2 gap-2">
-          <button type="button" data-support-chat class="flex flex-col items-center gap-1.5 rounded-lg bg-brand px-2 py-3 text-xs font-semibold text-white">
-            <Icon name="chat" class="h-5 w-5" />
-            پشتیبانی آنلاین
-          </button>
-          <a href={`tel:${SUPPORT_PHONE}`} class="flex flex-col items-center gap-1.5 rounded-lg border border-brand-100/60 px-2 py-3 text-xs font-semibold text-brand">
-            <Icon name="phone" class="h-5 w-5" />
-            <span class="tnum">{SUPPORT_PHONE_FA}</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="mt-3 rounded-xl border border-brand-100/40 bg-white p-3 flex items-center gap-3">
+      <div class="mt-4 rounded-xl border border-brand-100/40 bg-white p-3 flex items-center gap-3">
         <img
           src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=ffffff"
           alt="اسکن جهت دانلود اپلیکیشن"
@@ -297,14 +253,7 @@ const supportItems = [
       </div>
     </nav>
 
-    <div class="shrink-0 grid grid-cols-[auto_1fr] gap-2.5 border-t border-brand-100/50 bg-white px-4 sm:px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <button type="button" data-support-chat class="btn-outline !px-4 !py-3 text-sm" aria-label="پشتیبانی آنلاین">
-        <span class="relative">
-          <Icon name="headset" class="h-5 w-5" />
-          <span class="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-success"></span>
-        </span>
-        پشتیبانی
-      </button>
+    <div class="shrink-0 border-t border-brand-100/50 bg-white px-4 sm:px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <a href={APP_URL} class="btn-primary w-full !py-3 text-sm">ورود / ثبت نام</a>
     </div>
   </div>
@@ -316,7 +265,10 @@ const supportItems = [
     margin-inline: auto;
     width: 100%;
     max-width: 1760px;
-    padding-inline: 1rem;
+    padding-inline: 0.75rem;
+  }
+  @media (min-width: 360px) {
+    .header-wide { padding-inline: 1rem; }
   }
   @media (min-width: 640px) {
     .header-wide { padding-inline: 1.5rem; }
@@ -354,11 +306,40 @@ const supportItems = [
     color: #330509;
     font-weight: 700;
   }
-  .nav-support {
-    padding-block: 0.3rem;
-    padding-inline-start: 0.35rem;
-    font-weight: 600;
+  /* آیکون پشتیبانی آنلاین در هدر */
+  .support-icon-btn {
+    position: relative;
+    display: inline-flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #f6e7e8;
     color: #330509;
+    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  }
+  .support-icon-btn:hover {
+    background: #330509;
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  @media (min-width: 640px) {
+    .support-icon-btn { height: 2.75rem; width: 2.75rem; }
+  }
+  @media (max-width: 359px) {
+    .support-icon-btn { height: 2.25rem; width: 2.25rem; }
+  }
+  .support-dot {
+    position: absolute;
+    top: 0.1rem;
+    left: 0.1rem;
+    height: 0.65rem;
+    width: 0.65rem;
+    border-radius: 9999px;
+    border: 2px solid #fff;
+    background: #1e7d4f;
   }
 
   .nav-dd-panel {
@@ -383,10 +364,6 @@ const supportItems = [
     position: absolute;
     inset: -0.75rem 0 auto 0;
     height: 0.75rem;
-  }
-  .nav-dd-panel--end {
-    right: auto;
-    left: 0;
   }
   .group:hover > .nav-dd-panel,
   .group:focus-within > .nav-dd-panel {

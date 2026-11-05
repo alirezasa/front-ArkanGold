@@ -35,10 +35,10 @@ export const OFFICE_HOURS = '۹ الی ۱۸';
 /** ساعات پاسخگویی پشتیبانی */
 export const SUPPORT_HOURS = 'پشتیبانی ۲۴ ساعته';
 
-/** شناسه‌ی ویجت چت آنلاین گفتینو (goftino.com) — خالی بودن آن ویجت را غیرفعال می‌کند.
- *  آیکون شناور گفتینو روی صفحات مخفی است و چت فقط از آیتم «پشتیبانی» در منوها و دکمه‌های
- *  «پشتیبانی آنلاین» (هر المان با data-support-chat) باز می‌شود — src/lib/support.ts */
-export const GOFTINO_WIDGET_ID = 'DvT1ia';
+/** اسکریپت چت آنلاین آرکان گلد (پشتیبانی آنلاین) — روی همه‌ی صفحات بارگذاری می‌شود.
+ *  دکمه‌ی شناور ویجت روی صفحات مخفی است و چت فقط از آیکون پشتیبانی هدر، آیتم «پشتیبانی آنلاین»
+ *  منوی موبایل و دکمه‌های «پشتیبانی آنلاین» (هر المان با data-support-chat) باز می‌شود — src/lib/support.ts */
+export const LIVECHAT_EMBED_URL = 'https://app.arkan.gold/livechat-embed.js';
 
 /** شبکه‌های اجتماعی آرکان گلد */
 export const INSTAGRAM_ID = 'arkangallery.gold';
