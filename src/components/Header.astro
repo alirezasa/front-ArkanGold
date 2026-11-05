@@ -20,7 +20,8 @@ const LOGO_H = 356;
 
 <header class="sticky top-0 z-50 border-b border-brand-100/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
   <!-- هدر عریض: در دسکتاپ تا ۱۷۶۰ پیکسل باز می‌شود تا منو و لوگو جای کافی داشته باشند -->
-  <div class="header-wide flex h-16 min-[400px]:h-[68px] sm:h-[76px] xl:h-[84px] items-center justify-between gap-3 xl:gap-5">
+  <!-- چیدمان مشابه توچال گلد: هدر تمام‌عرض، لوگو و منو کنار هم در راست، پشتیبانی و ورود در چپ -->
+  <div class="header-wide flex h-16 sm:h-[68px] xl:h-16 items-center gap-3 xl:gap-8 min-[1440px]:gap-10">
     <a href="/" class="flex items-center shrink-0 group" aria-label="آرکان گلد - صفحه اصلی">
       <img
         src={LOGO_SRC}
@@ -28,11 +29,11 @@ const LOGO_H = 356;
         width={LOGO_W}
         height={LOGO_H}
         fetchpriority="high"
-        class="h-8 min-[360px]:h-9 min-[400px]:h-10 sm:h-12 xl:h-[46px] min-[1440px]:h-[52px] w-auto transition-transform duration-300 group-hover:scale-[1.03]"
+        class="h-8 min-[360px]:h-9 min-[400px]:h-10 sm:h-11 xl:h-10 w-auto transition-transform duration-300 group-hover:scale-[1.03]"
       />
     </a>
 
-    <nav aria-label="ناوبری اصلی" class="hidden xl:flex flex-1 items-center justify-center gap-0.5 min-[1440px]:gap-1.5">
+    <nav aria-label="ناوبری اصلی" class="hidden xl:flex items-center gap-1 min-[1440px]:gap-3">
       {mainNav.map((item) => (
         item.children ? (
           <div class="nav-dd relative group">
@@ -76,7 +77,7 @@ const LOGO_H = 356;
       ))}
     </nav>
 
-    <div class="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2.5 shrink-0">
+    <div class="ms-auto flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2.5 xl:gap-3 shrink-0">
       <!-- پشتیبانی آنلاین — فقط آیکون، در همه‌ی اندازه‌ها (بعد از لوگو و قبل از ورود) -->
       <button
         type="button"
@@ -85,8 +86,7 @@ const LOGO_H = 356;
         aria-label="پشتیبانی آنلاین"
         title="پشتیبانی آنلاین"
       >
-        <Icon name="headset" class="h-5 w-5 sm:h-[22px] sm:w-[22px]" />
-        <span class="support-dot" aria-hidden="true"></span>
+        <Icon name="headset" class="h-[22px] w-[22px] sm:h-6 sm:w-6" />
       </button>
 
       <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
@@ -116,7 +116,7 @@ const LOGO_H = 356;
         </div>
       </div>
 
-      <a href={APP_URL} class="btn-primary !px-2.5 min-[360px]:!px-3 min-[400px]:!px-4 sm:!px-5 !py-2 sm:!py-2.5 text-[11px] min-[360px]:text-xs sm:text-sm whitespace-nowrap">
+      <a href={APP_URL} class="btn-primary !px-2.5 min-[360px]:!px-3 min-[400px]:!px-4 sm:!px-5 !py-2 sm:!py-2.5 xl:!py-2 !shadow-[0_6px_16px_-8px_rgba(51,5,9,0.45)] text-[11px] min-[360px]:text-xs sm:text-sm whitespace-nowrap">
         ورود / ثبت نام
       </a>
 
@@ -160,9 +160,9 @@ const LOGO_H = 356;
   <!-- پس‌زمینه‌ی تیره (فقط تبلت؛ در موبایل منو تمام‌صفحه است) — کلیک روی آن منو را می‌بندد -->
   <div data-menu-backdrop class="absolute inset-0 hidden sm:block bg-brand-700/45 backdrop-blur-[2px]"></div>
   <div class="mobile-drawer relative flex h-full max-h-[100dvh] w-full sm:max-w-[440px] flex-col bg-canvas-50 sm:shadow-2xl">
-    <div class="flex h-16 min-[400px]:h-[68px] sm:h-[76px] items-center justify-between gap-3 border-b border-brand-100/50 bg-white px-4 sm:px-6 shrink-0">
+    <div class="flex h-16 sm:h-[68px] items-center justify-between gap-3 border-b border-brand-100/50 bg-white px-4 sm:px-6 shrink-0">
       <a href="/" class="flex items-center" aria-label="آرکان گلد - صفحه اصلی">
-        <img src={LOGO_SRC} alt="آرکان گلد" width={LOGO_W} height={LOGO_H} class="h-10 min-[400px]:h-11 sm:h-12 w-auto" />
+        <img src={LOGO_SRC} alt="آرکان گلد" width={LOGO_W} height={LOGO_H} class="h-9 min-[360px]:h-10 sm:h-11 w-auto" />
       </a>
       <button id="mobile-menu-close" type="button" class="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-brand-100/60 text-brand hover:bg-brand-50" aria-label="بستن منو">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
@@ -264,7 +264,7 @@ const LOGO_H = 356;
   .header-wide {
     margin-inline: auto;
     width: 100%;
-    max-width: 1760px;
+    max-width: 2200px;
     padding-inline: 0.75rem;
   }
   @media (min-width: 360px) {
@@ -274,33 +274,32 @@ const LOGO_H = 356;
     .header-wide { padding-inline: 1.5rem; }
   }
   @media (min-width: 1280px) {
-    .header-wide { padding-inline: 2rem; }
+    .header-wide { padding-inline: 1.5rem; }
   }
   @media (min-width: 1536px) {
-    .header-wide { padding-inline: 3rem; }
+    .header-wide { padding-inline: 2rem; }
   }
 
   /* ===== آیتم‌های منوی دسکتاپ ===== */
   .nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 0.7rem;
-    border-radius: 10px;
-    font-size: 0.92rem;
+    gap: 0.35rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
     font-weight: 500;
     white-space: nowrap;
-    color: #5c5449;
-    transition: color 0.2s, background-color 0.2s;
+    color: #211a17;
+    transition: color 0.2s;
   }
   @media (min-width: 1440px) {
-    .nav-link { padding: 0.6rem 0.9rem; font-size: 0.97rem; }
+    .nav-link { font-size: 1rem; }
   }
   .nav-link:hover,
   .group:hover > .nav-link,
   .group:focus-within > .nav-link {
-    color: #330509;
-    background: #f6e7e8;
+    color: #7a171e;
   }
   .nav-link.is-active {
     color: #330509;
@@ -316,14 +315,13 @@ const LOGO_H = 356;
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background: #f6e7e8;
-    color: #330509;
-    transition: background-color 0.2s, color 0.2s, transform 0.2s;
+    background: transparent;
+    color: #211a17;
+    transition: background-color 0.2s, color 0.2s;
   }
   .support-icon-btn:hover {
-    background: #330509;
-    color: #fff;
-    transform: translateY(-1px);
+    background: #f6e7e8;
+    color: #330509;
   }
   @media (min-width: 640px) {
     .support-icon-btn { height: 2.75rem; width: 2.75rem; }
