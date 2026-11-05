@@ -5,7 +5,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Goftino from '../components/Goftino.astro';
 import '../styles/global.css';
-import { OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
+import { INSTAGRAM_URL, OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
 
 interface Props {
   title: string;
@@ -40,7 +40,7 @@ const organizationSchema = {
     areaServed: 'IR',
     availableLanguage: ['fa'],
   },
-  sameAs: [],
+  sameAs: [INSTAGRAM_URL],
 };
 
 const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
@@ -71,6 +71,5 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
       <slot />
     </main>
     <Footer />
-    <script src="https://app.arkan.gold/livechat-embed.js" defer></script>
   </body>
 </html>

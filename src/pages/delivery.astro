@@ -1,0 +1,225 @@
+---
+/**
+ * تحویل فیزیکی طلا — دو روش دریافت طلای فیزیکی در قالب شمش‌های آرکان گلد
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import FaqAccordion from '../components/sections/FaqAccordion.astro';
+import { APP_URL, BAR_PURITY, OFFICE_ADDRESS, OFFICE_HOURS } from '../config/site';
+import { formatGrams, ingotWeights, loadIngotCatalog } from '../lib/goldIngots';
+
+// وزن‌های شمش موجود در فروشگاه (در زمان build از API خوانده می‌شود؛ در صورت عدم دسترسی، فهرست نمایش داده نمی‌شود)
+const catalog = await loadIngotCatalog();
+const barWeights = [...new Set(catalog.products.flatMap((p) => ingotWeights(p)))].sort((a, b) => a - b);
+
+const purityFa = BAR_PURITY.toLocaleString('fa-IR');
+
+const methods = [
+  {
+    id: 'bar',
+    badge: 'روش اول',
+    title: 'خرید مستقیم شمش طلا',
+    subtitle: 'شمش آرکان گلد با وزن‌های مشخص‌شده',
+    icon: 'gold-bar' as const,
+    desc: `شمش ${purityFa} عیار آرکان گلد را با یکی از وزن‌های مشخص‌شده در بخش محصولات، با قیمت لحظه‌ای خریداری کنید و درخواست تحویل فیزیکی آن را ثبت کنید.`,
+    steps: [
+      'از بخش محصولات، شمش با وزن موردنظر خود را انتخاب کنید.',
+      'سفارش را با قیمت لحظه‌ای در پنل کاربری نهایی و پرداخت کنید.',
+      'درخواست تحویل فیزیکی را ثبت و روش دریافت را انتخاب کنید.',
+      'شمش را همراه کارت پلمپ، کد اصالت و فاکتور رسمی تحویل بگیرید.',
+    ],
+    best: 'مناسب برای خرید یک‌جا و هدیه',
+    cta: { label: 'مشاهده محصولات شمش', href: '/shop' },
+  },
+  {
+    id: 'saving',
+    badge: 'روش دوم',
+    title: 'خرید کم‌کم طلای آب‌شده',
+    subtitle: 'پس‌انداز تدریجی و تبدیل به شمش',
+    icon: 'gold-drop' as const,
+    desc: 'هر زمان و با هر مبلغی طلای آب‌شده بخرید. وقتی موجودی طلای آب‌شده‌ی شما به حد نصاب، یعنی معادل وزن یکی از محصولات شمش آرکان گلد رسید، همان شمش را انتخاب کنید و درخواست تحویل فیزیکی بدهید.',
+    steps: [
+      'به‌تدریج و با هر مبلغی طلای آب‌شده با قیمت لحظه‌ای خریداری کنید.',
+      'موجودی طلای آب‌شده‌ی شما در کیف طلایی پنل کاربری جمع می‌شود.',
+      'وقتی موجودی به وزن یکی از شمش‌های آرکان گلد رسید، آن شمش را انتخاب کنید.',
+      'درخواست تحویل فیزیکی ثبت کنید؛ طلای آب‌شده‌ی شما در قالب شمش آرکان گلد تحویل داده می‌شود.',
+    ],
+    best: 'مناسب برای پس‌انداز با مبالغ کم',
+    cta: { label: 'خرید و فروش طلای آب‌شده', href: '/buy-gold' },
+  },
+];
+
+const notes = [
+  { icon: 'shield' as const, title: 'تحویل به صاحب حساب', desc: 'تحویل فقط به صاحب حساب کاربری یا وکیل قانونی او و با ارائه کارت شناسایی معتبر و رمز تحویل انجام می‌شود.' },
+  { icon: 'invoice' as const, title: 'هزینه‌ها پیش از تایید', desc: 'هزینه‌های ضرب، بسته‌بندی، پلمپ یا ارسال (در صورت تعلق) پیش از نهایی شدن درخواست در پنل نمایش داده می‌شود.' },
+  { icon: 'gold-bar' as const, title: 'شمش استاندارد آرکان', desc: `طلا در قالب شمش‌های ${purityFa} عیار آرکان گلد با کارت پلمپ امنیتی و کد ۸ رقمی قابل استعلام تحویل داده می‌شود.` },
+  { icon: 'location' as const, title: 'تحویل حضوری یا ارسال', desc: 'دریافت حضوری از دفتر مرکزی یا ارسال بیمه‌شده به نشانی تاییدشده، مطابق گزینه‌های فعال در پنل.' },
+];
+
+const deliveryFaq = [
+  {
+    question: 'آیا طلای آب‌شده‌ای که خریده‌ام قابل تحویل فیزیکی است؟',
+    answer: 'بله. وقتی موجودی طلای آب‌شده‌ی شما به وزن یکی از شمش‌های آرکان گلد رسید، می‌توانید همان شمش را انتخاب و درخواست تحویل فیزیکی ثبت کنید. طلای آب‌شده‌ی شما در قالب شمش استاندارد آرکان گلد تحویل داده می‌شود.',
+  },
+  {
+    question: 'حد نصاب تحویل فیزیکی طلای آب‌شده چقدر است؟',
+    answer: 'حد نصاب، وزن شمش‌هایی است که در بخش محصولات آرکان گلد عرضه می‌شوند. هر زمان موجودی طلای آب‌شده‌ی شما با وزن یکی از این شمش‌ها برابر یا بیشتر شد، امکان ثبت درخواست تحویل آن شمش را دارید.',
+  },
+  {
+    question: 'شمش را چطور تحویل بگیرم؟',
+    answer: 'پس از ثبت درخواست تحویل در پنل کاربری، می‌توانید شمش را به‌صورت حضوری از دفتر مرکزی آرکان گلد دریافت کنید یا در صورت فعال بودن، ارسال بیمه‌شده به نشانی تاییدشده را انتخاب کنید.',
+  },
+  {
+    question: 'هنگام دریافت شمش چه چیزهایی را بررسی کنم؟',
+    answer: 'سلامت پلمپ و بسته‌بندی، مشخصات درج‌شده روی کارت شمش و فاکتور را بررسی کنید و کد ۸ رقمی هولوگرام را در صفحه استعلام اصالت شمش وارد کنید تا مشخصات و نام مالک را تطبیق دهید.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: deliveryFaq.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer },
+  })),
+};
+---
+
+<BaseLayout
+  title="تحویل فیزیکی طلا"
+  description="تحویل فیزیکی طلا در آرکان گلد در قالب شمش ۷۵۰ عیار: خرید مستقیم شمش با وزن‌های مشخص یا خرید کم‌کم طلای آب‌شده و تبدیل آن به شمش آرکان گلد."
+  path="/delivery"
+  jsonLd={faqSchema}
+>
+  <section class="relative overflow-hidden py-12 md:py-16">
+    <div class="pointer-events-none absolute inset-0 dot-grid-bg opacity-30 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"></div>
+    <div class="container-page relative text-center max-w-3xl mx-auto">
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-brand-100/40 bg-white/70 px-3 py-1.5 text-xs font-medium text-brand shadow-sm">
+        <Icon name="location" class="h-4 w-4" />
+        خدمات آرکان گلد
+      </span>
+      <h1 class="mt-4 text-3xl md:text-4xl font-bold text-brand leading-[1.4]">تحویل فیزیکی طلا</h1>
+      <p class="mt-4 text-base leading-8 text-ink-soft">
+        هر خرید در آرکان گلد پشتوانه‌ی طلای واقعی دارد و هر زمان بخواهید می‌توانید طلای خود را به‌صورت
+        فیزیکی دریافت کنید. تحویل فیزیکی در قالب <b class="text-brand">شمش‌های {purityFa} عیار آرکان گلد</b>
+        انجام می‌شود و شما از <b class="text-brand">دو روش</b> می‌توانید طلای فیزیکی تحویل بگیرید.
+      </p>
+      <div class="mt-6 flex flex-wrap justify-center gap-2.5">
+        <a href="#method-bar" class="inline-flex items-center gap-2 rounded-full bg-white border border-brand-100/50 px-4 py-2 text-sm font-semibold text-brand shadow-sm hover:border-brand">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] text-white tnum">۱</span>
+          خرید مستقیم شمش
+        </a>
+        <a href="#method-saving" class="inline-flex items-center gap-2 rounded-full bg-white border border-brand-100/50 px-4 py-2 text-sm font-semibold text-brand shadow-sm hover:border-brand">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] text-white tnum">۲</span>
+          خرید کم‌کم طلای آب‌شده
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- دو روش تحویل فیزیکی -->
+  <section class="container-page pb-6 grid gap-6 lg:grid-cols-2">
+    {methods.map((m) => (
+      <article id={`method-${m.id}`} class="scroll-mt-40 flex flex-col rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover overflow-hidden">
+        <div class="flex items-center gap-4 bg-brand-radial px-5 py-5 sm:px-7 text-white">
+          <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold-300">
+            <Icon name={m.icon} class="h-7 w-7" />
+          </span>
+          <div class="min-w-0">
+            <span class="inline-block rounded-full bg-gold/20 px-2.5 py-0.5 text-[11px] font-bold text-gold-300">{m.badge}</span>
+            <h2 class="mt-1 text-xl font-bold leading-8">{m.title}</h2>
+            <p class="text-xs text-white/70">{m.subtitle}</p>
+          </div>
+        </div>
+        <div class="flex flex-1 flex-col p-5 sm:p-7">
+          <p class="text-sm leading-8 text-ink-soft">{m.desc}</p>
+
+          {m.id === 'saving' && (
+            <div class="mt-4 rounded-card border border-gold/40 bg-gold-50 p-4">
+              <p class="text-sm font-bold text-brand">به زبان ساده:</p>
+              <p class="mt-1 text-xs leading-6 text-ink">
+                طلای آب‌شده را کم‌کم می‌خرید و جمع می‌کنید؛ وقتی مقدار آن به وزن یک شمش آرکان گلد رسید،
+                همان مقدار طلای آب‌شده به شمش تبدیل و به شما تحویل داده می‌شود.
+              </p>
+            </div>
+          )}
+
+          <ol class="mt-5 space-y-3">
+            {m.steps.map((s, i) => (
+              <li class="flex items-start gap-3">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cta-gradient text-sm font-bold text-white tnum">{(i + 1).toLocaleString('fa-IR')}</span>
+                <p class="pt-1 text-sm leading-7 text-ink">{s}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div class="mt-auto pt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+            <a href={m.cta.href} class="btn-primary shine-hover">{m.cta.label}</a>
+            <span class="inline-flex items-center justify-center gap-1.5 text-xs font-medium text-ink-soft">
+              <span class="h-1.5 w-1.5 rounded-full bg-gold"></span>
+              {m.best}
+            </span>
+          </div>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  {barWeights.length > 0 && (
+    <section class="container-page py-6">
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-5 sm:p-7 text-center">
+        <h2 class="text-lg font-bold text-brand">وزن شمش‌های قابل تحویل</h2>
+        <p class="mt-1 text-xs leading-6 text-ink-soft">
+          حد نصاب تحویل در روش دوم، رسیدن موجودی طلای آب‌شده به یکی از این وزن‌هاست (مطابق موجودی فعلی فروشگاه).
+        </p>
+        <ul class="mt-4 flex flex-wrap justify-center gap-2">
+          {barWeights.map((w) => (
+            <li class="rounded-full border border-brand-100/60 bg-canvas-100 px-4 py-1.5 text-sm font-semibold text-brand tnum">{formatGrams(w)}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- نکات و شرایط تحویل -->
+  <section class="container-page py-10">
+    <h2 class="text-2xl font-bold text-brand text-center mb-8">شرایط و نکات تحویل فیزیکی</h2>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {notes.map((n) => (
+        <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card p-5 card-lift">
+          <span class="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
+            <Icon name={n.icon} class="h-5 w-5" />
+          </span>
+          <h3 class="font-semibold text-brand mb-1.5">{n.title}</h3>
+          <p class="text-xs leading-6 text-ink-soft">{n.desc}</p>
+        </div>
+      ))}
+    </div>
+    <p class="mt-5 text-center text-xs text-ink-soft">
+      جزئیات کامل در <a href="/rules" class="font-semibold text-brand hover:underline">قوانین و مقررات (مقررات تحویل فیزیکی طلا)</a> آمده است.
+    </p>
+  </section>
+
+  <section class="container-page py-6 grid gap-8 lg:grid-cols-[1fr_380px] items-start">
+    <div>
+      <h2 class="text-xl font-bold text-brand mb-5">سوالات متداول تحویل فیزیکی</h2>
+      <FaqAccordion items={deliveryFaq} idPrefix="delivery-faq" />
+    </div>
+    <aside class="rounded-xl2 bg-brand-radial text-white p-6 shadow-glow-brand">
+      <p class="flex items-center gap-2 text-sm font-bold">
+        <Icon name="location" class="h-5 w-5 text-gold" />
+        محل تحویل حضوری
+      </p>
+      <p class="mt-3 text-sm leading-7 text-white/85">{OFFICE_ADDRESS}</p>
+      <p class="mt-2 text-xs text-white/70">ساعات کاری دفتر: {OFFICE_HOURS}</p>
+      <div class="mt-5 grid gap-2.5">
+        <a href={APP_URL} class="btn-light">ثبت درخواست تحویل در پنل</a>
+        <button type="button" data-support-chat class="inline-flex items-center justify-center gap-2 rounded-lg border border-white/25 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+          <Icon name="headset" class="h-4.5 w-4.5" />
+          پشتیبانی آنلاین
+        </button>
+      </div>
+    </aside>
+  </section>
+</BaseLayout>

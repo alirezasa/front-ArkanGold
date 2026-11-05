@@ -35,8 +35,20 @@ export const OFFICE_HOURS = '۹ الی ۱۸';
 /** ساعات پاسخگویی پشتیبانی */
 export const SUPPORT_HOURS = 'پشتیبانی ۲۴ ساعته';
 
-/** شناسه‌ی ویجت چت آنلاین گفتینو (goftino.com) — خالی بودن آن ویجت را غیرفعال می‌کند */
+/** شناسه‌ی ویجت چت آنلاین گفتینو (goftino.com) — خالی بودن آن ویجت را غیرفعال می‌کند.
+ *  آیکون شناور گفتینو روی صفحات مخفی است و چت فقط از آیتم «پشتیبانی» در منوها و دکمه‌های
+ *  «پشتیبانی آنلاین» (هر المان با data-support-chat) باز می‌شود — src/lib/support.ts */
 export const GOFTINO_WIDGET_ID = 'DvT1ia';
+
+/** شبکه‌های اجتماعی آرکان گلد */
+export const INSTAGRAM_ID = 'arkangallery.gold';
+export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_ID}/`;
+/** شماره‌ی واتس‌اپ و بله */
+export const MESSENGER_PHONE = '09916340038';
+export const MESSENGER_PHONE_FA = '۰۹۹۱۶۳۴۰۰۳۸';
+export const WHATSAPP_URL = 'https://wa.me/989916340038';
+/** لینک بله — بله لینک مستقیم با شماره ندارد؛ در صورت داشتن نام کاربری، آن را به شکل https://ble.ir/USERNAME قرار دهید */
+export const BALE_URL = 'https://web.bale.ai/';
 
 /**
  * نماد اعتماد الکترونیکی (اینماد)

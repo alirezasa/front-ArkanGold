@@ -2,13 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SimplePage from '../components/sections/SimplePage.astro';
 
-const services = [
-  { title: 'خرید و فروش طلای آب‌شده', desc: 'معامله آنلاین طلای آب‌شده با قیمت لحظه‌ای.' },
-  { title: 'خرید شمش طلای ۷۵۰ عیار', desc: 'خرید شمش طلا و شمش هدیه آرکان با فاکتور رسمی و کد اصالت قابل استعلام.' },
+const services: { title: string; desc: string; href?: string }[] = [
+  { title: 'خرید و فروش طلای آب‌شده', desc: 'معامله آنلاین طلای آب‌شده با قیمت لحظه‌ای.', href: '/buy-gold' },
+  { title: 'خرید و فروش شمش طلا', desc: 'خرید و فروش شمش طلای ۷۵۰ عیار و شمش هدیه آرکان با فاکتور رسمی و کد اصالت قابل استعلام.', href: '/shop' },
   { title: 'کارت هدیه سازمانی', desc: 'خرید شمش هدیه با کارت هدیه سازمانی برای کارکنان و مشتریان.' },
-  { title: 'استعلام اصالت شمش', desc: 'بررسی آنلاین اصالت شمش با کد ۸ رقمی درج‌شده روی هولوگرام کارت شمش.' },
+  { title: 'استعلام اصالت شمش', desc: 'بررسی آنلاین اصالت شمش با کد ۸ رقمی درج‌شده روی هولوگرام کارت شمش.', href: '/verify' },
   { title: 'نگهداری در خزانه امن', desc: 'نگهداری طلای خریداری‌شده در خزانه رسمی بانک.' },
-  { title: 'تحویل فیزیکی طلا', desc: 'دریافت فیزیکی طلای خریداری‌شده در آدرس دلخواه.' },
+  { title: 'تحویل فیزیکی طلا', desc: 'دریافت طلای خریداری‌شده در قالب شمش‌های استاندارد آرکان گلد.', href: '/delivery' },
 ];
 ---
 <BaseLayout
@@ -23,10 +23,10 @@ const services = [
   >
     <div class="grid gap-5 sm:grid-cols-2 text-right">
       {services.map((s) => (
-        <div class="rounded-card bg-white border border-brand-100/40 shadow-card p-5 card-lift">
+        <a href={s.href ?? '/contact'} class="block rounded-card bg-white border border-brand-100/40 shadow-card p-5 card-lift">
           <h2 class="font-semibold text-brand mb-1.5">{s.title}</h2>
           <p class="text-xs leading-6 text-ink-soft">{s.desc}</p>
-        </div>
+        </a>
       ))}
     </div>
   </SimplePage>

@@ -10,10 +10,11 @@ const trustItems = [
   'تضمین دارایی',
 ];
 
-const miniCards = [
-  { title: 'کسب درآمد', desc: 'پاداش معرفی به ازای هر خرید', icon: 'gift-card' },
-  { title: 'تحویل فیزیکی', desc: 'تحویل فیزیکی طلا در آدرس شما', icon: 'gold-bar' },
-  { title: 'پشتیبانی سریع', desc: 'پاسخگویی تمام روزهای هفته', icon: 'headset' },
+// زیرعنوان‌ها کوتاه و تک‌خطی هستند
+const miniCards: { title: string; desc: string; icon: string; href?: string; chat?: boolean }[] = [
+  { title: 'کسب درآمد', desc: 'پاداش به ازای هر معرفی', icon: 'gift-card' },
+  { title: 'تحویل فیزیکی', desc: 'در قالب شمش آرکان', icon: 'gold-bar', href: '/delivery' },
+  { title: 'پشتیبانی سریع', desc: 'پاسخگویی هر روز هفته', icon: 'headset', chat: true },
 ];
 ---
 
@@ -22,7 +23,7 @@ const miniCards = [
   <div class="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full brand-glow-bg blur-2xl"></div>
 
   <div class="container-page relative">
-    <div class="grid items-center gap-10 md:grid-cols-2">
+    <div class="grid items-center gap-10 md:grid-cols-2 xl:grid-cols-[0.8fr_1.2fr]">
       <div class="order-2 md:order-1 flex justify-center">
         <div class="relative">
           <div class="absolute inset-0 -z-10 brand-glow-bg blur-xl"></div>
@@ -53,39 +54,50 @@ const miniCards = [
           آرکان با فاکتور رسمی و کد اصالت قابل استعلام.
         </p>
 
-        <div class="mt-7 flex flex-col-reverse sm:flex-row justify-center md:justify-start gap-3">
+        <!-- ترتیب: دو دکمه‌ی اصلی، سپس استعلام اصالت (در دسکتاپ بعد از دکمه‌ها، در موبایل زیر آن‌ها) -->
+        <div class="hero-actions mt-7 flex flex-col sm:flex-row sm:flex-wrap justify-center md:justify-start gap-3">
+          <a href="/buy-gold" class="btn-primary shine-hover">
+            <Icon name="gold-drop" class="h-4.5 w-4.5" />
+            خرید و فروش طلای آب‌شده
+          </a>
+          <a href="/shop" class="btn-primary shine-hover">
+            <Icon name="gold-bar" class="h-4.5 w-4.5" />
+            خرید و فروش شمش طلا
+          </a>
           <a href="/verify" class="btn-outline">
             <Icon name="shield" class="h-4.5 w-4.5" />
             استعلام اصالت شمش
-          </a>
-          <a href="/shop" class="btn-primary shine-hover">
-            خرید شمش طلا
-          </a>
-          <a href="/buy-gold" class="btn-primary shine-hover">
-            خرید طلای آب‌شده
           </a>
         </div>
       </div>
     </div>
 
     <!-- کارت‌های کوچک اعتماد -->
-    <div class="mt-10 grid gap-3 sm:grid-cols-3 max-w-2xl mx-auto md:mx-0">
-      {miniCards.map((m) => (
-        <div class="flex items-center gap-3 rounded-xl2 bg-white/80 border border-brand-100/40/70 px-4 py-3.5 shadow-card card-lift">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-            <Icon name={m.icon as any} class="h-5 w-5" />
-          </span>
-          <div class="text-right">
-            <p class="text-sm font-semibold text-brand">{m.title}</p>
-            <p class="text-xs text-ink-soft">{m.desc}</p>
-          </div>
-        </div>
-      ))}
+    <div class="mt-10 grid gap-3 sm:grid-cols-3 max-w-3xl mx-auto md:mx-0">
+      {miniCards.map((m) => {
+        const Tag = m.href ? 'a' : m.chat ? 'button' : 'div';
+        return (
+          <Tag
+            href={m.href}
+            type={m.chat ? 'button' : undefined}
+            data-support-chat={m.chat ? '' : undefined}
+            class="flex min-w-0 items-center gap-3 rounded-xl2 bg-white/80 border border-brand-100/40 px-4 py-3 shadow-card card-lift text-right"
+          >
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+              <Icon name={m.icon as any} class="h-5 w-5" />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-semibold text-brand">{m.title}</span>
+              <span class="block truncate whitespace-nowrap text-[11.5px] leading-5 text-ink-soft">{m.desc}</span>
+            </span>
+          </Tag>
+        );
+      })}
     </div>
 
     <!-- ماشین‌حساب زنده خرید/فروش -->
     <div class="mt-10 grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-      <div class="rounded-xl2 bg-white border border-brand-100/40/70 shadow-card-hover p-6 md:p-8">
+      <div class="rounded-xl2 bg-white border border-brand-100/40 shadow-card-hover p-6 md:p-8">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-1.5 text-xs text-ink-soft">
             <span class="live-dot"></span>
@@ -178,6 +190,13 @@ const miniCards = [
 </section>
 
 <style>
+  /* دکمه‌های هیرو با اندازه‌ی استاندارد و یکسان */
+  .hero-actions > a {
+    min-height: 3rem;
+    padding: 0.7rem 1.15rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
   .calc-tab[data-active="true"] {
     background: linear-gradient(135deg, #7a171e, #330509);
     color: #ffffff;

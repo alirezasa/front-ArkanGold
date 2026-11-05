@@ -1,32 +1,46 @@
 ---
 import Icon from './Icon.astro';
-import { ENAMAD_CODE, ENAMAD_ID, OFFICE_ADDRESS, OFFICE_HOURS, SUPPORT_HOURS, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import {
+  BALE_URL,
+  ENAMAD_CODE,
+  ENAMAD_ID,
+  INSTAGRAM_ID,
+  INSTAGRAM_URL,
+  MESSENGER_PHONE_FA,
+  OFFICE_ADDRESS,
+  OFFICE_HOURS,
+  SUPPORT_HOURS,
+  SUPPORT_PHONE,
+  SUPPORT_PHONE_FA,
+  WHATSAPP_URL,
+} from '../config/site';
+import { otherMenu, servicesMenu } from '../data/nav';
 
 const enamadQuery = ENAMAD_ID && ENAMAD_CODE ? `id=${encodeURIComponent(ENAMAD_ID)}&Code=${encodeURIComponent(ENAMAD_CODE)}` : '';
 
-const quickLinks = [
-  { label: 'صفحه اصلی', href: '/' },
-  { label: 'فروشگاه', href: '/shop' },
-  { label: 'استعلام اصالت شمش', href: '/verify' },
-  { label: 'خرید طلای آب‌شده', href: '/buy-gold' },
+type FooterLink = { label: string; href: string; external?: boolean };
+
+/** عنوان‌ها مطابق منوی جدید سایت */
+const serviceLinks: FooterLink[] = [
+  ...servicesMenu.map(({ label, href }) => ({ label, href })),
   { label: 'فروش طلا', href: '/sell-gold' },
-  { label: 'قیمت لحظه‌ای', href: '/price' },
-  { label: 'مجوزها و اعتبار', href: '/licenses' },
+  { label: 'قیمت طلا', href: '/price' },
+  { label: 'محصولات', href: '/shop' },
+  { label: 'استعلام اصالت شمش', href: '/verify' },
+  { label: 'مجوزها', href: '/licenses' },
 ];
 
-const supportLinks = [
-  { label: 'تماس با ما', href: '/contact' },
-  { label: 'درباره ما', href: '/about' },
-  { label: 'سوالات متداول', href: '/faq' },
-  { label: 'قوانین و مقررات', href: '/rules' },
+const otherLinks: FooterLink[] = [
+  ...otherMenu.map(({ label, href, external }) => ({ label, href, external })),
   { label: 'همکاری در فروش', href: '/cooperation' },
-  { label: 'ورود به اپلیکیشن', href: 'https://app.arkan.gold' },
+  { label: 'ورود به اپلیکیشن', href: 'https://app.arkan.gold', external: true },
 ];
 
+/** شبکه‌های اجتماعی با لوگوی رنگی */
 const socials = [
-  { label: 'واتس‌اپ', href: '#', icon: 'M17.5 6.5a8 8 0 10-14.6 6.5L2 21l8.2-1a8 8 0 007.3-13.5z' },
-  { label: 'تلگرام', href: '#', icon: 'M21 4L2.5 11.4c-1 .4-1 1.9.1 2.2l4.6 1.4 1.7 5.4c.3.9 1.5 1.1 2.1.3l2.5-3 4.7 3.5c.8.6 1.9.1 2.1-.9L21 4z' },
-  { label: 'اینستاگرام', href: '#', icon: 'M4 8a4 4 0 014-4h8a4 4 0 014 4v8a4 4 0 01-4 4H8a4 4 0 01-4-4V8z M12 9a3 3 0 100 6 3 3 0 000-6z M16.5 7.5h.01' },
+  { key: 'instagram', label: 'اینستاگرام', handle: INSTAGRAM_ID, href: INSTAGRAM_URL, latin: true },
+  { key: 'bale', label: 'بله', handle: MESSENGER_PHONE_FA, href: BALE_URL },
+  { key: 'whatsapp', label: 'واتس‌اپ', handle: MESSENGER_PHONE_FA, href: WHATSAPP_URL },
 ];
 ---
 
@@ -35,40 +49,66 @@ const socials = [
 
   <div class="container-page relative grid grid-cols-2 gap-x-6 gap-y-10 py-12 md:py-14 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
     <!-- ستون ۱: برند و شبکه‌های اجتماعی -->
-    <div class="col-span-2 lg:col-span-1">
+    <div class="col-span-2 lg:col-span-1 flex flex-col items-center text-center">
       <a href="/" class="mb-5 inline-block" aria-label="آرکان گلد - صفحه اصلی">
         <img src="/images/arkan-gold-logo.png" alt="آرکان گلد" width="480" height="388" loading="lazy" class="h-24 w-auto" />
       </a>
-      <p class="text-sm leading-7 text-white/80 text-justify">
+      <p class="text-sm leading-7 text-white/80 text-justify [text-align-last:center]">
         ما در آرکان گلد تلاش کرده‌ایم تجربه‌ای مطمئن، ساده و قابل‌اتکا از معاملات طلا برای
         کاربران فراهم کنیم؛ تجربه‌ای که در آن اصالت کالا، شفافیت قیمت، امکان بررسی سفارش
         و قابلیت تحویل فیزیکی طلا در اولویت قرار دارد.
       </p>
-      <p class="brand-slogan mt-3 text-2xl sm:text-[1.75rem]">آرکان گلد ارزش ماندگار</p>
-      <ul class="mt-5 flex gap-3">
+      <p class="brand-slogan mt-4">آرکان گلد ارزش ماندگار</p>
+
+      <ul class="mt-5 grid w-full max-w-[22rem] grid-cols-3 gap-2.5" aria-label="شبکه‌های اجتماعی آرکان گلد">
         {socials.map((s) => (
           <li>
             <a
               href={s.href}
-              aria-label={s.label}
-              class="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 transition-all duration-300 hover:border-gold hover:text-gold hover:-translate-y-1 hover:shadow-glow"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${s.label} آرکان گلد: ${s.handle}`}
+              class="social-pill group"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d={s.icon} />
-              </svg>
+              <span class:list={['social-logo', `social-logo--${s.key}`]} aria-hidden="true">
+                {s.key === 'instagram' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+                    <circle cx="12" cy="12" r="3.8" />
+                    <circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" />
+                  </svg>
+                )}
+                {s.key === 'whatsapp' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3.6 20.4l1.3-4.4A8.6 8.6 0 1112 20.6a8.5 8.5 0 01-4.1-1.1z" />
+                    <path d="M9.1 8.2c.3-.3.8-.3 1 .1l.7 1.5c.1.3 0 .6-.2.8l-.5.5c.6 1.2 1.6 2.2 2.8 2.8l.5-.5c.2-.2.5-.3.8-.2l1.5.7c.4.2.4.7.1 1-.6.7-1.4 1-2.3.8a7 7 0 01-5.2-5.2c-.2-.9.1-1.7.8-2.3z" fill="currentColor" stroke="none" />
+                  </svg>
+                )}
+                {s.key === 'bale' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3.4a8.6 8.6 0 018.6 8.6 8.6 8.6 0 01-8.6 8.6H3.4V12A8.6 8.6 0 0112 3.4z" />
+                    <path d="M8 11.2v1.6a1.6 1.6 0 001.6 1.6h4.8a1.6 1.6 0 001.6-1.6v-1.6" />
+                    <circle cx="12" cy="16.9" r="0.9" fill="currentColor" stroke="none" />
+                  </svg>
+                )}
+              </span>
+              <span class="flex w-full min-w-0 flex-col items-center leading-tight">
+                <span class="text-[11px] text-white/60">{s.label}</span>
+                <span class:list={['mt-1 max-w-full truncate text-[11.5px] font-semibold text-white', s.latin ? 'font-sans' : 'tnum']} dir={s.latin ? 'ltr' : undefined}>{s.handle}</span>
+              </span>
             </a>
           </li>
         ))}
       </ul>
     </div>
 
-    <!-- ستون ۲: دسترسی سریع -->
+    <!-- ستون ۲: خدمات -->
     <div>
-      <p class="mb-4 font-semibold text-white">دسترسی سریع</p>
+      <p class="mb-4 font-semibold text-white">خدمات و محصولات</p>
       <ul class="space-y-2.5 text-sm text-white/80">
-        {quickLinks.map((l) => (
+        {serviceLinks.map((l) => (
           <li>
-            <a href={l.href} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
+            <a href={l.href} target={l.external ? '_blank' : undefined} rel={l.external ? 'noopener noreferrer' : undefined} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
               <span class="h-1 w-1 rounded-full bg-gold/0 group-hover:bg-gold transition-colors"></span>
               {l.label}
             </a>
@@ -77,13 +117,13 @@ const socials = [
       </ul>
     </div>
 
-    <!-- ستون ۳: پشتیبانی و راهنما -->
+    <!-- ستون ۳: سایر -->
     <div>
-      <p class="mb-4 font-semibold text-white">پشتیبانی و راهنما</p>
+      <p class="mb-4 font-semibold text-white">سایر</p>
       <ul class="space-y-2.5 text-sm text-white/80">
-        {supportLinks.map((l) => (
+        {otherLinks.map((l) => (
           <li>
-            <a href={l.href} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
+            <a href={l.href} target={l.external ? '_blank' : undefined} rel={l.external ? 'noopener noreferrer' : undefined} class="inline-flex items-center gap-1.5 hover:text-gold transition-colors group">
               <span class="h-1 w-1 rounded-full bg-gold/0 group-hover:bg-gold transition-colors"></span>
               {l.label}
             </a>
@@ -112,6 +152,15 @@ const socials = [
           <div>
             <p class="text-[11px] text-white/60">شماره تماس شرکت</p>
             <a href={`tel:${SUPPORT_PHONE}`} class="font-semibold tnum hover:text-gold transition-colors">{SUPPORT_PHONE_FA}</a>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-gold">
+            <Icon name="chat" class="h-4.5 w-4.5" />
+          </span>
+          <div>
+            <p class="text-[11px] text-white/60">گفتگوی آنلاین</p>
+            <button type="button" data-support-chat class="font-semibold hover:text-gold transition-colors">پشتیبانی آنلاین</button>
           </div>
         </div>
         <div class="flex items-center gap-3">
@@ -169,3 +218,47 @@ const socials = [
     کلیه حقوق برای آرکان گلد (گنجینه طلای پروانه زر) محفوظ است © {new Date().getFullYear()}
   </div>
 </footer>
+
+<style>
+  .social-pill {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.4rem 0.65rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    transition: transform 0.25s, border-color 0.25s, background-color 0.25s;
+  }
+  .social-pill:hover {
+    transform: translateY(-3px);
+    border-color: rgba(197, 160, 89, 0.6);
+    background: rgba(255, 255, 255, 0.09);
+  }
+  .social-logo {
+    display: flex;
+    height: 2.4rem;
+    width: 2.4rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: #fff;
+    box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+  }
+  .social-logo svg {
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+  .social-logo--instagram {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  }
+  .social-logo--whatsapp {
+    background: linear-gradient(135deg, #2fe075, #128c4b);
+  }
+  .social-logo--bale {
+    background: linear-gradient(135deg, #18b9a8, #08766c);
+  }
+</style>

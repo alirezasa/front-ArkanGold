@@ -1,12 +1,16 @@
 ---
+import Icon from '../Icon.astro';
+
 interface Props {
   eyebrow?: string;
   title: string;
   description: string;
   ctaLabel: string;
   ctaHref: string;
+  /** نمایش دکمه‌ی «پشتیبانی آنلاین» کنار دکمه‌ی تماس (باز کردن چت آنلاین) */
+  supportChat?: boolean;
 }
-const { eyebrow, title, description, ctaLabel, ctaHref } = Astro.props;
+const { eyebrow, title, description, ctaLabel, ctaHref, supportChat = false } = Astro.props;
 ---
 
 <div class="relative overflow-hidden rounded-card bg-white border border-brand-100/40 shadow-card p-7 text-center md:text-right card-lift">
@@ -14,10 +18,27 @@ const { eyebrow, title, description, ctaLabel, ctaHref } = Astro.props;
   {eyebrow && <p class="relative text-xs text-brand mb-2">{eyebrow}</p>}
   <h3 class="relative text-lg font-bold text-brand mb-2">{title}</h3>
   <p class="relative text-sm leading-7 text-ink-soft mb-5">{description}</p>
-  <a
-    href={ctaHref}
-    class="btn-primary relative"
-  >
-    {ctaLabel}
-  </a>
+  <div class:list={['relative flex flex-wrap justify-center md:justify-start gap-2.5', supportChat && 'cta-actions']}>
+    <a href={ctaHref} class="btn-primary">
+      <Icon name="phone" class="h-4.5 w-4.5" />
+      {ctaLabel}
+    </a>
+    {supportChat && (
+      <button type="button" data-support-chat class="btn-outline">
+        <span class="relative">
+          <Icon name="headset" class="h-4.5 w-4.5" />
+          <span class="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-success"></span>
+        </span>
+        پشتیبانی آنلاین
+      </button>
+    )}
+  </div>
 </div>
+
+<style>
+  /* دو دکمه کنار هم؛ در ستون باریک (۳۶۰ پیکسل) هم‌عرض و زیر هم */
+  .cta-actions > * {
+    flex: 1 1 9.5rem;
+    padding-inline: 1rem;
+  }
+</style>
