@@ -1,66 +1,92 @@
 /**
- * پشتیبانی آنلاین (چت گفتینو)
- * ----------------------------------------------------
- * آیکون شناور گفتینو روی همه‌ی صفحات مخفی می‌شود و چت فقط از طریق منوها و
- * دکمه‌هایی باز می‌شود که ویژگی data-support-chat دارند.
- * اگر ویجت هنوز بارگذاری نشده باشد، پس از آماده شدن باز می‌شود و اگر اصلاً
- * بارگذاری نشود (مثلا مسدود شدن اسکریپت)، کاربر به صفحه‌ی تماس با ما می‌رود.
+ * پشتیبانی آنلاین — چت آنلاین آرکان گلد
+ * ------------------------------------------------------------------
+ * اسکریپت رسمی چت (LIVECHAT_EMBED_URL = https://app.arkan.gold/livechat-embed.js) در BaseLayout
+ * روی همه‌ی صفحات بارگذاری می‌شود. این اسکریپت ویجت را در یک iframe با ویژگی data-arkan-chat
+ * می‌سازد و API زیر را در اختیار می‌گذارد:
+ *   ArkanChat.open()   ArkanChat.close()
+ * ویجت وضعیت خود را با postMessage به صفحه اعلام می‌کند:
+ *   { source: "arkan-chat", type: "layout", state: "hidden" | "closed" | "open" }
+ * (مستندات: مخزن arkangold ← docs/livechat/README.md بخش ۸)
+ *
+ * رفتار در این سایت:
+ * - دکمه‌ی شناور چت (حالت closed) روی صفحات نمایش داده نمی‌شود؛ فقط پنجره‌ی باز چت دیده می‌شود
+ *   (کلاس arkan-chat-open روی <html> — CSS در src/styles/global.css).
+ * - چت از آیکون پشتیبانی هدر، آیتم «پشتیبانی آنلاین» منوی موبایل و هر المان با data-support-chat
+ *   باز می‌شود. باز شدن از مسیرهای دیگر (?chat=open، شروع گفتگو توسط کارشناس، باز ماندن چت در
+ *   صفحه‌ی قبل) هم به‌طور خودکار نمایش داده می‌شود.
+ * - اگر چت در دسترس نباشد (اسکریپت بارگذاری نشود یا چت از پنل غیرفعال باشد)، کاربر به صفحه‌ی
+ *   «تماس با ما» هدایت می‌شود.
  */
-
-interface GoftinoApi {
-  open?: () => void;
-  toggle?: () => void;
-  setWidget?: (opts: Record<string, unknown>) => void;
-}
+import { LIVECHAT_EMBED_URL } from '../config/site';
 
 declare global {
   interface Window {
-    Goftino?: GoftinoApi;
+    ArkanChat?: { open: () => void; close: () => void };
   }
 }
 
-const FALLBACK_URL = '/contact';
-const WAIT_MS = 6000;
-
-let ready = false;
-let pendingOpen = false;
-
-function hideLauncher() {
+const CHAT_ORIGIN = (() => {
   try {
-    window.Goftino?.setWidget?.({ hasIcon: false });
+    return new URL(LIVECHAT_EMBED_URL).origin;
   } catch {
-    /* ویجت در دسترس نیست */
+    return 'https://app.arkan.gold';
   }
+})();
+const OPEN_CLASS = 'arkan-chat-open';
+const FALLBACK_URL = '/contact';
+/** حداکثر انتظار برای بارگذاری اسکریپت چت پس از کلیک */
+const SCRIPT_WAIT_MS = 8000;
+/** حداکثر انتظار برای باز شدن پنجره‌ی چت پس از ArkanChat.open() (اینترنت کند موبایل) */
+const OPEN_WAIT_MS = 15000;
+
+type ChatState = 'unknown' | 'hidden' | 'closed' | 'open';
+let state: ChatState = 'unknown';
+let fallbackTimer = 0;
+
+function setState(next: ChatState) {
+  state = next;
+  document.documentElement.classList.toggle(OPEN_CLASS, next === 'open');
+  if (next === 'open') window.clearTimeout(fallbackTimer);
 }
 
-function openChat(): boolean {
-  const g = window.Goftino;
-  if (!g) return false;
-  if (typeof g.open === 'function') g.open();
-  else if (typeof g.toggle === 'function') g.toggle();
-  else return false;
-  return true;
-}
-
-window.addEventListener('goftino_ready', () => {
-  ready = true;
-  hideLauncher();
-  if (pendingOpen) {
-    pendingOpen = false;
-    openChat();
-  }
+// وضعیت ویجت از پیام‌های خود iframe چت خوانده می‌شود
+window.addEventListener('message', (e) => {
+  if (e.origin !== CHAT_ORIGIN) return;
+  const d = e.data as { source?: string; type?: string; state?: string } | null;
+  if (!d || d.source !== 'arkan-chat' || d.type !== 'layout') return;
+  const frame = document.querySelector<HTMLIFrameElement>('iframe[data-arkan-chat]');
+  if (!frame || e.source !== frame.contentWindow) return;
+  if (d.state === 'open' || d.state === 'closed' || d.state === 'hidden') setState(d.state);
 });
 
-/** باز کردن پشتیبانی آنلاین */
+function goToContact() {
+  window.clearTimeout(fallbackTimer);
+  window.location.href = FALLBACK_URL;
+}
+
+/** باز کردن پشتیبانی آنلاین (از هر جای سایت) */
 export function openOnlineSupport() {
-  if (ready && openChat()) return;
-  pendingOpen = true;
-  window.setTimeout(() => {
-    if (pendingOpen) {
-      pendingOpen = false;
-      if (!openChat()) window.location.href = FALLBACK_URL;
+  if (state === 'open') return;
+  // چت از پنل مدیریت غیرفعال است یا در این صفحه نمایش داده نمی‌شود
+  if (state === 'hidden') return goToContact();
+
+  const startedAt = Date.now();
+  const tryOpen = () => {
+    const chat = window.ArkanChat;
+    if (chat && typeof chat.open === 'function') {
+      chat.open();
+      window.clearTimeout(fallbackTimer);
+      fallbackTimer = window.setTimeout(() => {
+        if (state !== 'open') goToContact();
+      }, OPEN_WAIT_MS);
+      return;
     }
-  }, WAIT_MS);
+    // اسکریپت چت هنوز بارگذاری نشده است
+    if (Date.now() - startedAt > SCRIPT_WAIT_MS) return goToContact();
+    window.setTimeout(tryOpen, 200);
+  };
+  tryOpen();
 }
 
 document.addEventListener('click', (e) => {

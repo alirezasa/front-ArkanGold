@@ -221,3 +221,11 @@ canvas {
 .product-description img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; }
 .product-description a { color: #7a171e; text-decoration: underline; }
 .product-description table { display: block; max-width: 100%; overflow-x: auto; }
+
+/* چت آنلاین آرکان گلد (app.arkan.gold/livechat-embed.js): دکمه‌ی شناور چت روی صفحات نمایش داده
+   نمی‌شود و فقط پنجره‌ی باز چت دیده می‌شود. کلاس arkan-chat-open را src/lib/support.ts از روی
+   پیام وضعیت خود ویجت (layout: open) می‌گذارد. iframe مخفی می‌شود ولی بارگذاری آن ادامه دارد. */
+html:not(.arkan-chat-open) iframe[data-arkan-chat] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

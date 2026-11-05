@@ -3,9 +3,8 @@ import Seo from '../components/Seo.astro';
 import Analytics from '../components/Analytics.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import Goftino from '../components/Goftino.astro';
 import '../styles/global.css';
-import { INSTAGRAM_URL, OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
+import { INSTAGRAM_URL, LIVECHAT_EMBED_URL, OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
 
 interface Props {
   title: string;
@@ -54,11 +53,16 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
     <meta name="theme-color" content="#330509" />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- نصب به‌صورت اپلیکیشن (PWA / افزودن به صفحه اصلی) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="آرکان گلد" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="preconnect" href="https://www.googletagmanager.com" />
 
     <Seo title={title} description={description} path={path} image={image} noindex={noindex} ogType={ogType} imageAlt={imageAlt} meta={meta} />
     <Analytics />
-    <Goftino />
 
     {schemas.map((schema) => (
       <script type="application/ld+json" set:html={JSON.stringify(schema)} />
@@ -71,5 +75,7 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
       <slot />
     </main>
     <Footer />
+    <!-- چت آنلاین (پشتیبانی آنلاین) — دکمه‌ی شناورش مخفی است و از منوها باز می‌شود: src/lib/support.ts -->
+    <script is:inline src={LIVECHAT_EMBED_URL} defer></script>
   </body>
 </html>

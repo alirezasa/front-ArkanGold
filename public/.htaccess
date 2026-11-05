@@ -2,6 +2,9 @@
 # این فایل در build به ریشه‌ی dist کپی می‌شود. اگر روی هاست از قبل .htaccess دارید
 # (مثلا برای ریدایرکت https)، این خطوط را به همان فایل اضافه کنید.
 
+# نوع فایل manifest برای نصب سایت به‌صورت اپلیکیشن (PWA)
+AddType application/manifest+json .webmanifest
+
 # صفحه‌ی ۴۰۴ اختصاصی سایت به‌جای صفحه‌ی پیش‌فرض سرور
 ErrorDocument 404 /404.html
 
