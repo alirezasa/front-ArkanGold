@@ -25,6 +25,13 @@ export const iconPaths = {
   wallet: `<path d="M3 8a2 2 0 012-2h13a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/><path d="M16 13.2h2.5"/><path d="M3 8L14.5 4l3 2.3"/>`,
   document: `<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M9.5 12h5M9.5 15.5h5"/>`,
   handshake: `<path d="M2.5 12.5l4-3 3 2.3 3.3-3 3.5 2.7 4.2-3.2"/><path d="M6.5 9.5l4 5.2a1.6 1.6 0 002.4.2l.6-.6a1.6 1.6 0 000-2.2"/><path d="M13.8 12.7l1 1a1.6 1.6 0 002.3 0l.5-.5"/>`,
+  chat: `<path d="M4 5.5A2.5 2.5 0 016.5 3h11A2.5 2.5 0 0120 5.5v8a2.5 2.5 0 01-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 014 13.5z"/><path d="M8.5 9.5h.01M12 9.5h.01M15.5 9.5h.01"/>`,
+  phone: `<path d="M5 4h3.2l1.6 4-2 1.3a10.5 10.5 0 004.9 4.9l1.3-2 4 1.6V17a2 2 0 01-2 2A14 14 0 013 6a2 2 0 012-2z"/>`,
+  info: `<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6h.01"/>`,
+  book: `<path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 006.5 23H20v-5"/><path d="M8.5 8h7M8.5 11.5h5"/>`,
+  grid: `<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>`,
+  transfer: `<path d="M4 8h13.5"/><path d="M14 4.5L17.5 8 14 11.5"/><path d="M20 16H6.5"/><path d="M10 12.5L6.5 16l3.5 3.5"/>`,
+  gift: `<rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5V20a1 1 0 001 1h12a1 1 0 001-1v-7.5"/><path d="M12 8.5V21"/><path d="M12 8.5S10.8 4 8.3 4a2.2 2.2 0 000 4.5H12zM12 8.5S13.2 4 15.7 4a2.2 2.2 0 010 4.5H12z"/>`,
   question: `<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2-2.6 4"/><path d="M12 17h.01"/>`,
 };
 

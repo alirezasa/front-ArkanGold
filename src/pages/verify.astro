@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
-import { SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import { APP_URL, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
 import { faqIntro } from '../data/faq';
 
 const steps = [
@@ -19,6 +19,29 @@ const checks = [
   'در صورت هرگونه مغایرت، از خرید یا دریافت شمش خودداری کرده و با پشتیبانی تماس بگیرید.',
 ];
 
+/** فروش شمش به شخص دیگر: انتقال مالکیت در پنل کاربری */
+const transferSteps = [
+  { who: 'فروشنده', title: 'ورود به پنل کاربری', desc: 'با حساب کاربری خود (همان حسابی که شمش به نام آن ثبت است) وارد پنل آرکان گلد شوید.' },
+  { who: 'فروشنده', title: 'ثبت انتقال مالکیت', desc: 'شمش موردنظر را از میان شمش‌های خود انتخاب کرده و با وارد کردن شماره همراه خریدار جدید، درخواست انتقال مالکیت را ثبت کنید.' },
+  { who: 'خریدار', title: 'ورود به پنل و تایید انتقال', desc: 'خریدار جدید با همان شماره همراه وارد پنل آرکان گلد می‌شود (در صورت نداشتن حساب، ثبت‌نام و احراز هویت می‌کند) و درخواست انتقال مالکیت را تایید می‌کند.' },
+  { who: 'هر دو', title: 'ثبت مالک جدید', desc: 'پس از تایید خریدار، شمش به نام او ثبت می‌شود و از این پس در استعلام اصالت، نام مالک جدید نمایش داده می‌شود.' },
+];
+
+/** خرید شمش به‌عنوان هدیه */
+const giftSteps = [
+  { title: 'انتخاب خرید هدیه', desc: 'هنگام ثبت سفارش خرید شمش در پنل، مشخص کنید که شمش را برای شخص دیگری (به‌عنوان هدیه) خریداری می‌کنید.' },
+  { title: 'ثبت شماره همراه هدیه‌گیرنده', desc: 'شماره همراه هدیه‌گیرنده را با دقت وارد کنید. این شماره باید به نام خود هدیه‌گیرنده باشد، چون مالکیت شمش با احراز هویت صاحب همین شماره ثبت می‌شود.' },
+  { title: 'تایید توسط هدیه‌گیرنده', desc: 'هدیه‌گیرنده با همان شماره همراه وارد پنل آرکان گلد می‌شود، احراز هویت می‌کند و مالکیت شمش را تایید می‌کند.' },
+  { title: 'نمایش نام هدیه‌گیرنده', desc: 'پس از تایید، در استعلام اصالت شمش نام هدیه‌گیرنده به‌عنوان مالک نمایش داده می‌شود.' },
+];
+
+const ownershipWarnings = [
+  'تا زمانی که انتقال مالکیت در پنل ثبت و توسط خریدار تایید نشده باشد، شمش همچنان به نام فروشنده است.',
+  'پیش از پرداخت وجه، کد ۸ رقمی شمش را استعلام کنید و نام مالک نمایش‌داده‌شده را با هویت فروشنده تطبیق دهید.',
+  'از فروشنده بخواهید انتقال مالکیت را همزمان با معامله در پنل ثبت کند و شما بلافاصله آن را تایید کنید.',
+  'اگر هنگام خرید هدیه شماره همراه خودتان را وارد کنید، شمش به نام شما ثبت می‌شود و برای واگذاری باید بعداً انتقال مالکیت انجام دهید.',
+];
+
 const verifyFaq = [
   {
     question: 'کد ۸ رقمی اصالت شمش آرکان گلد کجا درج شده است؟',
@@ -27,6 +50,14 @@ const verifyFaq = [
   {
     question: 'اگر نتیجه استعلام «یافت نشد» بود چه کنم؟',
     answer: 'ابتدا کد ۸ رقمی را دوباره و با دقت وارد کنید. اگر باز هم یافت نشد، شمش را خریداری یا دریافت نکنید و موضوع را از طریق تماس تلفنی یا تیکت به پشتیبانی آرکان گلد اطلاع دهید.',
+  },
+  {
+    question: 'چگونه شمش آرکان گلد خود را به شخص دیگری بفروشم؟',
+    answer: 'فروشنده باید از طریق پنل کاربری آرکان گلد، با وارد کردن شماره همراه خریدار، درخواست انتقال مالکیت شمش را ثبت کند. خریدار جدید با ورود به پنل (و احراز هویت در صورت نیاز) انتقال را تایید می‌کند و پس از آن شمش به نام او ثبت می‌شود.',
+  },
+  {
+    question: 'شمشی که به‌عنوان هدیه خریداری می‌شود به نام چه کسی ثبت می‌شود؟',
+    answer: 'هنگام خرید شمش هدیه باید شماره همراه هدیه‌گیرنده (شماره‌ای که به نام خود او است) ثبت شود. هدیه‌گیرنده با همان شماره وارد پنل شده و مالکیت را تایید می‌کند و از آن پس در استعلام اصالت، نام او به‌عنوان مالک نمایش داده می‌شود.',
   },
   {
     question: 'آیا استعلام اصالت هزینه دارد؟',
@@ -141,6 +172,97 @@ const faqSchema = {
 
         <!-- نتیجه استعلام -->
         <div id="verify-result" class="mt-6 hidden" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- مهم: انتقال مالکیت هنگام فروش شمش و ثبت شمش هدیه -->
+  <section id="ownership" class="container-page py-10 scroll-mt-40">
+    <div class="rounded-xl2 border-2 border-gold/50 bg-white shadow-card-hover overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-4 bg-gold-50 px-5 py-5 sm:px-8 border-b border-gold/30">
+        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-glow-brand">
+          <Icon name="transfer" class="h-6 w-6" />
+        </span>
+        <div class="min-w-0">
+          <p class="inline-flex items-center gap-1.5 rounded-full bg-danger px-2.5 py-0.5 text-[11px] font-bold text-white">مهم</p>
+          <h2 class="mt-1.5 text-xl sm:text-2xl font-bold text-brand leading-9">انتقال مالکیت شمش و خرید شمش هدیه</h2>
+          <p class="mt-1 text-sm leading-7 text-ink-soft">
+            هر شمش آرکان گلد در سامانه به نام یک مالک ثبت می‌شود و نام همین مالک در نتیجه‌ی استعلام اصالت نمایش داده می‌شود.
+            بنابراین فروش، واگذاری یا هدیه دادن شمش فقط با ثبت مالکیت در پنل کاربری کامل می‌شود.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid gap-6 p-5 sm:p-8 lg:grid-cols-2">
+        <!-- فروش شمش به شخص دیگر -->
+        <div class="min-w-0">
+          <h3 class="flex items-start gap-2 text-lg font-bold leading-8 text-brand">
+            <Icon name="transfer" class="mt-1.5 h-5 w-5 shrink-0 text-gold-500" />
+            قصد فروش شمش به شخص دیگری را دارید؟
+          </h3>
+          <p class="mt-1 text-sm leading-7 text-ink-soft">
+            فروشنده باید شمش را از طریق پنل کاربری به خریدار جدید <b class="text-ink">انتقال مالکیت</b> بدهد و خریدار جدید با ورود به پنل، انتقال را <b class="text-ink">تایید</b> کند.
+          </p>
+          <ol class="mt-4 space-y-3">
+            {transferSteps.map((s, i) => (
+              <li class="flex items-start gap-3 rounded-card bg-canvas-100 p-3.5">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cta-gradient text-sm font-bold text-white tnum">{(i + 1).toLocaleString('fa-IR')}</span>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-brand">
+                    <span class="ml-1 rounded bg-white px-1.5 py-0.5 text-[11px] font-semibold text-ink-soft">{s.who}</span>
+                    {s.title}
+                  </p>
+                  <p class="mt-1 text-xs leading-6 text-ink-soft">{s.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <!-- خرید شمش هدیه -->
+        <div class="min-w-0">
+          <h3 class="flex items-start gap-2 text-lg font-bold leading-8 text-brand">
+            <Icon name="gift" class="mt-1.5 h-5 w-5 shrink-0 text-gold-500" />
+            شمش را به‌عنوان هدیه می‌خرید؟
+          </h3>
+          <p class="mt-1 text-sm leading-7 text-ink-soft">
+            هنگام خرید شمش هدیه، <b class="text-ink">شماره همراه هدیه‌گیرنده</b> را ثبت کنید تا شمش از ابتدا به نام او ثبت شود.
+          </p>
+          <ol class="mt-4 space-y-3">
+            {giftSteps.map((s, i) => (
+              <li class="flex items-start gap-3 rounded-card bg-canvas-100 p-3.5">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500 text-sm font-bold text-white tnum">{(i + 1).toLocaleString('fa-IR')}</span>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-brand">{s.title}</p>
+                  <p class="mt-1 text-xs leading-6 text-ink-soft">{s.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <div class="mx-5 mb-5 sm:mx-8 sm:mb-8 rounded-card border border-danger/25 bg-danger-50 p-4">
+        <p class="flex items-center gap-2 text-sm font-bold text-danger">
+          <Icon name="shield" class="h-4.5 w-4.5" />
+          پیش از خرید شمش دست‌دوم حتماً بدانید
+        </p>
+        <ul class="mt-2 space-y-1.5 text-xs leading-6 text-ink">
+          {ownershipWarnings.map((w) => (
+            <li class="flex items-start gap-2"><span class="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger"></span>{w}</li>
+          ))}
+        </ul>
+        <div class="mt-4 flex flex-col sm:flex-row gap-2.5">
+          <a href={APP_URL} class="btn-primary !py-3">
+            <Icon name="wallet" class="h-4.5 w-4.5" />
+            ورود به پنل کاربری
+          </a>
+          <button type="button" data-support-chat class="btn-outline !py-3 bg-white">
+            <Icon name="headset" class="h-4.5 w-4.5" />
+            راهنمایی با پشتیبانی آنلاین
+          </button>
+        </div>
       </div>
     </div>
   </section>

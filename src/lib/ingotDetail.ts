@@ -235,7 +235,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
 
 const services: { icon: IconName; title: string; desc: string; href: string }[] = [
   { icon: 'shield', title: 'استعلام اصالت', desc: 'با کد ۸ رقمی هولوگرام شمش', href: '/verify' },
-  { icon: 'location', title: 'تحویل فیزیکی', desc: 'ارسال بیمه‌شده یا تحویل حضوری', href: '/services' },
+  { icon: 'location', title: 'تحویل فیزیکی', desc: 'ارسال بیمه‌شده یا تحویل حضوری', href: '/delivery' },
   { icon: 'invoice', title: 'فاکتور رسمی', desc: 'صدور فاکتور معتبر برای هر خرید', href: '/licenses' },
   { icon: 'trend-up', title: 'فروش مجدد', desc: 'فروش به آرکان گلد با قیمت لحظه‌ای', href: '/sell-gold' },
 ];
@@ -392,6 +392,10 @@ export function ingotDetailHtml(p: GoldIngot, { serviceEnabled }: DetailHtmlOpti
         <p class="mt-3 text-[11px] leading-6 text-ink-soft/80 text-center">
           با کلیک روی «خرید شمش» به داشبورد آرکان گلد منتقل می‌شوید و سفارش را با قیمت لحظه‌ای نهایی و پرداخت آنلاین ثبت می‌کنید.
         </p>
+        <a href="/verify#ownership" class="mt-3 flex items-start gap-2.5 rounded-lg border border-gold/40 bg-gold-50 px-3 py-2.5 text-[12px] leading-6 text-ink">
+          <span class="mt-0.5 shrink-0 text-gold-600">${iconSvg('gift', 'h-4.5 w-4.5')}</span>
+          <span><b class="text-brand">خرید به‌عنوان هدیه؟</b> هنگام ثبت سفارش، شماره همراه هدیه‌گیرنده را وارد کنید تا شمش به نام او ثبت شود. <span class="font-semibold text-brand underline">راهنمای کامل</span></span>
+        </a>
       </div>
 
       <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">

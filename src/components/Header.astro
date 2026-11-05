@@ -1,25 +1,24 @@
 ---
 import Icon from './Icon.astro';
-import { APP_URL, SUPPORT_PHONE, SUPPORT_PHONE_FA } from '../config/site';
+import { APP_URL, MESSENGER_PHONE_FA, SUPPORT_PHONE, SUPPORT_PHONE_FA, WHATSAPP_URL } from '../config/site';
+import { mainNav, type NavLink } from '../data/nav';
 
-const nav = [
-  {
-    label: 'خدمات',
-    href: '/services',
-    children: [
-      { label: 'خرید طلای آب‌شده', href: '/buy-gold', desc: 'خرید آنلاین با قیمت لحظه‌ای', icon: 'gold-drop' },
-      { label: 'خرید شمش طلا', href: '/shop', desc: 'شمش ۷۵۰ عیار آرکان با قیمت لحظه‌ای', icon: 'gold-bar' },
-      { label: 'تحویل فیزیکی', href: '/services', desc: 'تحویل فیزیکی طلا در آدرس شما', icon: 'location' },
-    ],
-  },
-  { label: 'قیمت لحظه‌ای', href: '/price', icon: 'trend-up' },
-  { label: 'فروشگاه', href: '/shop', icon: 'gold-bar' },
-  { label: 'استعلام اصالت شمش', href: '/verify', icon: 'shield' },
-  { label: 'مجوزها و اعتبار', href: '/licenses', icon: 'seal' },
-  { label: 'مجله', href: 'https://arkan.gold/mag', external: true, icon: 'document' },
-  { label: 'سوالات متداول', href: '/faq', icon: 'question' },
+const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (href: string) => !href.startsWith('http') && currentPath === href;
+const isParentActive = (children?: NavLink[]) => !!children?.some((c) => isActive(c.href));
+
+/** لوگوی جدید (نماد در کادر زرشکی + «آرکان گلد») — هدر و منوی موبایل */
+const LOGO_SRC = '/images/arkan-gold-logo-header.webp';
+const LOGO_W = 1124;
+const LOGO_H = 356;
+
+/** آیتم‌های منوی پشتیبانی (هدر دسکتاپ و منوی موبایل) */
+const supportItems = [
+  { label: 'پشتیبانی آنلاین', desc: 'گفتگوی آنلاین با کارشناسان', icon: 'chat' as const, chat: true },
+  { label: 'تماس تلفنی', desc: SUPPORT_PHONE_FA, icon: 'phone' as const, href: `tel:${SUPPORT_PHONE}`, tnum: true },
+  { label: 'واتس‌اپ', desc: MESSENGER_PHONE_FA, icon: 'chat' as const, href: WHATSAPP_URL, external: true, tnum: true },
+  { label: 'تماس با ما', desc: 'آدرس، ساعات کاری و فرم تماس', icon: 'location' as const, href: '/contact' },
 ];
-const currentPath = Astro.url.pathname;
 ---
 
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-2 focus:z-50 focus:bg-brand focus:text-white focus:px-4 focus:py-2 focus:rounded">
@@ -27,74 +26,111 @@ const currentPath = Astro.url.pathname;
 </a>
 
 <header class="sticky top-0 z-50 border-b border-brand-100/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
-  <div class="container-page flex h-[72px] sm:h-20 items-center justify-between gap-3 sm:gap-6">
-    <!-- لوگوی فارسی افقی (نماد + آرکان گلد + شعار) — نام داخل خود لوگو است، پس متن جداگانه لازم نیست -->
+  <!-- هدر عریض: در دسکتاپ تا ۱۷۶۰ پیکسل باز می‌شود تا منو و لوگو جای کافی داشته باشند -->
+  <div class="header-wide flex h-16 min-[400px]:h-[68px] sm:h-[76px] xl:h-[84px] items-center justify-between gap-3 xl:gap-5">
     <a href="/" class="flex items-center shrink-0 group" aria-label="آرکان گلد - صفحه اصلی">
       <img
-        src="/images/arkan-gold-logo-horizontal.webp"
-        alt="آرکان گلد | پلتفرم خرید و فروش طلای آب‌شده"
-        width="1171"
-        height="240"
-        class="h-6 min-[360px]:h-[30px] min-[400px]:h-9 min-[440px]:h-10 sm:h-12 xl:h-10 min-[1440px]:h-11 2xl:h-10 min-[1720px]:h-12 w-auto transition-transform duration-300 group-hover:scale-[1.03]"
+        src={LOGO_SRC}
+        alt="آرکان گلد"
+        width={LOGO_W}
+        height={LOGO_H}
+        fetchpriority="high"
+        class="h-9 min-[400px]:h-10 sm:h-12 xl:h-[46px] min-[1440px]:h-[52px] w-auto transition-transform duration-300 group-hover:scale-[1.03]"
       />
     </a>
 
-    <nav aria-label="ناوبری اصلی" class="hidden xl:flex items-center gap-0.5">
-      {nav.map((item) => (
+    <nav aria-label="ناوبری اصلی" class="hidden xl:flex flex-1 items-center justify-center gap-0.5 min-[1440px]:gap-1.5">
+      {mainNav.map((item) => (
         item.children ? (
-          <div class="relative group">
+          <div class="nav-dd relative group">
             <button
               type="button"
               class:list={[
-                'flex items-center gap-1.5 px-3 py-2.5 rounded-md text-sm whitespace-nowrap transition-colors',
-                currentPath === item.href ? 'text-brand font-semibold' : 'text-ink-soft hover:text-brand',
+                'nav-link',
+                isParentActive(item.children) || isActive(item.href) ? 'is-active' : '',
               ]}
               aria-haspopup="true"
+              aria-expanded="false"
             >
-              <Icon name={item.icon as any} class="hidden 2xl:block h-5 w-5 shrink-0" />
               {item.label}
-              <Icon name="chevron" class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-180" />
+              <Icon name="chevron" class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" />
             </button>
 
-            <div class="invisible absolute right-0 top-full z-50 w-96 translate-y-2 rounded-card border border-brand-100/50 bg-white p-2 opacity-0 shadow-card-hover transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+            <div class="nav-dd-panel w-[25rem]">
               {item.children.map((c) => (
-                <a href={c.href} class="flex items-start gap-3 rounded-lg px-4 py-3 hover:bg-canvas-100 transition-colors">
-                  <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                    <Icon name={c.icon as any} class="h-6 w-6" />
+                <a
+                  href={c.href}
+                  target={c.external ? '_blank' : undefined}
+                  rel={c.external ? 'noopener noreferrer' : undefined}
+                  class:list={['nav-dd-link', isActive(c.href) && 'bg-canvas-100']}
+                >
+                  <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                    <Icon name={c.icon} class="h-5.5 w-5.5" />
                   </span>
-                  <span class="flex flex-col gap-0.5">
+                  <span class="flex min-w-0 flex-col">
                     <span class="text-sm font-semibold text-brand">{c.label}</span>
-                    <span class="text-xs text-ink-soft">{c.desc}</span>
+                    {c.desc && <span class="text-xs text-ink-soft">{c.desc}</span>}
                   </span>
                 </a>
               ))}
             </div>
           </div>
         ) : (
-          <a
-            href={item.href}
-            target={item.external ? '_blank' : undefined}
-            rel={item.external ? 'noopener noreferrer' : undefined}
-            class:list={[
-              'flex items-center gap-1.5 px-3 py-2.5 rounded-md text-sm whitespace-nowrap transition-colors',
-              currentPath === item.href
-                ? 'text-brand font-semibold'
-                : 'text-ink-soft hover:text-brand',
-            ]}
-          >
-            <Icon name={item.icon as any} class="hidden 2xl:block h-5 w-5 shrink-0" />
+          <a href={item.href} class:list={['nav-link', isActive(item.href) && 'is-active']}>
             {item.label}
           </a>
         )
       ))}
     </nav>
 
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+      <!-- پشتیبانی — جایگزین آیکون شناور چت روی صفحات (فقط دسکتاپ؛ در موبایل داخل منو است) -->
+      <div class="nav-dd relative group hidden xl:block">
+        <button type="button" class="nav-link nav-support" aria-haspopup="true" aria-expanded="false">
+          <span class="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand">
+            <Icon name="headset" class="h-[18px] w-[18px]" />
+            <span class="absolute -top-0.5 -left-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-success"></span>
+          </span>
+          پشتیبانی
+          <Icon name="chevron" class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" />
+        </button>
+        <div class="nav-dd-panel nav-dd-panel--end w-[19rem]">
+          {supportItems.map((s) => (
+            s.chat ? (
+              <button type="button" data-support-chat class="nav-dd-link w-full text-right">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+                  <Icon name={s.icon} class="h-5.5 w-5.5" />
+                </span>
+                <span class="flex min-w-0 flex-col">
+                  <span class="text-sm font-semibold text-brand">{s.label}</span>
+                  <span class="text-xs text-ink-soft">{s.desc}</span>
+                </span>
+              </button>
+            ) : (
+              <a
+                href={s.href}
+                target={s.external ? '_blank' : undefined}
+                rel={s.external ? 'noopener noreferrer' : undefined}
+                class="nav-dd-link"
+              >
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                  <Icon name={s.icon} class="h-5.5 w-5.5" />
+                </span>
+                <span class="flex min-w-0 flex-col">
+                  <span class="text-sm font-semibold text-brand">{s.label}</span>
+                  <span class:list={['text-xs text-ink-soft', s.tnum && 'tnum']}>{s.desc}</span>
+                </span>
+              </a>
+            )
+          ))}
+        </div>
+      </div>
+
       <!-- آیتم دانلود اپلیکیشن با پاپ‌آپ QR هنگام هاور -->
       <div class="nav-download-item hidden md:inline-flex">
-        <div class="nav-download-trigger">
+        <div class="nav-download-trigger" tabindex="0" role="button" aria-label="دانلود اپلیکیشن">
           <Icon name="smartphone" class="h-5 w-5 shrink-0" />
-          <span class="nav-label whitespace-nowrap">دانلود اپلیکیشن</span>
+          <span class="nav-label whitespace-nowrap xl:hidden min-[1560px]:inline" aria-hidden="true">دانلود اپلیکیشن</span>
         </div>
         <div class="qr-dropdown-modal">
           <div class="qr-card">
@@ -117,19 +153,19 @@ const currentPath = Astro.url.pathname;
         </div>
       </div>
 
-      <a href={APP_URL} class="btn-primary !px-3.5 sm:!px-5 !py-2 sm:!py-2.5 text-xs sm:text-sm whitespace-nowrap">
+      <a href={APP_URL} class="btn-primary !px-3 min-[400px]:!px-4 sm:!px-5 !py-2 sm:!py-2.5 text-xs sm:text-sm whitespace-nowrap">
         ورود / ثبت نام
       </a>
 
       <button
         id="mobile-menu-btn"
         type="button"
-        class="xl:hidden -ml-2 shrink-0 rounded-md p-2 text-brand"
+        class="xl:hidden flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg border border-brand-100/60 text-brand transition-colors hover:bg-brand-50"
         aria-expanded="false"
         aria-controls="mobile-menu"
         aria-label="باز کردن منو"
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
         </svg>
       </button>
@@ -138,7 +174,7 @@ const currentPath = Astro.url.pathname;
 
   <!-- نوار وضعیت زنده قیمت طلا — در همه‌ی سایزها از جمله موبایل نمایش داده می‌شود -->
   <div class="border-t border-brand-100/40 bg-brand text-white">
-    <div class="container-page flex min-h-[48px] sm:min-h-[52px] flex-wrap items-center justify-center sm:justify-start gap-x-4 sm:gap-x-6 gap-y-1 py-2 text-[13px] sm:text-[15px]">
+    <div class="header-wide flex min-h-[46px] sm:min-h-[52px] flex-wrap items-center justify-center xl:justify-start gap-x-4 sm:gap-x-6 gap-y-1 py-2 text-[13px] sm:text-[15px]">
       <span class="flex items-center gap-2 whitespace-nowrap">
         <span class="live-dot shrink-0"></span>
         <span class="font-medium text-white/85"><span class="hidden sm:inline">نرخ زنده </span>طلای ۱۸ عیار<span class="hidden sm:inline"> هر گرم</span>:</span>
@@ -153,52 +189,61 @@ const currentPath = Astro.url.pathname;
       </span>
     </div>
   </div>
-
 </header>
 
 <!-- منوی موبایل تمام‌صفحه — بیرون از <header> است چون backdrop-filter هدر، position:fixed فرزندان را
      به خود هدر محدود می‌کند و منو بریده نمایش داده می‌شد -->
-<div id="mobile-menu" class="fixed inset-0 z-[70] hidden xl:hidden bg-white" role="dialog" aria-modal="true" aria-label="منوی سایت">
-  <div class="flex h-full max-h-[100dvh] flex-col bg-white">
-    <div class="flex h-[72px] items-center justify-between border-b border-brand-100/50 px-5 shrink-0">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/images/arkan-gold-logo.png" alt="آرکان گلد" width="480" height="388" class="h-14 w-auto" />
-        <span class="text-lg font-bold text-brand">آرکان گلد</span>
+<div id="mobile-menu" class="fixed inset-0 z-[70] hidden xl:hidden" role="dialog" aria-modal="true" aria-label="منوی سایت">
+  <!-- پس‌زمینه‌ی تیره (فقط تبلت؛ در موبایل منو تمام‌صفحه است) — کلیک روی آن منو را می‌بندد -->
+  <div data-menu-backdrop class="absolute inset-0 hidden sm:block bg-brand-700/45 backdrop-blur-[2px]"></div>
+  <div class="mobile-drawer relative flex h-full max-h-[100dvh] w-full sm:max-w-[440px] flex-col bg-canvas-50 sm:shadow-2xl">
+    <div class="flex h-16 min-[400px]:h-[68px] sm:h-[76px] items-center justify-between gap-3 border-b border-brand-100/50 bg-white px-4 sm:px-6 shrink-0">
+      <a href="/" class="flex items-center" aria-label="آرکان گلد - صفحه اصلی">
+        <img src={LOGO_SRC} alt="آرکان گلد" width={LOGO_W} height={LOGO_H} class="h-10 min-[400px]:h-11 sm:h-12 w-auto" />
       </a>
-      <button id="mobile-menu-close" type="button" class="rounded-md p-2 text-brand" aria-label="بستن منو">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+      <button id="mobile-menu-close" type="button" class="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-brand-100/60 text-brand hover:bg-brand-50" aria-label="بستن منو">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
       </button>
     </div>
 
-    <!-- قیمت زنده هم بالای منوی موبایل تکرار می‌شود تا همیشه در دید باشد -->
-    <div class="shrink-0 bg-brand text-white px-5 py-3 text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
-      <span class="live-dot"></span>
-      <span class="tnum">
-        طلای ۱۸ عیار: <b class="text-base font-extrabold text-gold-300" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
-      </span>
-      <b class="tnum text-sm font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
+    <!-- قیمت زنده بالای منوی موبایل — وسط‌چین -->
+    <div class="shrink-0 bg-brand text-white px-4 py-3 text-center">
+      <p class="flex items-center justify-center gap-2 text-xs text-white/80">
+        <span class="live-dot"></span>
+        قیمت لحظه‌ای هر گرم طلای ۱۸ عیار
+      </p>
+      <p class="mt-1 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-0.5">
+        <b class="tnum text-lg font-extrabold text-gold-300" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+        <b class="tnum text-sm font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
+      </p>
     </div>
 
-    <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto px-5 py-4">
-      <ul class="flex flex-col divide-y divide-brand-100/40">
-        {nav.map((item) => (
+    <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4">
+      <ul class="flex flex-col gap-2">
+        {mainNav.map((item, idx) => (
           item.children ? (
             <li>
-              <details class="group/d">
-                <summary class="flex cursor-pointer items-center justify-between py-4 text-base font-medium text-ink marker:content-none">
-                  <span class="flex items-center gap-3">
-                    <Icon name={item.icon as any} class="h-6 w-6 text-brand" />
-                    {item.label}
-                  </span>
-                  <Icon name="chevron" class="h-4 w-4 transition-transform group-open/d:rotate-180" />
+              <details class="m-group group/d rounded-xl border border-brand-100/40 bg-white" open={idx === 0}>
+                <summary class="m-row cursor-pointer list-none">
+                  <span class="m-icon"><Icon name={item.icon} class="h-5 w-5" /></span>
+                  <span class="flex-1">{item.label}</span>
+                  <Icon name="chevron" class="h-4 w-4 text-brand transition-transform group-open/d:rotate-180" />
                 </summary>
-                <div class="flex flex-col gap-1 pb-3">
+                <div class="grid gap-1 border-t border-brand-100/30 p-2">
                   {item.children.map((c) => (
-                    <a href={c.href} class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-ink-soft hover:bg-canvas-100 hover:text-brand">
-                      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
-                        <Icon name={c.icon as any} class="h-5.5 w-5.5" />
+                    <a
+                      href={c.href}
+                      target={c.external ? '_blank' : undefined}
+                      rel={c.external ? 'noopener noreferrer' : undefined}
+                      class:list={['flex items-center gap-3 rounded-lg px-2.5 py-2.5 hover:bg-canvas-100', isActive(c.href) && 'bg-canvas-100']}
+                    >
+                      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand">
+                        <Icon name={c.icon} class="h-[18px] w-[18px]" />
                       </span>
-                      {c.label}
+                      <span class="flex min-w-0 flex-col">
+                        <span class="text-sm font-semibold text-ink">{c.label}</span>
+                        {c.desc && <span class="truncate text-[11px] leading-5 text-ink-soft">{c.desc}</span>}
+                      </span>
                     </a>
                   ))}
                 </div>
@@ -206,27 +251,41 @@ const currentPath = Astro.url.pathname;
             </li>
           ) : (
             <li>
-              <a
-                href={item.href}
-                target={item.external ? '_blank' : undefined}
-                rel={item.external ? 'noopener noreferrer' : undefined}
-                class="flex items-center gap-3 py-4 text-base font-medium text-ink hover:text-brand"
-              >
-                <Icon name={item.icon as any} class="h-6 w-6 text-brand" />
-                {item.label}
+              <a href={item.href} class:list={['m-row rounded-xl border border-brand-100/40 bg-white', isActive(item.href) && '!border-brand/40 !text-brand']}>
+                <span class="m-icon"><Icon name={item.icon} class="h-5 w-5" /></span>
+                <span class="flex-1">{item.label}</span>
+                <Icon name="chevron" class="h-4 w-4 rotate-90 text-ink-soft/60" />
               </a>
             </li>
           )
         ))}
       </ul>
 
-      <div class="mt-4 rounded-card border border-brand-100/50 bg-canvas-100 p-4 flex items-center gap-3">
+      <!-- پشتیبانی داخل منوی موبایل -->
+      <div class="mt-4 rounded-xl border border-brand-100/40 bg-white p-3">
+        <p class="mb-2 flex items-center gap-2 px-1 text-sm font-bold text-brand">
+          <Icon name="headset" class="h-5 w-5" />
+          پشتیبانی آرکان گلد
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" data-support-chat class="flex flex-col items-center gap-1.5 rounded-lg bg-brand px-2 py-3 text-xs font-semibold text-white">
+            <Icon name="chat" class="h-5 w-5" />
+            پشتیبانی آنلاین
+          </button>
+          <a href={`tel:${SUPPORT_PHONE}`} class="flex flex-col items-center gap-1.5 rounded-lg border border-brand-100/60 px-2 py-3 text-xs font-semibold text-brand">
+            <Icon name="phone" class="h-5 w-5" />
+            <span class="tnum">{SUPPORT_PHONE_FA}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-3 rounded-xl border border-brand-100/40 bg-white p-3 flex items-center gap-3">
         <img
-          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=efeff1"
+          src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://app.arkan.gold&color=330509&bgcolor=ffffff"
           alt="اسکن جهت دانلود اپلیکیشن"
-          width="64"
-          height="64"
-          class="h-16 w-16 shrink-0 rounded-lg bg-white"
+          width="56"
+          height="56"
+          class="h-14 w-14 shrink-0 rounded-lg border border-brand-100/40 bg-white"
           loading="lazy"
         />
         <div class="min-w-0">
@@ -238,17 +297,149 @@ const currentPath = Astro.url.pathname;
       </div>
     </nav>
 
-    <div class="shrink-0 border-t border-brand-100/50 px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] grid grid-cols-2 gap-3">
-      <a href={`tel:${SUPPORT_PHONE}`} class="btn-outline !px-3 !py-3 text-xs">
-        <Icon name="headset" class="h-4 w-4" />
-        <span class="tnum">{SUPPORT_PHONE_FA}</span>
-      </a>
-      <a href={APP_URL} class="btn-primary !px-3 !py-3 text-xs">ورود / ثبت نام</a>
+    <div class="shrink-0 grid grid-cols-[auto_1fr] gap-2.5 border-t border-brand-100/50 bg-white px-4 sm:px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <button type="button" data-support-chat class="btn-outline !px-4 !py-3 text-sm" aria-label="پشتیبانی آنلاین">
+        <span class="relative">
+          <Icon name="headset" class="h-5 w-5" />
+          <span class="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-success"></span>
+        </span>
+        پشتیبانی
+      </button>
+      <a href={APP_URL} class="btn-primary w-full !py-3 text-sm">ورود / ثبت نام</a>
     </div>
   </div>
 </div>
 
 <style>
+  /* کانتینر عریض هدر (بزرگ‌تر از container-page صفحات) */
+  .header-wide {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 1760px;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .header-wide { padding-inline: 1.5rem; }
+  }
+  @media (min-width: 1280px) {
+    .header-wide { padding-inline: 2rem; }
+  }
+  @media (min-width: 1536px) {
+    .header-wide { padding-inline: 3rem; }
+  }
+
+  /* ===== آیتم‌های منوی دسکتاپ ===== */
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: #5c5449;
+    transition: color 0.2s, background-color 0.2s;
+  }
+  @media (min-width: 1440px) {
+    .nav-link { padding: 0.6rem 0.9rem; font-size: 0.97rem; }
+  }
+  .nav-link:hover,
+  .group:hover > .nav-link,
+  .group:focus-within > .nav-link {
+    color: #330509;
+    background: #f6e7e8;
+  }
+  .nav-link.is-active {
+    color: #330509;
+    font-weight: 700;
+  }
+  .nav-support {
+    padding-block: 0.3rem;
+    padding-inline-start: 0.35rem;
+    font-weight: 600;
+    color: #330509;
+  }
+
+  .nav-dd-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 60;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(230, 194, 197, 0.5);
+    background: #fff;
+    box-shadow: 0 20px 45px -15px rgba(51, 5, 9, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  }
+  /* پل نامرئی بین دکمه و پنل تا با حرکت ماوس منو بسته نشود */
+  .nav-dd-panel::before {
+    content: '';
+    position: absolute;
+    inset: -0.75rem 0 auto 0;
+    height: 0.75rem;
+  }
+  .nav-dd-panel--end {
+    right: auto;
+    left: 0;
+  }
+  .group:hover > .nav-dd-panel,
+  .group:focus-within > .nav-dd-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .nav-dd-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 12px;
+    padding: 0.65rem 0.75rem;
+    transition: background-color 0.2s;
+  }
+  .nav-dd-link:hover {
+    background: #efeff1;
+  }
+
+  /* ===== منوی موبایل ===== */
+  @media (min-width: 640px) {
+    #mobile-menu:not(.hidden) .mobile-drawer {
+      animation: drawer-in 0.25s ease-out;
+    }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .m-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #211a17;
+  }
+  .m-row::-webkit-details-marker {
+    display: none;
+  }
+  .m-icon {
+    display: flex;
+    height: 2.4rem;
+    width: 2.4rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #f6e7e8;
+    color: #330509;
+  }
+
   /* ===== پاپ‌آپ QR دانلود اپلیکیشن (هاور) ===== */
   .nav-download-item {
     position: relative;
@@ -260,15 +451,16 @@ const currentPath = Astro.url.pathname;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
+    padding: 8px 10px;
     cursor: pointer;
     color: #5c5449;
     font-size: 0.85rem;
     font-weight: 500;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.2s ease;
   }
-  .nav-download-trigger:hover {
+  .nav-download-trigger:hover,
+  .nav-download-item:focus-within .nav-download-trigger {
     color: #330509;
     background: #f6e7e8;
   }
@@ -286,7 +478,8 @@ const currentPath = Astro.url.pathname;
                 visibility 0.25s;
     z-index: 1000;
   }
-  .nav-download-item:hover .qr-dropdown-modal {
+  .nav-download-item:hover .qr-dropdown-modal,
+  .nav-download-item:focus-within .qr-dropdown-modal {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -364,12 +557,24 @@ const currentPath = Astro.url.pathname;
 
   btn?.addEventListener('click', openMenu);
   closeBtn?.addEventListener('click', closeMenu);
-  // با انتخاب یک لینک، کلید Escape یا بزرگ شدن صفحه (نمایش منوی دسکتاپ) منو بسته می‌شود
-  menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', closeMenu));
+  menu?.querySelector('[data-menu-backdrop]')?.addEventListener('click', closeMenu);
+  // با انتخاب یک لینک یا پشتیبانی آنلاین، کلید Escape یا بزرگ شدن صفحه (نمایش منوی دسکتاپ) منو بسته می‌شود
+  menu?.querySelectorAll('a, [data-support-chat]').forEach((a) => a.addEventListener('click', closeMenu));
   document.addEventListener('keydown', (e) => e.key === 'Escape' && closeMenu());
   matchMedia('(min-width: 1280px)').addEventListener('change', (e) => e.matches && closeMenu());
+
+  // aria-expanded منوهای کشویی دسکتاپ (هاور و فوکوس صفحه‌کلید)
+  document.querySelectorAll<HTMLElement>('.nav-dd').forEach((dd) => {
+    const trigger = dd.querySelector('button[aria-haspopup]');
+    const set = (v: boolean) => trigger?.setAttribute('aria-expanded', String(v));
+    dd.addEventListener('mouseenter', () => set(true));
+    dd.addEventListener('mouseleave', () => set(dd.contains(document.activeElement)));
+    dd.addEventListener('focusin', () => set(true));
+    dd.addEventListener('focusout', (e) => !dd.contains(e.relatedTarget as Node) && set(false));
+  });
 </script>
 
 <script>
   import '../lib/priceBinding';
+  import '../lib/support';
 </script>

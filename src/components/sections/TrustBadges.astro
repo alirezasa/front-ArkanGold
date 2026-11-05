@@ -5,23 +5,25 @@ const badges: { label: string; icon: string; href?: string }[] = [
   { label: 'مجوز فینوتک', icon: 'bank' },
   { label: 'نماد اعتماد', icon: 'seal' },
   { label: 'تاییدیه بانک مرکزی', icon: 'shield' },
-  { label: 'استعلام اصالت شمش', icon: 'gold-bar', href: '/verify' },
-  { label: 'امنیت SSL', icon: 'lock' },
+  { label: 'اتصال به سامانه ناظر', icon: 'transfer', href: '#supervisor' },
   { label: 'خزانه بیمه‌شده', icon: 'vault' },
 ];
 ---
 
 <section class="border-y border-brand-100/30 bg-white/60">
   <div class="container-page py-10">
-    <div class="flex items-center justify-center gap-2 mb-6">
-      <p class="text-center text-sm font-medium text-ink-soft">
+    <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mb-6 text-center">
+      <p class="text-sm font-medium text-ink-soft">
         مجوزها و تاییدیه‌های رسمی — آرکان گلد در چارچوب قوانین کشور فعالیت می‌کند
       </p>
       <a href="/licenses" class="text-xs font-semibold text-brand hover:underline whitespace-nowrap">مشاهده همه</a>
     </div>
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="flex flex-wrap justify-center gap-4">
       {badges.map((b) => (
-        <a href={b.href ?? '/licenses'} class="flex flex-col items-center gap-2 rounded-xl2 border border-brand-100/30 bg-white px-3 py-4 text-center card-lift">
+        <a
+          href={b.href ?? '/licenses'}
+          class="flex w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.7rem)] lg:w-auto lg:flex-1 flex-col items-center gap-2 rounded-xl2 border border-brand-100/30 bg-white px-3 py-4 text-center card-lift"
+        >
           <span class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand">
             <Icon name={b.icon as any} class="h-5 w-5" />
           </span>

@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/sections/Hero.astro';
 import TrustBadges from '../components/sections/TrustBadges.astro';
+import SupervisorBanner from '../components/sections/SupervisorBanner.astro';
 import PriceChart from '../components/sections/PriceChart.astro';
 import ProductCategories from '../components/sections/ProductCategories.astro';
 import Features from '../components/sections/Features.astro';
@@ -35,6 +36,7 @@ const faqSchema = {
 >
   <Hero />
   <TrustBadges />
+  <SupervisorBanner />
   <PriceChart />
   <ProductCategories />
   <VerifyTeaser />
@@ -55,6 +57,7 @@ const faqSchema = {
       description="تیم پشتیبانی آرکان گلد در تمام روزهای هفته از طریق چت آنلاین، تماس تلفنی یا تیکت پاسخگوی شماست."
       ctaLabel="تماس با پشتیبانی"
       ctaHref="/contact"
+      supportChat
     />
   </section>
 
