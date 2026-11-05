@@ -141,17 +141,25 @@ function panelVisible(): boolean {
 
 /* --------------------- مخفی/نمایش لانچر شناور ویجت --------------------- */
 
+/** پنل چت از زمان آخرین باز کردن دیده شده است؟ */
+let panelSeen = false;
+
 function applyLauncherVisibility() {
+  const open = document.documentElement.classList.contains(OPEN_CLASS);
+  if (open && !panelSeen && panelVisible()) panelSeen = true;
   const el = findLauncher();
   if (!el) return;
-  const open = document.documentElement.classList.contains(OPEN_CLASS);
   for (const [prop, value] of [
     ['visibility', 'hidden'],
     ['opacity', '0'],
     ['pointer-events', 'none'],
   ] as const) {
-    if (open) el.style.removeProperty(prop);
-    else el.style.setProperty(prop, value, 'important');
+    // فقط در صورت تغییر نوشته می‌شود تا با MutationObserver حلقه ایجاد نشود
+    if (open) {
+      if (el.style.getPropertyValue(prop)) el.style.removeProperty(prop);
+    } else if (el.style.getPropertyValue(prop) !== value || el.style.getPropertyPriority(prop) !== 'important') {
+      el.style.setProperty(prop, value, 'important');
+    }
   }
 }
 
@@ -167,7 +175,7 @@ const rootObserver = new MutationObserver((mutations) => {
       if (n instanceof Element && !isOurs(n)) {
         widgetRoots.add(n);
         // تغییرات داخلی ویجت (رندر دیرهنگام لانچر) هم دنبال می‌شود
-        new MutationObserver(scheduleScan).observe(n, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+        new MutationObserver(scheduleScan).observe(n, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open'] });
       }
     });
   }
@@ -191,27 +199,47 @@ else document.addEventListener('DOMContentLoaded', observeRoots, { once: true })
 
 let closeWatch = 0;
 function setOpen(open: boolean) {
+  if (open) panelSeen = false;
   document.documentElement.classList.toggle(OPEN_CLASS, open);
   applyLauncherVisibility();
   window.clearInterval(closeWatch);
   if (open) {
-    // وقتی کاربر چت را از داخل ویجت ببندد، لانچر دوباره مخفی می‌شود
+    // وقتی کاربر چت را از داخل ویجت ببندد، لانچر دوباره مخفی می‌شود.
+    // تا پنل چت یک بار دیده نشده (مثلاً لانچرِ iframe که کاربر باید خودش لمسش کند)،
+    // لانچر تا ۲۰ ثانیه نمایان می‌ماند.
     let misses = 0;
     const startedAt = Date.now();
     closeWatch = window.setInterval(() => {
-      if (Date.now() - startedAt < 1500) return;
-      misses = panelVisible() ? 0 : misses + 1;
-      if (misses >= 2) setOpen(false);
-    }, 700);
+      if (panelVisible()) {
+        panelSeen = true;
+        misses = 0;
+        return;
+      }
+      if (!panelSeen) {
+        if (Date.now() - startedAt > 20000) setOpen(false);
+        return;
+      }
+      if (++misses >= 2) setOpen(false);
+    }, 400);
   }
 }
 
+/** بررسی سریع نمایش پنل پس از باز کردن (برای ویجت‌هایی که تغییرشان در shadow DOM است) */
+function checkPanelSoon() {
+  [150, 600].forEach((ms) => window.setTimeout(() => {
+    if (panelVisible()) panelSeen = true;
+  }, ms));
+}
+
 function tryOpen(): boolean {
+  // اگر چت همین حالا باز است، دوباره کلیک نمی‌شود (کلیک روی لانچر ممکن است آن را ببندد)
+  if (document.documentElement.classList.contains(OPEN_CLASS) && panelVisible()) return true;
   const api = findApi();
   if (api) {
     setOpen(true);
     try {
       api();
+      checkPanelSoon();
       return true;
     } catch {
       /* ادامه با کلیک روی لانچر */
@@ -223,6 +251,7 @@ function tryOpen(): boolean {
     if (el.tagName !== 'IFRAME') {
       const target = el.matches('button, a, [role="button"]') ? el : (el.querySelector<HTMLElement>('button, a, [role="button"]') ?? el);
       target.click();
+      checkPanelSoon();
     }
     return true;
   }
