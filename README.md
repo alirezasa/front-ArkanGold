@@ -166,7 +166,7 @@ src/components/Icon.astro
 ## هویت بصری و لوگو
 
 لوگوی رسمی آرکان گلد در این نسخه‌ها در `public/images/` قرار دارد:
-- `arkan-gold-logo-header.webp` (و `.png`) — لوگوی هدر و منوی موبایل (نماد طلایی در کادر زرشکی + «آرکان گلد»)
+- `arkan-gold-logo-header.webp` (و `.png`) — لوگوی هدر و منوی موبایل (نماد طلایی در کادر زرشکی + «آرکان گلد» زرشکی)
 - `arkan-gold-logo.png` — لوگوی لاتین (نماد + ARKAN GOLD)، در فوتر و پنل «درباره ما»
 - `arkan-gold-logo-horizontal.webp` (و `.png`) — لوگوی فارسی افقی قبلی (نماد | آرکان گلد + شعار)
 - `logo.png` — نسخه‌ی کامل (نماد + نوشتار ARKAN GOLD GALLERY)

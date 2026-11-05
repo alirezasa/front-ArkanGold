@@ -7,8 +7,8 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/';
 const isActive = (href: string) => !href.startsWith('http') && currentPath === href;
 const isParentActive = (children?: NavLink[]) => !!children?.some((c) => isActive(c.href));
 
-/** لوگوی جدید (نماد در کادر زرشکی + «آرکان گلد») — هدر و منوی موبایل */
-const LOGO_SRC = '/images/arkan-gold-logo-header.webp';
+/** لوگوی هدر (نماد در کادر زرشکی + «آرکان گلد» زرشکی) — ?v برای به‌روزرسانی کش مرورگر پس از تغییر فایل */
+const LOGO_SRC = '/images/arkan-gold-logo-header.webp?v=2';
 const LOGO_W = 1124;
 const LOGO_H = 356;
 
@@ -137,7 +137,7 @@ const LOGO_H = 356;
 
   <!-- نوار وضعیت زنده قیمت طلا — در همه‌ی سایزها از جمله موبایل نمایش داده می‌شود -->
   <div class="border-t border-brand-100/40 bg-brand text-white">
-    <div class="header-wide flex min-h-[46px] sm:min-h-[52px] flex-wrap items-center justify-center xl:justify-start gap-x-4 sm:gap-x-6 gap-y-1 py-2 text-[13px] sm:text-[15px]">
+    <div class="header-wide flex min-h-[46px] sm:min-h-[52px] flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-1 py-2 text-[13px] sm:text-[15px]">
       <span class="flex items-center gap-2 whitespace-nowrap">
         <span class="live-dot shrink-0"></span>
         <span class="font-medium text-white/85"><span class="hidden sm:inline">نرخ زنده </span>طلای ۱۸ عیار<span class="hidden sm:inline"> هر گرم</span>:</span>
