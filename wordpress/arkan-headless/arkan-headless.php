@@ -151,7 +151,8 @@ function arkan_headless_trigger_deploy()
     if ($s['hook_url'] === '') {
         return new WP_Error('no_hook', 'آدرس Deploy Hook تنظیم نشده است.');
     }
-    $headers = ['User-Agent' => 'ArkanHeadless/1.0', 'Accept' => 'application/json'];
+    $is_github = wp_parse_url($s['hook_url'], PHP_URL_HOST) === 'api.github.com';
+    $headers = ['User-Agent' => 'ArkanHeadless/1.0', 'Accept' => $is_github ? 'application/vnd.github+json' : 'application/json'];
     if ($s['hook_auth'] !== '') {
         $headers['Authorization'] = $s['hook_auth'];
     }

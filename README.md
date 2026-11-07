@@ -330,6 +330,32 @@ PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run build
   ایستا ندارند به `mag-live` می‌دهد که مطلب را در مرورگر از REST API وردپرس نمایش می‌دهد.
 - جست‌وجوی مجله (`/mag-live?s=...`) هم مستقیم از وردپرس خوانده می‌شود و همیشه به‌روز است.
 
+### انتشار خودکار (GitHub Actions + FTP)
+فایل `.github/workflows/deploy.yml` سایت را build می‌کند و فقط فایل‌های تغییرکرده را با FTP روی هاست
+آپلود می‌کند. با هر انتشار مطلب (Deploy Hook افزونه) یا دستی از تب Actions اجرا می‌شود.
+
+1. **این شاخه را در `main` ادغام کنید** — رویداد `repository_dispatch` فقط فایل workflow روی شاخه‌ی اصلی را اجرا می‌کند.
+2. **حساب FTP**: در cPanel/DirectAdmin هاست یک حساب FTP بسازید که به پوشه‌ی سایت (`public_html`) دسترسی دارد.
+3. **Secrets** (GitHub ← Settings ← Secrets and variables ← Actions ← Secrets):
+   `FTP_SERVER` (مثلا `ftp.arkan.gold`)، `FTP_USERNAME`، `FTP_PASSWORD`.
+4. **Variables** (همان صفحه ← تب Variables): `PUBLIC_WP_API_URL` = `https://cms.arkan.gold/wp-json`؛
+   اختیاری: `FTP_SERVER_DIR` (پیش‌فرض `public_html/`، حتما با `/` در انتها؛ اگر حساب FTP مستقیم در
+   `public_html` باز می‌شود `./` بگذارید)، `FTP_PROTOCOL` (پیش‌فرض `ftps`؛ اگر هاست FTPS ندارد `ftp`)،
+   و `PUBLIC_GA4_ID`، `PUBLIC_YEKTANET_ID`، `PUBLIC_ENAMAD_ID`، `PUBLIC_ENAMAD_CODE` اگر استفاده می‌کنید.
+5. **اجرای اول دستی**: Actions ← Deploy ← Run workflow. اولین اجرا همه‌ی فایل‌ها را آپلود می‌کند.
+6. **توکن GitHub برای وردپرس**: GitHub ← Settings (حساب کاربری) ← Developer settings ← Fine-grained tokens
+   ← Generate new token؛ Repository access: فقط `alirezasa/front-ArkanGold`؛ Permissions ← Contents: **Read and write**.
+7. **وردپرس ← تنظیمات ← مجله هدلس**:
+   - آدرس Deploy Hook: `https://api.github.com/repos/alirezasa/front-ArkanGold/dispatches`
+   - هدر Authorization: `Bearer github_pat_...` (توکن مرحله‌ی ۶)
+   - بدنه‌ی JSON: `{"event_type":"wordpress-publish"}`
+   - «اجرای build الان» را بزنید؛ نتیجه‌ی موفق `HTTP 204` است و یک اجرای جدید در تب Actions دیده می‌شود.
+
+اگر هاست ایرانی اتصال از سرورهای خارج از ایران را می‌بندد، FTP یا REST API وردپرس از GitHub در دسترس
+نخواهد بود (خطای اتصال در لاگ Actions)؛ در این صورت از پشتیبانی هاست بخواهید دسترسی FTP و
+`cms.arkan.gold` را برای IPهای خارجی باز کنند. توکن GitHub تاریخ انقضا دارد؛ قبل از انقضا توکن جدید
+بسازید و در تنظیمات افزونه جایگزین کنید.
+
 REST API وردپرس به‌طور پیش‌فرض درخواست‌های مرورگر از دامنه‌ی دیگر (CORS) را می‌پذیرد؛ اگر افزونه‌ی
 امنیتی دارید، دسترسی عمومی به `/wp-json/wp/v2/` (posts، pages، categories، tags و users برای نام نویسنده)
 را باز بگذارید.

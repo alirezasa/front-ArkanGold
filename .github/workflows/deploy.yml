@@ -1,0 +1,58 @@
+# build و آپلود خودکار سایت روی هاست با FTP
+# ----------------------------------------------------
+# اجرا می‌شود:
+#   - با هر انتشار/ویرایش مطلب در وردپرس (افزونه‌ی arkan-headless ← repository_dispatch: wordpress-publish)
+#   - دستی: تب Actions ← Deploy ← Run workflow
+# تنظیمات لازم در GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «انتشار خودکار»
+#   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
+#   Variables: PUBLIC_WP_API_URL، FTP_SERVER_DIR (پیش‌فرض public_html/)، FTP_PROTOCOL (پیش‌فرض ftps)
+#              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
+# نکته: repository_dispatch فقط وقتی کار می‌کند که این فایل روی شاخه‌ی اصلی (main) باشد.
+name: Deploy
+
+on:
+  repository_dispatch:
+    types: [wordpress-publish]
+  workflow_dispatch:
+
+# اگر چند مطلب پشت‌سرهم منتشر شود، اجراها در صف می‌مانند (آپلود نیمه‌کاره لغو نمی‌شود)
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_WP_API_URL: ${{ vars.PUBLIC_WP_API_URL }}
+          PUBLIC_ARKAN_API_URL: ${{ vars.PUBLIC_ARKAN_API_URL }}
+          PUBLIC_VERIFY_API_URL: ${{ vars.PUBLIC_VERIFY_API_URL }}
+          PUBLIC_GA4_ID: ${{ vars.PUBLIC_GA4_ID }}
+          PUBLIC_YEKTANET_ID: ${{ vars.PUBLIC_YEKTANET_ID }}
+          PUBLIC_ENAMAD_ID: ${{ vars.PUBLIC_ENAMAD_ID }}
+          PUBLIC_ENAMAD_CODE: ${{ vars.PUBLIC_ENAMAD_CODE }}
+
+      # فقط فایل‌های تغییرکرده آپلود می‌شوند (فهرست فایل‌ها در .ftp-deploy-sync-state.json روی هاست
+      # نگه داشته می‌شود). فایل‌هایی که این action آپلود نکرده (مثلا پوشه‌های دیگر هاست) پاک نمی‌شوند.
+      - name: Upload to host (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./dist/
+          server-dir: ${{ vars.FTP_SERVER_DIR || 'public_html/' }}
