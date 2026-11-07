@@ -5,15 +5,20 @@
  */
 import type { APIRoute } from 'astro';
 import { MAG_ENABLED, WP_API_URL } from '../config/site';
+import { withDeadline } from '../lib/cache';
 import { loadIngotCatalog } from '../lib/goldIngots';
 import { getSite } from '../lib/magazine';
 import { serverGoldPrice } from '../lib/serverPrice';
 
 export const prerender = false;
 
+const TIMEOUT = Symbol('timeout');
+
+/** هر بررسی حداکثر ۴ ثانیه — /healthz همیشه سریع جواب می‌دهد (مناسب health check پلتفرم) */
 const check = async (fn: () => Promise<unknown>) => {
   try {
-    const detail = await fn();
+    const detail = await withDeadline(fn(), 4000, TIMEOUT);
+    if (detail === TIMEOUT) return { ok: false, error: 'timeout (4s)' };
     return { ok: true, ...(detail && typeof detail === 'object' ? detail : {}) };
   } catch (err) {
     return { ok: false, error: String((err as Error)?.message ?? err) };

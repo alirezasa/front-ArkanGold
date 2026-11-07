@@ -1,16 +1,16 @@
-# انتشار کد سایت روی هاست Node.js (FTP) — فقط برای تغییر کد/طراحی؛ مطالب مجله، محصولات و قیمت‌ها
-# هنگام بازدید روی سرور از API ها خوانده می‌شوند و به build نیاز ندارند.
-# اجرا: تب Actions ← Deploy ← Run workflow
-#
-# تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «اجرا روی Node.js»
-#   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
-#   Variables: FTP_APP_DIR      پوشه‌ی برنامه‌ی Node.js نسبت به ریشه‌ی FTP (پیش‌فرض arkan-site)
-#              PUBLIC_WP_API_URL پیش‌فرض https://cms.arkan.gold/wp-json؛ off = مجله غیرفعال
-#              FTP_VERIFY_CERT  اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
-#              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
+# دیپلوی خودکار سایت روی هاست Node.js — با هر push به main (و دستی از تب Actions ← Deploy ← Run workflow)
+# ----------------------------------------------------
+# فقط تغییر کد/طراحی به دیپلوی نیاز دارد؛ مطالب مجله، شمش‌ها و قیمت‌ها هنگام بازدید از API ها خوانده می‌شوند.
+# روش آپلود (README ← «دیپلوی خودکار»):
+#   SSH (پیشنهادی، سریع‌تر و مطمئن‌تر):  Secrets: SSH_HOST، SSH_USERNAME، SSH_PRIVATE_KEY   Variable: SSH_PORT (پیش‌فرض 22)
+#   FTP:                                Secrets: FTP_SERVER، FTP_USERNAME، FTP_PASSWORD     Variable: FTP_VERIFY_CERT=false در صورت خطای گواهی
+# Variables مشترک: APP_DIR پوشه‌ی برنامه نسبت به پوشه‌ی خانه/ریشه‌ی FTP (پیش‌فرض arkan-site)
+#                  PUBLIC_WP_API_URL، PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE (اختیاری)
 name: Deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -29,32 +29,89 @@ jobs:
       PUBLIC_YEKTANET_ID: ${{ vars.PUBLIC_YEKTANET_ID }}
       PUBLIC_ENAMAD_ID: ${{ vars.PUBLIC_ENAMAD_ID }}
       PUBLIC_ENAMAD_CODE: ${{ vars.PUBLIC_ENAMAD_CODE }}
+      APP_DIR: ${{ vars.APP_DIR || vars.FTP_APP_DIR || 'arkan-site' }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ vars.SSH_PORT || '22' }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+      FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
     steps:
+      - name: بررسی تنظیمات دیپلوی
+        id: method
+        run: |
+          if [ -n "$SSH_HOST" ] && [ -n "$SSH_USERNAME" ]; then
+            echo "method=ssh" >> "$GITHUB_OUTPUT"; HOST="$SSH_HOST"; PORT="$SSH_PORT"
+          elif [ -n "$FTP_SERVER" ] && [ -n "$FTP_USERNAME" ]; then
+            echo "method=ftp" >> "$GITHUB_OUTPUT"; HOST="$FTP_SERVER"; PORT=21
+          else
+            MSG="هیچ روش آپلودی تنظیم نشده است. در Settings ← Secrets and variables ← Actions یا SSH_HOST/SSH_USERNAME/SSH_PRIVATE_KEY یا FTP_SERVER/FTP_USERNAME/FTP_PASSWORD را اضافه کنید (README ← دیپلوی خودکار)."
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "::warning title=دیپلوی انجام نشد::$MSG"; echo "method=none" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            echo "::error title=دیپلوی انجام نشد::$MSG"; exit 1
+          fi
+          # آیا هاست از سرورهای GitHub (خارج از ایران) در دسترس است؟
+          if ! timeout 15 bash -c "</dev/tcp/$HOST/$PORT" 2>/dev/null; then
+            echo "::error title=اتصال به هاست برقرار نشد::پورت $PORT روی $HOST از سرورهای GitHub در دسترس نیست. معمولا هاست‌های ایرانی اتصال از خارج ایران را می‌بندند؛ از پشتیبانی هاست بخواهید پورت $PORT را برای IPهای خارجی (GitHub Actions) باز کنند، یا آدرس/پورت را بررسی کنید."
+            exit 1
+          fi
+          echo "اتصال به $HOST:$PORT برقرار است."
+
       - uses: actions/checkout@v4
+        if: steps.method.outputs.method != 'none'
 
       - uses: actions/setup-node@v4
+        if: steps.method.outputs.method != 'none'
         with:
           node-version: 20
           cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Build
+        if: steps.method.outputs.method != 'none'
+        run: |
+          npm ci
+          npm run build
 
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-
-      # فایل‌های قدیمی پاک نمی‌شوند تا برنامه‌ی در حال اجرا تا لحظه‌ی راه‌اندازی دوباره سالم بماند؛
-      # tmp/restart.txt آخر از همه آپلود می‌شود و Passenger برنامه را با نسخه‌ی جدید راه‌اندازی می‌کند.
-      - name: Upload to host (FTP)
+      # فایل‌های قدیمی پاک نمی‌شوند تا برنامه‌ی در حال اجرا تا لحظه‌ی راه‌اندازی دوباره سالم بماند؛ کش تصاویر
+      # (cache/) دست نمی‌خورد. tmp/restart.txt آخر از همه آپلود می‌شود و Passenger برنامه را از نو راه‌اندازی می‌کند.
+      - name: Upload (SSH / rsync)
+        if: steps.method.outputs.method == 'ssh'
         env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then echo "::error title=کلید SSH::Secret با نام SSH_PRIVATE_KEY تنظیم نشده است."; exit 1; fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          SSH="ssh -i ~/.ssh/deploy_key -p $SSH_PORT -o BatchMode=yes"
+          $SSH "$SSH_USERNAME@$SSH_HOST" "mkdir -p '$APP_DIR/tmp'" || { echo "::error title=ورود SSH ناموفق::کلید عمومی را در cPanel ← SSH Access ← Manage SSH Keys وارد و Authorize کنید (README ← دیپلوی خودکار)."; exit 1; }
+          if $SSH "$SSH_USERNAME@$SSH_HOST" "command -v rsync" >/dev/null 2>&1; then
+            # rsync هر فایل را اول موقت می‌نویسد و بعد جایگزین می‌کند (برنامه‌ی در حال اجرا فایل نیمه‌کاره نمی‌بیند)
+            rsync -rlz --checksum --exclude 'tmp/' -e "$SSH" dist/app/ "$SSH_USERNAME@$SSH_HOST:$APP_DIR/"
+          else
+            echo "rsync روی هاست نیست؛ آپلود با tar"
+            tar -C dist/app --exclude=./tmp -czf - . | $SSH "$SSH_USERNAME@$SSH_HOST" "tar -xzf - -C '$APP_DIR'"
+          fi
+          $SSH "$SSH_USERNAME@$SSH_HOST" "date > '$APP_DIR/tmp/restart.txt'"
+
+      - name: Upload (FTP)
+        if: steps.method.outputs.method == 'ftp'
+        env:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_APP_DIR: ${{ vars.FTP_APP_DIR || 'arkan-site' }}
           FTP_VERIFY_CERT: ${{ vars.FTP_VERIFY_CERT || 'true' }}
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
           lftp -u "$FTP_USERNAME,$FTP_PASSWORD" "$FTP_SERVER" -e "
-            set ftp:ssl-allow true; set ssl:verify-certificate $FTP_VERIFY_CERT; set net:max-retries 3; set net:timeout 30;
-            mirror -R --parallel=4 --exclude ^tmp/ dist/app $FTP_APP_DIR;
-            mkdir -pf $FTP_APP_DIR/tmp;
-            put -O $FTP_APP_DIR/tmp dist/app/tmp/restart.txt;
-            bye"
+            set ftp:ssl-allow true; set ssl:verify-certificate $FTP_VERIFY_CERT; set ftp:passive-mode true;
+            set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5;
+            mirror -R --parallel=4 --only-newer --exclude ^tmp/ dist/app $APP_DIR;
+            mkdir -pf $APP_DIR/tmp;
+            put -O $APP_DIR/tmp dist/app/tmp/restart.txt;
+            bye" || { echo "::error title=آپلود FTP ناموفق::نام کاربری/رمز، پوشه‌ی APP_DIR و دسترسی حساب FTP به پوشه‌ی خانه را بررسی کنید. اگر خطای گواهی (certificate) دیدید، Variable با نام FTP_VERIFY_CERT=false بسازید."; exit 1; }
+
+      - name: Summary
+        if: steps.method.outputs.method != 'none'
+        run: |
+          echo "### ✅ دیپلوی انجام شد" >> "$GITHUB_STEP_SUMMARY"
+          echo "روش: ${{ steps.method.outputs.method }} — پوشه: \`$APP_DIR\` — commit: \`${GITHUB_SHA::7}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "بررسی: https://arkan.gold/healthz" >> "$GITHUB_STEP_SUMMARY"

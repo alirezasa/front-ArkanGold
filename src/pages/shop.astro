@@ -6,10 +6,12 @@ Astro.locals.livePrice = true;
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
-import { loadIngotCatalog } from '../lib/goldIngots';
+import { loadIngotCatalog, UNAVAILABLE_CATALOG } from '../lib/goldIngots';
+import { withDeadline } from '../lib/cache';
 import { compareIngots, DEFAULT_SORT, ingotDetailPath } from '../lib/ingotCard';
 
-const catalog = await loadIngotCatalog();
+// حداکثر ۴ ثانیه انتظار برای API؛ بعد از آن صفحه بدون معطلی ساخته می‌شود (فروشگاه محصولات را در مرورگر می‌گیرد)
+const catalog = await withDeadline(loadIngotCatalog(), 4000, UNAVAILABLE_CATALOG);
 const { serviceEnabled } = catalog;
 // ترتیب پیش‌فرض: ارزان‌ترین (و در قیمت برابر، سبک‌ترین) اول
 const products = [...catalog.products].sort(compareIngots(DEFAULT_SORT));

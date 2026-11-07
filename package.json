@@ -5,11 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
     "build": "astro build",
+    "start": "node dist/app/server.mjs",
+    "serve": "node dist/app/server.mjs",
     "preview": "astro preview",
-    "astro": "astro",
-    "serve": "node dist/app/app.cjs"
+    "astro": "astro"
   },
   "dependencies": {
     "@astrojs/node": "8.3.4",
@@ -21,5 +21,8 @@
   },
   "overrides": {
     "zod": "3.25.76"
+  },
+  "engines": {
+    "node": ">=18.17"
   }
 }

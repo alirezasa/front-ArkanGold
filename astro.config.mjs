@@ -15,6 +15,7 @@ export const SITE_URL = 'https://arkan.gold';
 // - صفحه‌های با داده‌ی زنده (صفحه‌ی اصلی، قیمت، خرید/فروش، فروشگاه، تحویل، مجله) هنگام بازدید
 //   روی سرور ساخته می‌شوند: `export const prerender = false` در همان صفحه
 const mode = process.argv.includes('dev') ? 'development' : 'production';
+const IS_BUILD = process.argv.includes('build');
 const env = loadEnv(mode, process.cwd(), '');
 // مجله (وردپرس هدلس روی https://cms.arkan.gold) به‌طور پیش‌فرض فعال است؛ PUBLIC_WP_API_URL=off غیرفعالش
 // می‌کند (همان منطق src/config/site.ts)
@@ -25,8 +26,9 @@ export default defineConfig({
   trailingSlash: 'never',
   output: 'hybrid',
   adapter: node({ mode: 'middleware' }),
-  // همه‌ی وابستگی‌ها داخل باندل سرور قرار می‌گیرند تا روی هاست npm install لازم نباشد
-  vite: { ssr: { noExternal: true } },
+  // در build همه‌ی وابستگی‌ها داخل باندل سرور قرار می‌گیرند تا روی هاست npm install لازم نباشد.
+  // فقط در build: در `astro dev` این کار باعث خطای «exports is not defined» در پکیج‌های CommonJS می‌شود.
+  vite: IS_BUILD ? { ssr: { noExternal: true } } : {},
   integrations: [
     tailwind({
       applyBaseStyles: false,

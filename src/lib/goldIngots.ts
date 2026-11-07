@@ -268,9 +268,12 @@ export async function loadIngotCatalog(): Promise<IngotCatalog> {
     return await cached('shop:catalog', SHOP_TTL, fetchCatalog, { maxStaleMs: SHOP_MAX_STALE, swrMs: SHOP_SWR });
   } catch (err) {
     console.warn(`[shop] API شمش‌ها (${GOLD_INGOTS_API_URL}) در دسترس نبود: ${(err as Error)?.message ?? err}`);
-    return { serviceEnabled: true, generatedAt: '', products: [], source: 'unavailable' };
+    return UNAVAILABLE_CATALOG;
   }
 }
+
+/** کاتالوگ خالی وقتی API در دسترس نیست (صفحه‌ی فروشگاه محصولات را در مرورگر بارگذاری می‌کند) */
+export const UNAVAILABLE_CATALOG: IngotCatalog = { serviceEnabled: true, generatedAt: '', products: [], source: 'unavailable' };
 
 /** جزئیات یک شمش برای صفحه‌ی /shop/{slug}؛ null یعنی چنین شمشی وجود ندارد (۴۰۴) */
 export function loadIngot(slug: string): Promise<{ product: GoldIngot | null; serviceEnabled: boolean }> {
