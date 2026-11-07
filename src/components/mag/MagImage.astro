@@ -1,0 +1,31 @@
+---
+// تصویر مطلب مجله با srcset؛ اگر مطلب تصویر شاخص نداشته باشد، کادر برند با نماد آرکان
+import type { MagImage } from '../../lib/wp';
+
+interface Props {
+  image?: MagImage;
+  sizes: string;
+  class?: string;
+  eager?: boolean;
+}
+const { image, sizes, class: className = '', eager = false } = Astro.props;
+---
+
+{image ? (
+  <img
+    src={image.src}
+    srcset={image.srcset}
+    sizes={image.srcset ? sizes : undefined}
+    width={image.width}
+    height={image.height}
+    alt={image.alt}
+    class={className}
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={eager ? 'high' : undefined}
+    decoding="async"
+  />
+) : (
+  <div class:list={['flex items-center justify-center bg-cta-gradient', className]}>
+    <img src="/images/logo-mark.png" alt="" class="h-14 w-14 opacity-80" loading="lazy" decoding="async" />
+  </div>
+)}

@@ -1,0 +1,195 @@
+---
+// صفحه‌ی مطلب مجله:
+//   ستون اصلی: سربرگ (دسته، عنوان، نویسنده، تاریخ، زمان مطالعه، اشتراک‌گذاری)، تصویر شاخص،
+//              فهرست مطالب خودکار از h2/h3، متن، برچسب‌ها، اشتراک‌گذاری و معرفی نویسنده
+//   ستون کناری (چسبان): قیمت لحظه‌ای طلا، آخرین مطالب، دسته‌بندی‌ها، استعلام اصالت شمش
+//   پایین: مطالب مرتبط
+// برگه‌های وردپرس (type=page) همین قالب را بدون اطلاعات نویسنده/تاریخ دارند.
+import Icon from '../Icon.astro';
+import MagBreadcrumb from './MagBreadcrumb.astro';
+import MagCard from './MagCard.astro';
+import MagImage from './MagImage.astro';
+import MagPriceWidget from './MagPriceWidget.astro';
+import MagSectionTitle from './MagSectionTitle.astro';
+import { MAG_PATH } from '../../config/site';
+import { buildToc, faDate, faNum, magHref, magUrl, postCrumbs, shareLinks, type MagPost } from '../../lib/wp';
+
+interface Props {
+  post: MagPost;
+  related: MagPost[];
+  latest: MagPost[];
+  categories: { name: string; path: string }[];
+}
+const { post, related, latest, categories } = Astro.props;
+const isPost = post.type === 'post';
+const { html, toc } = buildToc(post.contentHtml || '<p>محتوای این مطلب محافظت‌شده است.</p>');
+const updated = isPost && post.modified.slice(0, 10) !== post.date.slice(0, 10);
+const author = post.author;
+const share = shareLinks(post);
+const sidebarPosts = latest.filter((p) => p.id !== post.id).slice(0, 5);
+---
+
+<div id="mag-progress" class="fixed top-0 inset-x-0 z-[60] h-[3px] origin-right scale-x-0 bg-gold transition-transform duration-100" aria-hidden="true"></div>
+
+<div class="container-page py-6 sm:py-8">
+  <MagBreadcrumb crumbs={postCrumbs(post)} />
+
+  <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <article class="min-w-0 rounded-xl2 bg-white p-4 sm:p-6 md:p-8 shadow-card border border-brand-100/30" data-mag-article>
+      <header>
+        {isPost && post.categories.length > 0 && (
+          <div class="mb-3 flex flex-wrap gap-2">
+            {post.categories.map((c) => (
+              <a href={magHref(c.path)} class="rounded-full bg-brand-50 px-3 py-0.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">{c.name}</a>
+            ))}
+          </div>
+        )}
+        <h1 class="text-2xl md:text-[2rem] font-extrabold leading-[1.6] text-brand">{post.title}</h1>
+
+        {isPost && (
+          <div class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-card bg-canvas-50 px-4 py-3">
+            <div class="flex min-w-0 items-center gap-3">
+              {author?.avatar ? (
+                <img src={author.avatar} alt="" width="44" height="44" class="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-white" decoding="async" />
+              ) : (
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white"><Icon name="document" class="h-5 w-5" /></span>
+              )}
+              <div class="min-w-0 text-xs text-ink-soft">
+                <p class="font-bold text-ink text-sm">
+                  {author?.path ? <a href={magHref(author.path)} class="hover:text-brand">{author.name}</a> : (author?.name ?? 'تحریریه آرکان گلد')}
+                </p>
+                <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span class="inline-flex items-center gap-1"><Icon name="calendar" class="h-3.5 w-3.5" /><time datetime={post.date}>{faDate(post.date)}</time></span>
+                  {updated && <span>· به‌روزرسانی <time datetime={post.modified}>{faDate(post.modified)}</time></span>}
+                  <span class="inline-flex items-center gap-1">· <Icon name="clock" class="h-3.5 w-3.5" />{faNum(post.readingMinutes)} دقیقه مطالعه</span>
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5" aria-label="اشتراک‌گذاری">
+              {share.map((s) => (
+                <a href={s.href} target="_blank" rel="noopener noreferrer nofollow" aria-label={`اشتراک در ${s.label}`} title={s.label} class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-brand shadow-sm ring-1 ring-brand-100/60 hover:bg-brand hover:text-white transition-colors">
+                  <Icon name={s.icon} class="h-4 w-4" />
+                </a>
+              ))}
+              <button type="button" data-copy-link={magUrl(post.path)} aria-label="کپی لینک مطلب" title="کپی لینک" class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-brand shadow-sm ring-1 ring-brand-100/60 hover:bg-brand hover:text-white transition-colors">
+                <Icon name="link" class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {post.image && (
+        <figure class="mt-6 overflow-hidden rounded-card bg-canvas-200">
+          <MagImage image={post.image} eager sizes="(min-width: 1024px) 820px, 100vw" class="h-auto w-full" />
+        </figure>
+      )}
+
+      {toc.length >= 3 && (
+        <details class="mag-toc group mt-6 rounded-card border border-brand-100/70 bg-brand-50/50" open>
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3.5 font-bold text-brand [&::-webkit-details-marker]:hidden">
+            <span class="flex items-center gap-2"><Icon name="list" class="h-5 w-5" /> فهرست مطالب <span class="text-xs font-normal text-ink-soft">({faNum(toc.length)} بخش)</span></span>
+            <Icon name="chevron" class="h-5 w-5 transition-transform group-open:rotate-180" />
+          </summary>
+          <ol class="space-y-1.5 border-t border-brand-100/60 px-5 py-4 text-sm">
+            {toc.map((t) => (
+              <li class:list={[t.level === 3 && 'pr-5']}>
+                <a href={`#${t.id}`} class="relative flex gap-2 py-0.5 leading-7 text-ink-soft hover:text-brand before:mt-[0.8rem] before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-brand-200 before:content-['']">
+                  {t.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      <div class="mag-content mt-8"><Fragment set:html={html} /></div>
+
+      {isPost && post.tags.length > 0 && (
+        <div class="mt-10 flex flex-wrap items-center gap-2 text-xs">
+          <span class="font-semibold text-ink-soft">برچسب‌ها:</span>
+          {post.tags.map((t) => (
+            <a href={magHref(t.path)} class="rounded-full bg-canvas-100 px-3 py-1 text-ink hover:bg-brand hover:text-white transition-colors">#{t.name}</a>
+          ))}
+        </div>
+      )}
+
+      {isPost && (
+        <div class="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-card border border-dashed border-brand-200/70 px-4 py-3">
+          <p class="text-sm font-semibold text-brand">این مطلب برایتان مفید بود؟ با دوستانتان به اشتراک بگذارید</p>
+          <div class="flex items-center gap-1.5">
+            {share.map((s) => (
+              <a href={s.href} target="_blank" rel="noopener noreferrer nofollow" aria-label={`اشتراک در ${s.label}`} class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand hover:bg-brand hover:text-white transition-colors">
+                <Icon name={s.icon} class="h-4 w-4" />
+              </a>
+            ))}
+            <button type="button" data-copy-link={magUrl(post.path)} aria-label="کپی لینک مطلب" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand hover:bg-brand hover:text-white transition-colors">
+              <Icon name="link" class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isPost && author && (author.description || author.avatar) && (
+        <aside class="mt-8 flex gap-4 rounded-card bg-canvas-50 p-5">
+          {author.avatar && <img src={author.avatar} alt={author.name} width="64" height="64" class="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white" loading="lazy" decoding="async" />}
+          <div>
+            <p class="text-xs text-ink-soft">درباره‌ی نویسنده</p>
+            <p class="font-bold text-brand">{author.path ? <a href={magHref(author.path)} class="hover:underline">{author.name}</a> : author.name}</p>
+            {author.description && <p class="mt-1 text-sm leading-7 text-ink-soft">{author.description}</p>}
+          </div>
+        </aside>
+      )}
+    </article>
+
+    <aside class="space-y-6 lg:sticky lg:top-[136px]" aria-label="ستون کناری">
+      <MagPriceWidget />
+
+      {sidebarPosts.length > 0 && (
+        <section class="rounded-xl2 bg-white p-5 shadow-card border border-brand-100/30">
+          <h2 class="mb-4 flex items-center justify-between text-sm font-bold text-brand">
+            آخرین مطالب
+            <a href={MAG_PATH} class="text-[11px] font-semibold text-ink-soft hover:text-brand">همه</a>
+          </h2>
+          <div class="space-y-4">
+            {sidebarPosts.map((p) => <MagCard post={p} variant="mini" />)}
+          </div>
+        </section>
+      )}
+
+      {categories.length > 0 && (
+        <section class="rounded-xl2 bg-white p-5 shadow-card border border-brand-100/30">
+          <h2 class="mb-3 text-sm font-bold text-brand">دسته‌بندی‌ها</h2>
+          <div class="flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <a href={magHref(c.path)} class="rounded-full bg-canvas-100 px-3 py-1 text-xs text-ink hover:bg-brand hover:text-white transition-colors">{c.name}</a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <a href="/verify" class="flex items-center gap-3 rounded-xl2 border border-brand-100/60 bg-white p-4 shadow-card card-lift">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-white"><Icon name="shield" class="h-5 w-5" /></span>
+        <span>
+          <b class="block text-sm text-brand">استعلام اصالت شمش</b>
+          <span class="text-[11px] text-ink-soft">با کد ۸ رقمی هولوگرام</span>
+        </span>
+      </a>
+    </aside>
+  </div>
+
+  {related.length > 0 && (
+    <section class="mt-14">
+      <MagSectionTitle title="مطالب" highlight="مرتبط" href={MAG_PATH} linkLabel="همه‌ی مطالب مجله" />
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {related.map((p) => <MagCard post={p} />)}
+      </div>
+    </section>
+  )}
+</div>
+
+<script>
+  import { initMagArticle } from '../../lib/magClient';
+  import '../../lib/priceBinding';
+  initMagArticle();
+</script>

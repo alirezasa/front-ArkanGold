@@ -1,0 +1,103 @@
+---
+// صفحه‌ی اصلی مجله (/mag):
+//   ۱. سربرگ کوتاه + جست‌وجو
+//   ۲. پنج مطلب ویژه (اول مطالب «سنجاق‌شده» در وردپرس، بعد جدیدترین‌ها)
+//   ۳. بخش اختصاصی پرمطلب‌ترین دسته‌ها + بنرهای قیمت و خرید طلا
+//   ۴. «آخرین مطالب» با تب دسته‌ها و صفحه‌بندی (/mag/page/2 ...)
+import MagCard from './MagCard.astro';
+import MagCtaBanners from './MagCtaBanners.astro';
+import MagPagination from './MagPagination.astro';
+import MagSearch from './MagSearch.astro';
+import MagSectionTitle from './MagSectionTitle.astro';
+import { MAG_NAME } from '../../config/site';
+import type { MagLanding, MagListing } from '../../lib/magazine';
+import { magHref } from '../../lib/wp';
+
+interface Props {
+  landing: MagLanding;
+  listing: MagListing;
+  intro: string;
+}
+const { landing, listing, intro } = Astro.props;
+const [lead, ...side] = landing.featured;
+---
+
+<div class="container-page py-8 sm:py-10 space-y-14">
+  <header class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+    <div>
+      <p class="mb-1 flex items-center gap-2 text-xs text-ink-soft"><span class="h-1.5 w-1.5 rounded-full bg-gold"></span> اخبار، آموزش و تحلیل بازار طلا</p>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-brand">{MAG_NAME}</h1>
+      {intro && <p class="mt-2 max-w-2xl text-sm leading-7 text-ink-soft">{intro}</p>}
+    </div>
+    <MagSearch />
+  </header>
+
+  {lead && (
+    <section aria-label="مطالب ویژه" class="grid gap-4 lg:grid-cols-4 lg:grid-rows-2">
+      <div class="lg:col-span-2 lg:row-span-2">
+        <MagCard post={lead} variant="overlay" large eager headingTag="h2" />
+      </div>
+      <div class="grid grid-cols-2 gap-4 lg:col-span-2 lg:row-span-2">
+        {side.map((p, i) => <MagCard post={p} variant="overlay" eager={i < 2} headingTag="h2" />)}
+      </div>
+    </section>
+  )}
+
+  {landing.sections.map((section, i) => (
+    <>
+      <section>
+        <MagSectionTitle title={section.name} href={magHref(section.path)} linkLabel={`همه‌ی مطالب ${section.name}`} />
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {section.posts.map((p) => <MagCard post={p} />)}
+        </div>
+      </section>
+      {i === 0 && <MagCtaBanners />}
+    </>
+  ))}
+  {landing.sections.length === 0 && <MagCtaBanners />}
+
+  <section id="latest" data-mag-tabs>
+    <MagSectionTitle title="آخرین" highlight="مطالب" />
+    {landing.tabs.length > 0 && (
+      <div role="tablist" aria-label="دسته‌بندی مطالب" class="-mt-1 mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+        <button type="button" role="tab" aria-selected="true" aria-controls="tab-all" data-tab="all" class="mag-tab">همه‌ی مطالب</button>
+        {landing.tabs.map((t, i) => (
+          <button type="button" role="tab" aria-selected="false" aria-controls={`tab-${i}`} data-tab={String(i)} class="mag-tab">
+            {t.name}
+          </button>
+        ))}
+      </div>
+    )}
+
+    <div id="tab-all" role="tabpanel" data-panel="all">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {listing.posts.map((p) => <MagCard post={p} />)}
+      </div>
+      <MagPagination page={listing.page} totalPages={listing.totalPages} basePath={listing.basePath} />
+    </div>
+
+    {landing.tabs.map((t, i) => (
+      <div id={`tab-${i}`} role="tabpanel" data-panel={String(i)} hidden>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {t.posts.map((p) => <MagCard post={p} />)}
+        </div>
+        <div class="mt-10 text-center">
+          <a href={magHref(t.path)} class="btn-primary">همه‌ی مطالب {t.name}</a>
+        </div>
+      </div>
+    ))}
+  </section>
+</div>
+
+<script>
+  // تب‌های «آخرین مطالب» — همه‌ی پنل‌ها در HTML هستند (برای موتورهای جست‌وجو)؛ فقط نمایش عوض می‌شود
+  document.querySelectorAll<HTMLElement>('[data-mag-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const select = (key: string) => {
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === key)));
+      panels.forEach((p) => (p.hidden = p.dataset.panel !== key));
+    };
+    tabs.forEach((t) => t.addEventListener('click', () => select(t.dataset.tab!)));
+  });
+</script>

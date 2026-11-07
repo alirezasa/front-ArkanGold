@@ -220,8 +220,6 @@ export function faDate(iso: string): string {
   return d.toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-const faNum = (n: number) => n.toLocaleString('fa-IR');
-
 /** تاریخ GMT وردپرس («2026-11-07T08:30:00») بدون منطقه‌ی زمانی است */
 const gmtIso = (value: string) => (value && !/[zZ]|[+-]\d\d:?\d\d$/.test(value) ? `${value}Z` : value);
 
@@ -515,57 +513,14 @@ export async function fetchSiteInfo(base = WP_API_URL): Promise<WpSiteInfo> {
 }
 
 /* ------------------------------------------------------------------
- * HTML (کارت و صفحه‌ی مطلب)
+ * داده‌های نمایش (کامپوننت‌های src/components/mag)
  * ------------------------------------------------------------------ */
 
-const imgTag = (img: MagImage, cls: string, sizes: string, eager = false) =>
-  `<img src="${esc(img.src)}"${img.srcset ? ` srcset="${esc(img.srcset)}" sizes="${esc(sizes)}"` : ''}${
-    img.width && img.height ? ` width="${img.width}" height="${img.height}"` : ''
-  } alt="${esc(img.alt)}" class="${cls}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">`;
-
-const placeholder = `<div class="flex h-full w-full items-center justify-center bg-brand-solid">
-  <img src="/images/logo-mark.png" alt="" class="h-14 w-14 opacity-80" loading="lazy" decoding="async">
-</div>`;
-
-/** کارت مطلب در فهرست‌ها */
-export function magCardHtml(post: MagPost, opts: { headingTag?: 'h2' | 'h3'; eager?: boolean } = {}): string {
-  const h = opts.headingTag ?? 'h2';
-  const href = esc(magHref(post.path));
-  const cat = post.categories[0];
-  return `<article class="group flex flex-col overflow-hidden rounded-card bg-white border border-brand-100/40 shadow-card card-lift">
-  <a href="${href}" class="block aspect-[16/9] overflow-hidden bg-canvas-200" tabindex="-1" aria-hidden="true">
-    ${post.image ? imgTag(post.image, 'h-full w-full object-cover transition-transform duration-500 group-hover:scale-105', '(min-width: 1024px) 420px, (min-width: 640px) 50vw, 100vw', opts.eager) : placeholder}
-  </a>
-  <div class="flex flex-1 flex-col p-5">
-    ${cat ? `<a href="${esc(magHref(cat.path))}" class="mb-2 self-start rounded-full bg-brand-50 px-3 py-0.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">${esc(cat.name)}</a>` : ''}
-    <${h} class="font-bold text-brand leading-8 line-clamp-2"><a href="${href}" class="hover:underline">${esc(post.title)}</a></${h}>
-    <p class="mt-2 text-sm leading-7 text-ink-soft line-clamp-3">${esc(post.excerpt)}</p>
-    <div class="mt-auto pt-4 flex items-center gap-2 text-xs text-ink-soft/80">
-      <time datetime="${esc(post.date)}">${faDate(post.date)}</time>
-      <span aria-hidden="true">·</span>
-      <span>${faNum(post.readingMinutes)} دقیقه مطالعه</span>
-    </div>
-  </div>
-</article>`;
-}
+export const faNum = (n: number) => n.toLocaleString('fa-IR');
 
 export interface Crumb {
   name: string;
   href: string;
-}
-
-export function breadcrumbHtml(crumbs: Crumb[]): string {
-  return `<nav aria-label="مسیر صفحه" class="mb-6 text-xs text-ink-soft">
-  <ol class="flex flex-wrap items-center gap-1.5">
-    ${crumbs
-      .map((c, i) =>
-        i === crumbs.length - 1
-          ? `<li aria-current="page" class="text-brand font-semibold line-clamp-1">${esc(c.name)}</li>`
-          : `<li><a href="${esc(c.href)}" class="hover:text-brand hover:underline">${esc(c.name)}</a></li><li aria-hidden="true">/</li>`
-      )
-      .join('')}
-  </ol>
-</nav>`;
 }
 
 export function postCrumbs(post: MagPost): Crumb[] {
@@ -579,97 +534,58 @@ export function postCrumbs(post: MagPost): Crumb[] {
   return crumbs;
 }
 
-function shareHtml(post: MagPost): string {
+export interface TocItem {
+  id: string;
+  text: string;
+  level: 2 | 3;
+}
+
+/** شناسه‌ی خوانا برای لینک مستقیم به هر بخش (فارسی حفظ می‌شود): «عیار طلا چیست؟» → «عیار-طلا-چیست» */
+function headingId(text: string): string {
+  return (
+    text
+      .replace(/[\u200c\s]+/g, '-')
+      .replace(/[^\p{L}\p{N}-]+/gu, '')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) || 'section'
+  );
+}
+
+/**
+ * فهرست مطالب: به همه‌ی h2 و h3 متن مطلب شناسه داده می‌شود (اگر نداشته باشند) و فهرست
+ * عنوان‌ها برای جعبه‌ی «فهرست مطالب» برگردانده می‌شود.
+ */
+export function buildToc(html: string): { html: string; toc: TocItem[] } {
+  const toc: TocItem[] = [];
+  const used = new Set<string>();
+  const out = html.replace(/<h([23])(\s[^>]*)?>([\s\S]*?)<\/h\1>/gi, (m, lvl: string, attrs = '', inner: string) => {
+    const text = htmlToText(inner);
+    if (!text) return m;
+    let id = attrs.match(/\bid\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (!id) {
+      const base = headingId(text);
+      id = base;
+      for (let i = 2; used.has(id); i++) id = `${base}-${i}`;
+      attrs = `${attrs} id="${esc(id)}"`;
+    }
+    used.add(id);
+    toc.push({ id, text, level: lvl === '2' ? 2 : 3 });
+    return `<h${lvl}${attrs}>${inner}</h${lvl}>`;
+  });
+  return { html: out, toc };
+}
+
+/** لینک‌های اشتراک‌گذاری مطلب */
+export function shareLinks(post: MagPost): { label: string; href: string; icon: 'telegram' | 'whatsapp' | 'x' | 'linkedin' }[] {
   const url = encodeURIComponent(magUrl(post.path));
   const text = encodeURIComponent(post.title);
-  const links = [
-    { label: 'تلگرام', href: `https://t.me/share/url?url=${url}&text=${text}` },
-    { label: 'واتس‌اپ', href: `https://wa.me/?text=${text}%20${url}` },
-    { label: 'ایکس', href: `https://x.com/intent/post?url=${url}&text=${text}` },
-    { label: 'لینکدین', href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` },
+  return [
+    { label: 'تلگرام', icon: 'telegram', href: `https://t.me/share/url?url=${url}&text=${text}` },
+    { label: 'واتس‌اپ', icon: 'whatsapp', href: `https://wa.me/?text=${text}%20${url}` },
+    { label: 'ایکس', icon: 'x', href: `https://x.com/intent/post?url=${url}&text=${text}` },
+    { label: 'لینکدین', icon: 'linkedin', href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` },
   ];
-  return `<div class="flex flex-wrap items-center gap-2 text-xs">
-  <span class="text-ink-soft">اشتراک‌گذاری:</span>
-  ${links
-    .map(
-      (l) =>
-        `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer nofollow" class="rounded-full border border-brand-100 px-3 py-1 text-brand hover:bg-brand hover:text-white transition-colors">${l.label}</a>`
-    )
-    .join('')}
-  <button type="button" data-copy-link="${esc(magUrl(post.path))}" class="rounded-full border border-brand-100 px-3 py-1 text-brand hover:bg-brand hover:text-white transition-colors">کپی لینک</button>
-</div>`;
-}
-
-function authorBoxHtml(author: MagAuthor): string {
-  const name = author.path
-    ? `<a href="${esc(magHref(author.path))}" class="hover:underline">${esc(author.name)}</a>`
-    : esc(author.name);
-  return `<aside class="mt-10 flex gap-4 rounded-card bg-white border border-brand-100/40 p-5 shadow-card">
-  ${author.avatar ? `<img src="${esc(author.avatar)}" alt="${esc(author.name)}" width="64" height="64" class="h-16 w-16 shrink-0 rounded-full object-cover" loading="lazy" decoding="async">` : ''}
-  <div>
-    <p class="text-xs text-ink-soft">نویسنده</p>
-    <p class="font-bold text-brand">${name}</p>
-    ${author.description ? `<p class="mt-1 text-sm leading-7 text-ink-soft">${esc(author.description)}</p>` : ''}
-  </div>
-</aside>`;
-}
-
-/** صفحه‌ی کامل یک مطلب یا برگه */
-export function magArticleHtml(post: MagPost): string {
-  const isPost = post.type === 'post';
-  const updated = isPost && post.modified.slice(0, 10) !== post.date.slice(0, 10);
-  const author = post.author;
-  return `<article class="container-page py-10" data-mag-article>
-  <div class="mx-auto max-w-3xl">
-    ${breadcrumbHtml(postCrumbs(post))}
-    <header class="mb-8">
-      ${
-        isPost && post.categories.length
-          ? `<div class="mb-3 flex flex-wrap gap-2">${post.categories
-              .map(
-                (c) =>
-                  `<a href="${esc(magHref(c.path))}" class="rounded-full bg-brand-50 px-3 py-0.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">${esc(c.name)}</a>`
-              )
-              .join('')}</div>`
-          : ''
-      }
-      <h1 class="text-2xl md:text-3xl font-bold leading-[1.6] text-brand">${esc(post.title)}</h1>
-      ${
-        isPost
-          ? `<div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
-        ${author ? `<span class="flex items-center gap-2">${author.avatar ? `<img src="${esc(author.avatar)}" alt="" width="28" height="28" class="h-7 w-7 rounded-full object-cover" decoding="async">` : ''}${author.path ? `<a href="${esc(magHref(author.path))}" class="font-semibold text-brand hover:underline">${esc(author.name)}</a>` : `<span class="font-semibold text-brand">${esc(author.name)}</span>`}</span><span aria-hidden="true">·</span>` : ''}
-        <time datetime="${esc(post.date)}">${faDate(post.date)}</time>
-        ${updated ? `<span aria-hidden="true">·</span><span>به‌روزرسانی: <time datetime="${esc(post.modified)}">${faDate(post.modified)}</time></span>` : ''}
-        <span aria-hidden="true">·</span>
-        <span>${faNum(post.readingMinutes)} دقیقه مطالعه</span>
-      </div>`
-          : ''
-      }
-    </header>
-  </div>
-  ${
-    post.image
-      ? `<figure class="mx-auto mb-10 max-w-4xl overflow-hidden rounded-xl2 bg-canvas-200 shadow-card">${imgTag(
-          post.image,
-          'w-full h-auto',
-          '(min-width: 1024px) 896px, 100vw',
-          true
-        )}</figure>`
-      : ''
-  }
-  <div class="mx-auto max-w-3xl">
-    <div class="mag-content">${post.contentHtml || '<p>محتوای این مطلب محافظت‌شده است.</p>'}</div>
-    ${
-      isPost && post.tags.length
-        ? `<div class="mt-10 flex flex-wrap items-center gap-2 text-xs"><span class="text-ink-soft">برچسب‌ها:</span>${post.tags
-            .map((t) => `<a href="${esc(magHref(t.path))}" class="rounded-full bg-canvas-200 px-3 py-1 text-ink hover:bg-brand hover:text-white transition-colors">#${esc(t.name)}</a>`)
-            .join('')}</div>`
-        : ''
-    }
-    ${isPost ? `<div class="mt-6 border-t border-brand-100/50 pt-6">${shareHtml(post)}</div>` : ''}
-    ${isPost && author && (author.description || author.avatar) ? authorBoxHtml(author) : ''}
-  </div>
-</article>`;
 }
 
 /* ------------------------------------------------------------------

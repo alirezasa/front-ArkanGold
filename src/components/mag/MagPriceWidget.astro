@@ -1,0 +1,28 @@
+---
+// قیمت لحظه‌ای طلا در ستون کناری مطلب — روی سرور در HTML نوشته می‌شود (src/middleware.ts) و در
+// مرورگر هر ۳۰ ثانیه به‌روز می‌شود (priceBinding.ts)
+import Icon from '../Icon.astro';
+---
+
+<div class="overflow-hidden rounded-xl2 bg-cta-gradient text-white shadow-glow-brand">
+  <div class="p-5">
+    <p class="flex items-center gap-2 text-xs text-white/80">
+      <span class="live-dot"></span>
+      قیمت لحظه‌ای هر گرم طلای ۱۸ عیار
+    </p>
+    <p class="mt-2 text-2xl font-extrabold text-white tnum" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</p>
+    <p class="mt-1 flex items-center gap-2 text-xs text-white/70">
+      تغییر ۲۴ ساعته:
+      <b class="tnum font-bold" data-price-bind="changePercent" data-price-context="dark">--</b>
+    </p>
+    <div class="gold-divider my-4 opacity-60"></div>
+    <div class="grid grid-cols-2 gap-2">
+      <a href="/buy-gold" class="btn-light !px-3 !py-2.5 !text-xs">خرید طلا</a>
+      <a href="/sell-gold" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-3 py-2.5 text-xs font-semibold text-white hover:bg-white/10 transition-colors">فروش طلا</a>
+    </div>
+  </div>
+  <a href="/price" class="flex items-center justify-between bg-black/15 px-5 py-2.5 text-[11px] text-white/80 hover:text-white">
+    <span class="flex items-center gap-1.5"><Icon name="trend-up" class="h-4 w-4" /> نمودار قیمت طلا</span>
+    <Icon name="arrow-left" class="h-4 w-4" />
+  </a>
+</div>

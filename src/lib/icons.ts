@@ -33,6 +33,16 @@ export const iconPaths = {
   transfer: `<path d="M4 8h13.5"/><path d="M14 4.5L17.5 8 14 11.5"/><path d="M20 16H6.5"/><path d="M10 12.5L6.5 16l3.5 3.5"/>`,
   gift: `<rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5V20a1 1 0 001 1h12a1 1 0 001-1v-7.5"/><path d="M12 8.5V21"/><path d="M12 8.5S10.8 4 8.3 4a2.2 2.2 0 000 4.5H12zM12 8.5S13.2 4 15.7 4a2.2 2.2 0 010 4.5H12z"/>`,
   question: `<circle cx="12" cy="12" r="9"/><path d="M9.2 9.2a2.8 2.8 0 015.4 1c0 1.8-2.6 2-2.6 4"/><path d="M12 17h.01"/>`,
+  // مجله: اشتراک‌گذاری، فهرست مطالب، جست‌وجو
+  telegram: `<path d="M21 4.5L2.9 11.6c-.9.4-.9 1.2.2 1.5l4.6 1.4 1.8 5.5c.2.6.6.7 1 .3l2.6-2.3 4.8 3.5c.6.4 1.1.2 1.3-.6l3.1-14.3c.3-1.1-.4-1.6-1.3-1.1z"/><path d="M7.7 14.5l9.5-6.1"/>`,
+  whatsapp: `<path d="M4 20l1.3-3.9A8.5 8.5 0 1112 20.5a8.4 8.4 0 01-4.1-1.1z"/><path d="M9 8.8c0 3.3 2.9 6.2 6.2 6.2l1-1.5-1.8-.9-.9.9a4.6 4.6 0 01-2.9-2.9l.9-.9-.9-1.8z"/>`,
+  x: `<path d="M4.5 4h4L19.5 20h-4z"/><path d="M19.5 4l-6.7 7.4M4.5 20l6.7-7.4"/>`,
+  linkedin: `<rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M8 10.5V16M8 7.8h.01M12 16v-3.2a2.3 2.3 0 014.6 0V16M12 10.5V16"/>`,
+  link: `<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>`,
+  search: `<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.3-4.3"/>`,
+  list: `<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>`,
+  'arrow-left': `<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>`,
+  calendar: `<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>`,
 };
 
 export type IconName = keyof typeof iconPaths;

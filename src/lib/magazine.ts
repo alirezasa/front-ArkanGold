@@ -117,7 +117,7 @@ export const getCategories = (): Promise<WpTerm[]> =>
 export async function topCategories(limit = 10): Promise<{ name: string; path: string }[]> {
   const [site, cats] = await Promise.all([getSite(), getCategories()]);
   return cats
-    .filter((c) => (c.count ?? 0) > 0)
+    .filter((c) => (c.count ?? 1) > 0)
     .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
     .slice(0, limit)
     .map((c) => ({ name: htmlToText(c.name), path: wpPath(c.link, site.home) ?? '' }))
@@ -174,13 +174,19 @@ async function listPosts(
 
 const lastSegment = (path: string) => path.split('/').pop() || '';
 
+/** شناسه‌ی یک دسته و همه‌ی زیردسته‌هایش */
+function categoryIds(cats: WpTerm[], id: number): number[] {
+  const ids = [id];
+  for (let i = 0; i < ids.length; i++) for (const c of cats) if (c.parent === ids[i] && !ids.includes(c.id)) ids.push(c.id);
+  return ids;
+}
+
 /** دسته با همین آدرس (و شناسه‌ی زیردسته‌هایش، چون آرشیو وردپرس مطالب زیردسته‌ها را هم نشان می‌دهد) */
 async function findCategory(site: WpSiteInfo, path: string): Promise<{ archive: MagArchive; ids: number[] } | null> {
   const cats = await getCategories();
   const cat = cats.find((c) => wpPath(c.link, site.home) === path);
   if (!cat) return null;
-  const ids = [cat.id];
-  for (let i = 0; i < ids.length; i++) for (const c of cats) if (c.parent === ids[i] && !ids.includes(c.id)) ids.push(c.id);
+  const ids = categoryIds(cats, cat.id);
   const archive: MagArchive = {
     kind: 'category',
     id: cat.id,
@@ -251,15 +257,15 @@ async function relatedPosts(site: WpSiteInfo, post: MagPost): Promise<MagPost[]>
   if (post.type !== 'post') return [];
   const fetchList = async (params: Record<string, string | number>) =>
     (
-      await wpGet<WpPost[]>('wp/v2/posts', { ...params, per_page: 3, exclude: post.id, _embed: WP_EMBED, _fields: POST_FIELDS })
+      await wpGet<WpPost[]>('wp/v2/posts', { ...params, per_page: 4, exclude: post.id, _embed: WP_EMBED, _fields: POST_FIELDS })
     ).data
       .map((p) => toMagPost(p, site.home))
       .filter((p): p is MagPost => !!p);
   try {
     const sameCategory = post.categories.length ? await fetchList({ categories: post.categories.map((c) => c.id).join(',') }) : [];
-    if (sameCategory.length >= 3) return sameCategory;
+    if (sameCategory.length >= 4) return sameCategory;
     const latest = await fetchList({});
-    return [...sameCategory, ...latest.filter((p) => !sameCategory.some((s) => s.id === p.id))].slice(0, 3);
+    return [...sameCategory, ...latest.filter((p) => !sameCategory.some((s) => s.id === p.id))].slice(0, 4);
   } catch {
     return []; // مطالب مرتبط اختیاری‌اند؛ خطای آن‌ها صفحه را خراب نمی‌کند
   }
@@ -329,10 +335,62 @@ export function searchMag(query: string): Promise<MagRoute> {
 
 /** آخرین مطالب (RSS و بخش «مطالب مجله» صفحه‌ی اصلی) */
 export function latestPosts(count = 30): Promise<MagPost[]> {
-  return cached(`mag:latest:${count}`, TTL.feed, async () => {
+  return cached(`mag:latest:${count}`, TTL.page, async () => {
     const site = await getSite();
     const listing = await listPosts(site, { per_page: count }, 1, '');
     return listing?.posts.slice(0, count) ?? [];
+  });
+}
+
+/* ------------------------------------------------------------------
+ * صفحه‌ی اصلی مجله
+ * ------------------------------------------------------------------ */
+
+export interface MagCategoryBlock {
+  name: string;
+  path: string;
+  posts: MagPost[];
+}
+
+export interface MagLanding {
+  /** ۵ مطلب بالای صفحه: اول مطالب سنجاق‌شده (sticky) در وردپرس، بعد جدیدترین‌ها */
+  featured: MagPost[];
+  /** بخش اختصاصی پرمطلب‌ترین دسته‌ها (هر کدام ۴ مطلب) */
+  sections: MagCategoryBlock[];
+  /** تب‌های «آخرین مطالب» به تفکیک دسته (هر کدام ۸ مطلب) */
+  tabs: MagCategoryBlock[];
+}
+
+/** داده‌های صفحه‌ی اصلی مجله (/mag) — کش ۲ دقیقه‌ای، با انتشار مطلب پاک می‌شود */
+export function magLanding(): Promise<MagLanding> {
+  return cached('mag:landing', TTL.page, async () => {
+    const site = await getSite();
+    const [cats, sticky, latest] = await Promise.all([
+      getCategories(),
+      listPosts(site, { sticky: 'true', per_page: 5 }, 1, '').catch(() => null),
+      latestPosts(12),
+    ]);
+
+    const seen = new Set<number>();
+    const featured = [...(sticky?.posts ?? []), ...latest].filter((p) => !seen.has(p.id) && seen.add(p.id)).slice(0, 5);
+
+    const top = cats
+      .filter((c) => (c.count ?? 1) > 0)
+      .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+      .slice(0, 6);
+    const tabs = (
+      await Promise.all(
+        top.map(async (c): Promise<MagCategoryBlock | null> => {
+          const path = wpPath(c.link, site.home);
+          if (!path) return null;
+          const listing = await listPosts(site, { categories: categoryIds(cats, c.id).join(','), per_page: 8 }, 1, path).catch(() => null);
+          return listing?.posts.length ? { name: htmlToText(c.name), path, posts: listing.posts } : null;
+        })
+      )
+    ).filter((t): t is MagCategoryBlock => !!t);
+
+    const sections = tabs.slice(0, 3).map((t) => ({ ...t, posts: t.posts.slice(0, 4) }));
+    return { featured, sections, tabs };
   });
 }
 
@@ -366,7 +424,7 @@ export function sitemapEntries(): Promise<SitemapEntry[]> {
       const path = wpPath(p.link, site.home);
       if (path && p.yoast_head_json?.robots?.index !== 'noindex') out.push({ path, lastmod: iso(p.modified_gmt) });
     }
-    for (const t of [...cats.filter((c) => (c.count ?? 0) > 0), ...tags]) {
+    for (const t of [...cats.filter((c) => (c.count ?? 1) > 0), ...tags]) {
       const path = wpPath(t.link, site.home);
       if (path && t.yoast_head_json?.robots?.index !== 'noindex') out.push({ path });
     }
