@@ -70,7 +70,7 @@ const toNumber = (v: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-function normalize(raw: GoldPriceResponse): NormalizedGoldPrice {
+export function normalize(raw: GoldPriceResponse): NormalizedGoldPrice {
   const toman = toNumber(raw.pricePerGramToman) || toNumber(raw.pricePerGramRial) / 10;
   const fetchedAt = raw.fetchedAt ? new Date(raw.fetchedAt) : new Date();
   return {

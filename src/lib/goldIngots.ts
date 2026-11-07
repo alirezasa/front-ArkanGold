@@ -9,13 +9,14 @@
  *
  *   { "serviceEnabled": true, "currency": "TOMAN", "generatedAt": "...", "data": {...} | [...] }
  *
- * در زمان build صفحه‌ی فروشگاه و صفحه‌ی هر شمش ساخته می‌شود؛ در مرورگر همین API
- * با هر بروزرسانی قیمت طلا (هر ۳۰ ثانیه) دوباره خوانده می‌شود تا قیمت نهایی و
- * موجودی همیشه لحظه‌ای باشند. دکمه‌ی خرید کاربر را به buyUrl همان وزن (variant) می‌برد.
+ * صفحه‌ی فروشگاه و صفحه‌ی هر شمش هنگام بازدید روی سرور ساخته می‌شوند (شمش جدید فوراً صفحه‌ی
+ * کامل با سئو دارد)؛ در مرورگر همین API با هر بروزرسانی قیمت طلا (هر ۳۰ ثانیه) دوباره خوانده
+ * می‌شود تا قیمت نهایی و موجودی همیشه لحظه‌ای باشند. دکمه‌ی خرید کاربر را به buyUrl همان وزن (variant) می‌برد.
  *
  * این فایل هم در build (Node) و هم در مرورگر استفاده می‌شود.
  */
 import { ARKAN_API_URL } from '../config/site';
+import { cached } from './cache';
 
 export interface IngotSpec {
   label: string;
@@ -228,41 +229,64 @@ export async function fetchIngot(slug: string): Promise<IngotApiResponse<GoldIng
 }
 
 /* ------------------------------------------------------------------
- * بارگذاری در زمان build
+ * بارگذاری روی سرور (SSR) — با کش src/lib/cache.ts
  * ------------------------------------------------------------------ */
 
 export interface IngotCatalog extends IngotList {
   source: 'api' | 'unavailable';
 }
 
-let catalogPromise: Promise<IngotCatalog> | null = null;
+/** مدت تازه ماندن داده‌ی فروشگاه روی سرور؛ قیمت و موجودی در مرورگر هم هر ۳۰ ثانیه به‌روز می‌شوند */
+const SHOP_TTL = 60_000;
+/** قیمت‌های قدیمی‌تر از ۱ ساعت در قطعی API نمایش داده نمی‌شوند */
+const SHOP_MAX_STALE = 60 * 60_000;
+/** تا ۵ دقیقه بعد از تازگی، نسخه‌ی قبلی بدون انتظار نمایش داده و در پس‌زمینه تازه می‌شود */
+const SHOP_SWR = 5 * 60_000;
+
+async function fetchCatalog(): Promise<IngotCatalog> {
+  const list = await fetchIngotList(true);
+  const detailed = await Promise.all(
+    list.products.map(async (p) => {
+      try {
+        const res = await fetchIngot(p.slug);
+        return res.data?.slug ? { ...p, ...res.data } : p;
+      } catch {
+        return p;
+      }
+    })
+  );
+  return { ...list, products: detailed, source: 'api' };
+}
 
 /**
- * کاتالوگ شمش‌ها برای build (یک بار خوانده و بین صفحات به اشتراک گذاشته می‌شود).
- * برای هر شمش جزئیات کامل هم خوانده می‌شود. اگر API در دسترس نباشد build شکست
- * نمی‌خورد؛ صفحه‌ی فروشگاه محصولات را در مرورگر مستقیماً از API بارگذاری می‌کند.
+ * کاتالوگ کامل شمش‌ها (فهرست + جزئیات هر شمش) — هنگام بازدید روی سرور، با کش ۶۰ ثانیه‌ای.
+ * اگر API در دسترس نباشد آخرین نسخه‌ی سالم نمایش داده می‌شود؛ اگر آن هم نباشد صفحه خطا نمی‌دهد
+ * و محصولات در مرورگر مستقیماً از API بارگذاری می‌شوند.
  */
-export function loadIngotCatalog(): Promise<IngotCatalog> {
-  if (!catalogPromise) {
-    catalogPromise = (async (): Promise<IngotCatalog> => {
-      const list = await fetchIngotList(true);
-      const detailed = await Promise.all(
-        list.products.map(async (p) => {
-          try {
-            const res = await fetchIngot(p.slug);
-            return res.data?.slug ? { ...p, ...res.data } : p;
-          } catch {
-            return p;
-          }
-        })
-      );
-      return { ...list, products: detailed, source: 'api' as const };
-    })().catch((err) => {
-      console.warn(
-        `[shop] API شمش‌ها (${GOLD_INGOTS_API_URL}) در دسترس نبود (${err?.message ?? err}) — محصولات در مرورگر بارگذاری می‌شوند.`
-      );
-      return { serviceEnabled: true, generatedAt: '', products: [], source: 'unavailable' as const };
-    });
+export async function loadIngotCatalog(): Promise<IngotCatalog> {
+  try {
+    return await cached('shop:catalog', SHOP_TTL, fetchCatalog, { maxStaleMs: SHOP_MAX_STALE, swrMs: SHOP_SWR });
+  } catch (err) {
+    console.warn(`[shop] API شمش‌ها (${GOLD_INGOTS_API_URL}) در دسترس نبود: ${(err as Error)?.message ?? err}`);
+    return { serviceEnabled: true, generatedAt: '', products: [], source: 'unavailable' };
   }
-  return catalogPromise;
+}
+
+/** جزئیات یک شمش برای صفحه‌ی /shop/{slug}؛ null یعنی چنین شمشی وجود ندارد (۴۰۴) */
+export function loadIngot(slug: string): Promise<{ product: GoldIngot | null; serviceEnabled: boolean }> {
+  return cached(`shop:item:${slug}`, SHOP_TTL, async () => {
+    try {
+      const res = await fetchIngot(slug);
+      return { product: res.data?.slug ? res.data : null, serviceEnabled: res.serviceEnabled !== false };
+    } catch (err) {
+      if (/^404\b/.test(String((err as Error)?.message))) return { product: null, serviceEnabled: true };
+      throw err;
+    }
+  }, { maxStaleMs: SHOP_MAX_STALE, swrMs: SHOP_SWR }).catch(async (err) => {
+    // API جزئیات در دسترس نیست و این شمش کش نشده: از کاتالوگ کش‌شده (اگر هست)
+    const catalog = await loadIngotCatalog();
+    const product = catalog.products.find((p) => p.slug === slug);
+    if (product) return { product, serviceEnabled: catalog.serviceEnabled };
+    throw err;
+  });
 }

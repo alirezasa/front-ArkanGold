@@ -11,10 +11,10 @@ export const GET: APIRoute = () => {
     'User-agent: *',
     'Allow: /',
     'Disallow: /login',
-    'Disallow: /shop/item$',
-    'Disallow: /shop/item?',
     '',
     `Sitemap: ${SITE_URL}/sitemap-index.xml`,
+    // صفحه‌های پویای فروشگاه (هر شمش) — روی سرور ساخته می‌شود
+    `Sitemap: ${SITE_URL}/sitemap-shop.xml`,
     // مجله‌ی هدلس: sitemap ساخته‌شده در همین پروژه؛ در غیر این صورت sitemap افزونه‌ی سئوی وردپرس فعلی
     `Sitemap: ${SITE_URL}/mag/${MAG_ENABLED ? 'sitemap.xml' : 'sitemap_index.xml'}`,
     '',

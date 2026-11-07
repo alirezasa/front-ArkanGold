@@ -1,14 +1,12 @@
-# انتشار کد سایت روی هاست (FTP) — فقط برای تغییر کد/طراحی لازم است، نه برای انتشار مطلب
-# ----------------------------------------------------
-# مطالب مجله روی سرور Node.js هنگام بازدید از وردپرس ساخته می‌شوند و به build نیاز ندارند.
+# انتشار کد سایت روی هاست Node.js (FTP) — فقط برای تغییر کد/طراحی؛ مطالب مجله، محصولات و قیمت‌ها
+# هنگام بازدید روی سرور از API ها خوانده می‌شوند و به build نیاز ندارند.
 # اجرا: تب Actions ← Deploy ← Run workflow
 #
-# تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «مجله»
+# تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «اجرا روی Node.js»
 #   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
-#   Variables: PUBLIC_WP_API_URL (مثلا https://cms.arkan.gold/wp-json)
-#              FTP_SERVER_DIR  پوشه‌ی سایت نسبت به ریشه‌ی FTP (پیش‌فرض public_html)
-#              FTP_APP_DIR     پوشه‌ی برنامه‌ی Node.js مجله نسبت به ریشه‌ی FTP (پیش‌فرض arkan-mag)
-#              FTP_VERIFY_CERT اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
+#   Variables: FTP_APP_DIR      پوشه‌ی برنامه‌ی Node.js نسبت به ریشه‌ی FTP (پیش‌فرض arkan-site)
+#              PUBLIC_WP_API_URL (مثلا https://cms.arkan.gold/wp-json) — بدون آن مجله غیرفعال است
+#              FTP_VERIFY_CERT  اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
 #              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
 name: Deploy
 
@@ -44,25 +42,19 @@ jobs:
 
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
-      # ترتیب مهم است: اول فایل‌های ایستا (بدون حذف فایل‌های قدیمی _astro تا صفحه‌های مجله‌ی در حال
-      # اجرا خراب نشوند)، بعد برنامه‌ی Node.js که با tmp/restart.txt دوباره راه‌اندازی می‌شود.
+      # فایل‌های قدیمی پاک نمی‌شوند تا برنامه‌ی در حال اجرا تا لحظه‌ی راه‌اندازی دوباره سالم بماند؛
+      # tmp/restart.txt آخر از همه آپلود می‌شود و Passenger برنامه را با نسخه‌ی جدید راه‌اندازی می‌کند.
       - name: Upload to host (FTP)
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || 'public_html' }}
-          FTP_APP_DIR: ${{ vars.FTP_APP_DIR || 'arkan-mag' }}
+          FTP_APP_DIR: ${{ vars.FTP_APP_DIR || 'arkan-site' }}
           FTP_VERIFY_CERT: ${{ vars.FTP_VERIFY_CERT || 'true' }}
         run: |
-          STATIC_DIR=dist
-          APP_CMD=""
-          if [ -d dist/mag-app ]; then
-            STATIC_DIR=dist/client
-            APP_CMD="mirror -R --parallel=4 dist/mag-app $FTP_APP_DIR;"
-          fi
           lftp -u "$FTP_USERNAME,$FTP_PASSWORD" "$FTP_SERVER" -e "
             set ftp:ssl-allow true; set ssl:verify-certificate $FTP_VERIFY_CERT; set net:max-retries 3; set net:timeout 30;
-            mirror -R --parallel=4 $STATIC_DIR $FTP_SERVER_DIR;
-            $APP_CMD
+            mirror -R --parallel=4 --exclude ^tmp/ dist/app $FTP_APP_DIR;
+            mkdir -pf $FTP_APP_DIR/tmp;
+            put -O $FTP_APP_DIR/tmp dist/app/tmp/restart.txt;
             bye"

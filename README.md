@@ -8,9 +8,11 @@
 ```bash
 npm install
 npm run dev       # اجرای محلی روی http://localhost:4321
-npm run build     # خروجی نهایی برای دیپلوی، در پوشه dist
-npm run preview   # پیش‌نمایش خروجی build شده
+npm run build     # خروجی نهایی: پوشه‌ی dist/app (برنامه‌ی Node.js آماده‌ی آپلود)
+npm run serve     # اجرای همان خروجی روی سیستم خودتان (مثل هاست) روی http://localhost:4321
 ```
+
+کل سایت روی **Node.js** اجرا می‌شود؛ راه‌اندازی روی هاست: بخش «اجرا روی Node.js» در انتهای همین فایل.
 
 ## هویت بصری جدید
 
@@ -214,35 +216,26 @@ GET https://api.arkan.gold/public/gold-ingots?page=1&limit=50&inStock=true   ←
 GET https://api.arkan.gold/public/gold-ingots/{slug}                         ← جزئیات هر شمش
 ```
 
-- در زمان build صفحه‌ی `/shop` و برای هر شمش صفحه‌ی `/shop/{slug}` ساخته می‌شود (نام، تصاویر،
-  توضیحات، جدول `specifications` دقیقاً مطابق API، وزن‌ها، بسته‌بندی‌ها، مراحل خرید و سوالات متداول).
+- صفحه‌ی `/shop` و صفحه‌ی هر شمش `/shop/{slug}` **هنگام بازدید روی سرور** از API ساخته می‌شوند
+  (نام، تصاویر، توضیحات، جدول `specifications` دقیقاً مطابق API، وزن‌ها، بسته‌بندی‌ها، مراحل خرید و
+  سوالات متداول). شمشی که در پنل اضافه شود **همان لحظه** صفحه‌ی کامل با سئو دارد و در
+  `/sitemap-shop.xml` می‌آید؛ build لازم نیست. شمش حذف‌شده ۴۰۴ واقعی می‌گیرد.
   HTML صفحه از `src/lib/ingotDetail.ts` و رفتار تعاملی آن از `src/lib/ingotDetailClient.ts` می‌آید.
+- **کش سرور**: داده‌ی API ۶۰ ثانیه کش می‌شود؛ اگر API قطع شود تا ۱ ساعت آخرین نسخه‌ی سالم نمایش داده
+  می‌شود (بعد از آن فهرست در مرورگر بارگذاری و صفحه‌ی محصول ۵۰۳ می‌شود).
 - **ترتیب پیش‌فرض فروشگاه:** ارزان‌ترین اول و در قیمت برابر، سبک‌ترین اول (`compareIngots` در `src/lib/ingotCard.ts`).
 - **سئو صفحه‌ی محصول:** title/description اختصاصی، `og:type=product` و متاتگ‌های `product:*`،
-  JSON-LD شامل `Product` (با `Offer`/`AggregateOffer` به ریال — `IRR`)، `BreadcrumbList`، `FAQPage` و `ItemPage`.
-- **قیمت لحظه‌ای:** در مرورگر بلافاصله و سپس با هر بروزرسانی قیمت طلا (هر ۳۰ ثانیه) همین API دوباره
-  خوانده می‌شود و `finalPriceToman` هر وزن، موجودی و `serviceEnabled` به‌روز می‌شوند
-  (`src/lib/liveIngots.ts`). شمش جدیدی که بعد از آخرین build اضافه شود هم در `/shop` نمایش داده
-  می‌شود و کارتش به `/shop/item?slug=...` می‌رود که جزئیات را در مرورگر از API می‌سازد (noindex) تا
-  build بعدی صفحه‌ی ایستای آن را بسازد. لینک `/shop/{slug}` چنین شمشی هم از صفحه‌ی ۴۰۴ به همان‌جا هدایت می‌شود.
+  JSON-LD شامل `Product` (با `Offer`/`AggregateOffer` به ریال — `IRR`)، `BreadcrumbList`، `FAQPage` و
+  `ItemPage`. قیمت schema با هر بازدید از API خوانده می‌شود و با قیمت نمایش‌داده‌شده یکی است.
+- **قیمت لحظه‌ای:** در مرورگر هم با هر بروزرسانی قیمت طلا (هر ۳۰ ثانیه) همین API دوباره خوانده می‌شود
+  و `finalPriceToman` هر وزن، موجودی و `serviceEnabled` به‌روز می‌شوند (`src/lib/liveIngots.ts`).
+  شمشی که بعد از باز شدن صفحه اضافه شود هم به `/shop` اضافه می‌شود.
 - **خرید:** کلیک روی کارت محصول همیشه ابتدا صفحه‌ی جزئیات را باز می‌کند. در آنجا کاربر وزن را
   انتخاب می‌کند و دکمه‌ی «خرید شمش» (یا نوار خرید ثابت پایین صفحه در موبایل) او را به `buyUrl` همان وزن
   (`variants[].buyUrl`) در داشبورد آرکان گلد می‌برد. لینک مستقیم به یک وزن: `/shop/{slug}?variant={id}`.
+  آدرس قدیمی `/shop/item?slug=...` با ۳۰۱ به `/shop/{slug}` می‌رود.
 - اگر `serviceEnabled` برابر `false` باشد، دکمه‌های خرید غیرفعال و پیام «فروش موقتاً غیرفعال است»
   نمایش داده می‌شود.
-- اگر API هنگام build در دسترس نباشد، build شکست نمی‌خورد و `/shop` محصولات را در مرورگر بارگذاری می‌کند.
-
-### انتشار روی هاست (LiteSpeed / Apache) و آدرس‌های فارسی محصولات
-
-- فایل `public/.htaccess` در build به ریشه‌ی `dist` کپی می‌شود و باید همراه بقیه‌ی فایل‌ها آپلود شود
-  (فایل‌های نقطه‌دار در File Manager هاست به‌طور پیش‌فرض مخفی‌اند). اگر روی هاست از قبل `.htaccess`
-  دارید، محتوای این فایل را به آن اضافه کنید.
-- این فایل صفحه‌ی ۴۰۴ سایت را فعال می‌کند و اگر برای `/shop/{slug}` صفحه‌ی ایستا روی سرور نباشد،
-  همان آدرس را با صفحه‌ی جزئیاتی که در مرورگر از API ساخته می‌شود نمایش می‌دهد؛ پس لینک محصول هرگز ۴۰۴ نمی‌شود.
-- slug محصولات فارسی است، پس نام پوشه‌ها در `dist/shop/` فارسی است. هنگام zip کردن برای آپلود از
-  ابزاری استفاده کنید که نام فایل‌ها را UTF-8 ذخیره کند (مثلاً 7-Zip)؛ zip داخلی ویندوز ممکن است نام
-  پوشه‌های فارسی را هنگام استخراج روی هاست خراب کند.
-- بعد از اضافه شدن شمش جدید در پنل، یک build و آپلود دوباره انجام دهید تا صفحه‌ی ایستای آن (برای سئو) ساخته شود.
 
 ## استعلام اصالت شمش (`/verify`)
 
@@ -261,16 +254,10 @@ GET https://api.arkan.gold/public/gold-ingots/{slug}                         ←
 ## مجله آرکان گلد — وردپرس هدلس + SSR (`/mag`)
 
 نویسنده‌ها مثل قبل در **پنل وردپرس** کار می‌کنند (نقش‌های نویسنده/ویرایشگر/مدیر، کتابخانه‌ی رسانه،
-دسته و برچسب، زمان‌بندی انتشار، Yoast SEO یا Rank Math). صفحه‌های `https://arkan.gold/mag` روی یک
-**برنامه‌ی Node.js** هنگام هر بازدید از REST API وردپرس ساخته می‌شوند (SSR): HTML کامل با همه‌ی
-تگ‌های سئو، و **انتشار مطلب به build نیاز ندارد**. بقیه‌ی سایت مثل قبل فایل ایستا روی LiteSpeed است.
-وردپرس روی ساب‌دامین (مثلا `cms.arkan.gold`) فقط نقش پنل محتوا را دارد.
-
-```
-بازدیدکننده ── arkan.gold/*      ← LiteSpeed: فایل‌های ایستا (public_html ← dist/client)
-           └── arkan.gold/mag/* ← Node.js (cPanel ← Setup Node.js App ← dist/mag-app)
-                                     └─ کش حافظه ── REST API ── cms.arkan.gold (وردپرس)
-```
+دسته و برچسب، زمان‌بندی انتشار، Yoast SEO یا Rank Math). صفحه‌های `https://arkan.gold/mag` هنگام هر
+بازدید روی سرور Node.js سایت از REST API وردپرس ساخته می‌شوند (SSR): HTML کامل با همه‌ی تگ‌های سئو،
+و **انتشار مطلب به build نیاز ندارد**. وردپرس روی ساب‌دامین (مثلا `cms.arkan.gold`) فقط نقش پنل محتوا را
+دارد. بدون `PUBLIC_WP_API_URL` مجله غیرفعال است و منوها به وردپرس فعلی (`arkan.gold/mag`) لینک می‌دهند.
 
 ### رفتار سرور مجله (برای اینکه بعداً مشکل‌ساز نشود)
 - **کش**: هر صفحه ۲ دقیقه و فهرست دسته‌ها ۱۰ دقیقه کش می‌شود؛ بعد از آن نسخه‌ی قبلی فوراً نمایش
@@ -284,62 +271,31 @@ GET https://api.arkan.gold/public/gold-ingots/{slug}                         ←
   آدرس‌های قدیمی وردپرس با `/` در انتها، `/page/1`، `/mag/feed`، sitemapهای Yoast/Rank Math و
   مطلبی که آدرسش عوض شده (مثلا تغییر دسته در ساختار پیوند).
 - **حافظه**: حداکثر ۶۰۰ صفحه در کش (چند ده مگابایت در بدترین حالت).
-- **بدون npm install روی هاست**: همه‌ی وابستگی‌ها داخل `dist/mag-app` باندل می‌شوند (کمتر از ۱ مگابایت).
 
 ### فایل‌ها
 | فایل | کاربرد |
 |---|---|
 | `src/lib/wp.ts` | تبدیل پاسخ REST وردپرس، HTML کارت و صفحه‌ی مطلب، سئو و schema |
 | `src/lib/magazine.ts` | پیدا کردن صفحه بر اساس آدرس و خواندن فقط داده‌ی همان صفحه از وردپرس |
-| `src/lib/magCache.ts` | کش حافظه با نمایش نسخه‌ی قبلی در قطعی وردپرس |
+| `src/lib/cache.ts` | کش حافظه‌ی سرور (مشترک مجله، فروشگاه و قیمت) با نمایش نسخه‌ی قبلی در قطعی منبع |
 | `src/mag/MagPage.astro` | همه‌ی صفحه‌های `/mag`: فهرست، صفحه‌بندی، آرشیوها، مطلب، جست‌وجو، ۴۰۴ |
 | `src/mag/rss.ts`، `sitemap.ts`، `revalidate.ts` | `/mag/rss.xml`، `/mag/sitemap.xml`، `/mag/wp-revalidate` |
-| `src/mag/integration.mjs` | اضافه کردن مسیرهای بالا فقط وقتی `PUBLIC_WP_API_URL` تنظیم شده + ساخت `dist/mag-app` |
-| `server/server.mjs`، `server/app.cjs` | سرور Node.js مجله و فایل شروع Passenger |
+| `src/mag/integration.mjs` | اضافه کردن مسیرهای بالا فقط وقتی `PUBLIC_WP_API_URL` تنظیم شده |
 | `wordpress/arkan-headless/` | افزونه‌ی وردپرس: هدایت صفحه‌های وردپرس به سایت اصلی + پاک کردن کش |
 
-بدون `PUBLIC_WP_API_URL` هیچ‌کدام از این‌ها فعال نیست و خروجی build دقیقاً مثل قبل (پوشه‌ی `dist`) است.
 
-### build
-```bash
-PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run build
-```
-خروجی:
-- `dist/client` ← محتوای `public_html` (همان فایل‌های ایستای قبلی)
-- `dist/mag-app` ← پوشه‌ی برنامه‌ی Node.js مجله
-
-این دو باید **همیشه با هم** آپلود شوند (صفحه‌های مجله از CSS/JS همان build در `public_html/_astro`
-استفاده می‌کنند). **ترتیب**: اول `dist/client` (فایل‌های قدیمی `_astro` را پاک نکنید)، بعد `dist/mag-app`.
-انتشار مطلب به build نیاز ندارد؛ build فقط برای تغییر کد یا طراحی لازم است. GitHub Actions
-(`.github/workflows/deploy.yml`) هم همین دو مرحله را با FTP انجام می‌دهد (اجرا دستی از تب Actions).
-
-اجرای محلی: `PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run dev` (صفحه‌های مجله هم در dev کار می‌کنند).
-
-### راه‌اندازی (یک بار)
+### راه‌اندازی مجله (یک بار)
 1. **انتقال وردپرس** به `cms.arkan.gold` (مثلا با Duplicator یا All-in-One WP Migration). در
    «تنظیمات ← عمومی» هر دو نشانی `https://cms.arkan.gold`. «پیوندهای یکتا» را تغییر ندهید. افزونه‌ی
    استعلام شمش همراه وردپرس منتقل می‌شود و API آن خودکار `{PUBLIC_WP_API_URL}/arkan/v1/verify-bar` می‌شود.
-2. **پوشه‌ی قدیمی `public_html/mag`** (وردپرس قبلی) را بعد از اطمینان از انتقال، حذف یا تغییر نام دهید.
-3. **build** با دستور بالا، و آپلود `dist/client` در `public_html` و `dist/mag-app` در یک پوشه‌ی جدا
-   **بیرون از** `public_html` (مثلا `/home/USER/arkan-mag`).
-4. **cPanel ← Setup Node.js App ← Create Application**:
-   - Node.js version: ۱۸ یا بالاتر (ترجیحا ۲۰)
-   - Application mode: Production
-   - Application root: `arkan-mag`
-   - Application URL: `arkan.gold` / `mag`
-   - Application startup file: `app.cjs`
-   - Environment variables: `MAG_REVALIDATE_TOKEN` = یک رشته‌ی تصادفی بلند (حداقل ۱۶ کاراکتر)
-   - Create، سپس Start/Restart. (`Run NPM Install` لازم نیست.)
-   cPanel برای آدرس `/mag` یک `.htaccess` در `public_html/mag` می‌سازد؛ آن را پاک نکنید.
-5. **افزونه‌ی وردپرس** `wordpress/arkan-headless` را نصب و فعال کنید؛ در «تنظیمات ← مجله هدلس» همان
+2. **build** با `PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json` (در `.env` یا Variables گیت‌هاب) و
+   آپلود طبق بخش «اجرا روی Node.js». در cPanel متغیر `MAG_REVALIDATE_TOKEN` (یک رشته‌ی تصادفی حداقل
+   ۱۶ کاراکتری) را به برنامه اضافه کنید.
+3. **افزونه‌ی وردپرس** `wordpress/arkan-headless` را نصب و فعال کنید؛ در «تنظیمات ← مجله هدلس» همان
    `MAG_REVALIDATE_TOKEN` را در «توکن پاک‌سازی کش» وارد و «پاک کردن کش مجله» را بزنید (باید موفق باشد).
-6. **بررسی**: `https://arkan.gold/mag`، یک مطلب، `https://arkan.gold/mag/sitemap.xml` و یک آدرس اشتباه
+4. **بررسی**: `https://arkan.gold/mag`، یک مطلب، `https://arkan.gold/mag/sitemap.xml` و یک آدرس اشتباه
    (باید ۴۰۴ بدهد). یک مطلب آزمایشی منتشر کنید و ببینید فوراً روی سایت می‌آید.
-7. **Search Console**: sitemap `https://arkan.gold/mag/sitemap.xml` را ثبت کنید.
-
-بعد از هر آپلود جدید `dist/mag-app`، فایل `tmp/restart.txt` داخل آن عوض می‌شود و Passenger برنامه
-را با نسخه‌ی جدید راه‌اندازی می‌کند (یا در cPanel دکمه‌ی Restart را بزنید). لاگ خطاها در cPanel ←
-Setup Node.js App یا فایل `stderr.log` در پوشه‌ی برنامه است.
+5. **Search Console**: sitemap `https://arkan.gold/mag/sitemap.xml` را ثبت کنید.
 
 ### آدرس‌ها — حفظ رتبه‌های فعلی
 آدرس هر صفحه دقیقاً از فیلد `link` وردپرس گرفته می‌شود؛ هر ساختار «پیوند یکتا» (`/%postname%/`، با
@@ -358,3 +314,66 @@ Setup Node.js App یا فایل `stderr.log` در پوشه‌ی برنامه ا�
 
 REST API وردپرس باید عمومی بماند (`/wp-json/wp/v2/` برای posts، pages، categories، tags و users)؛ اگر
 افزونه‌ی امنیتی دارید آن را نبندید. بستن `users` فقط آرشیو نویسنده‌ها را غیرفعال می‌کند.
+
+## اجرا روی Node.js (کل سایت)
+
+کل سایت یک برنامه‌ی Node.js است (Astro در حالت hybrid + `@astrojs/node`):
+
+| نوع صفحه | صفحه‌ها | ساخته‌شدن |
+|---|---|---|
+| ایستا | درباره ما، تماس، سوالات متداول، قوانین، مجوزها، خدمات، همکاری، استعلام اصالت، ۴۰۴ | یک بار در build |
+| پویا (SSR) | صفحه‌ی اصلی، قیمت طلا، خرید/فروش طلا، تحویل فیزیکی، فروشگاه و هر شمش، مجله | هنگام هر بازدید روی سرور (با کش) |
+
+- **قیمت طلا در HTML**: در صفحه‌های پویا قیمت لحظه‌ای روی سرور در HTML نوشته می‌شود (نوار قیمت هدر،
+  هیرو، ماشین‌حساب، صفحه‌ی قیمت، فروشگاه) — موتورهای جست‌وجو و پیش‌نمایش لینک‌ها قیمت واقعی را
+  می‌بینند. (`src/middleware.ts` و `src/lib/serverPrice.ts`؛ قیمت ۲۰ ثانیه کش می‌شود و قیمت قدیمی‌تر از
+  ۵ دقیقه هرگز نوشته نمی‌شود.) در مرورگر مثل قبل هر ۳۰ ثانیه به‌روز می‌شود.
+- **صفحه‌ی پویای جدید**: در frontmatter صفحه `export const prerender = false;` و اگر قیمت دارد
+  `Astro.locals.livePrice = true;` بنویسید.
+- **کش سرور** (`src/lib/cache.ts`): مجله ۲ دقیقه (۲۴ ساعت در قطعی وردپرس)، فروشگاه ۶۰ ثانیه (۱ ساعت در
+  قطعی API)، قیمت ۲۰ ثانیه (۵ دقیقه در قطعی). درخواست‌های هم‌زمان فقط یک درخواست به API می‌فرستند.
+- **سرور** (`server/server.mjs`): فایل‌های ایستا با نسخه‌ی فشرده‌ی br/gzip (در build ساخته می‌شوند)،
+  ETag و کش یک‌ساله برای `/_astro`؛ ۳۰۱ برای آدرس‌های با `/` در انتها؛ صفحه‌ی ۴۰۴ سایت؛ هدرهای امنیتی؛
+  `/healthz` برای مانیتورینگ. فایل‌های نقطه‌دار و مسیرهای `..` هرگز سرو نمی‌شوند.
+- **sitemap**: `sitemap-index.xml` (همه‌ی صفحه‌های با آدرس ثابت)، `sitemap-shop.xml` (هر شمش، پویا) و
+  `mag/sitemap.xml` (مجله، پویا) — همه در `robots.txt`.
+
+### build و خروجی
+```bash
+npm run build
+```
+خروجی کامل در `dist/app` است (کمتر از چند مگابایت، **بدون نیاز به npm install روی هاست**):
+`client/` (فایل‌های ایستا)، `entry/` (باندل سرور)، `server.mjs`، `app.cjs`، `package.json`، `tmp/restart.txt`.
+متغیرهای `PUBLIC_*` (فایل `.env`) در build خوانده می‌شوند.
+
+### راه‌اندازی روی هاست (cPanel ← Setup Node.js App) — یک بار
+1. اگر وردپرس مجله هنوز در `public_html/mag` است، اول آن را به `cms.arkan.gold` منتقل کنید (بخش مجله).
+2. از محتوای فعلی `public_html` نسخه‌ی پشتیبان بگیرید و آن را **خالی** کنید (فایل‌های ایستای قبلی؛
+   وگرنه LiteSpeed به‌جای برنامه آن‌ها را نمایش می‌دهد).
+3. محتوای `dist/app` را در یک پوشه‌ی جدا **بیرون از** `public_html` آپلود کنید، مثلا `/home/USER/arkan-site`
+   (با FTP، یا zip با 7-Zip و استخراج در File Manager).
+4. **Setup Node.js App ← Create Application**:
+   - Node.js version: ۲۰ (حداقل ۱۸)
+   - Application mode: Production
+   - Application root: `arkan-site`
+   - Application URL: `arkan.gold` (بدون مسیر)
+   - Application startup file: `app.cjs`
+   - Environment variables: `MAG_REVALIDATE_TOKEN` (اگر مجله فعال است)
+   - Create، سپس Start. (`Run NPM Install` لازم نیست.)
+5. در cPanel ← Domains، گزینه‌ی **Force HTTPS Redirect** را برای `arkan.gold` روشن کنید.
+6. **بررسی**: صفحه‌ی اصلی (قیمت باید بدون «در حال دریافت» در سورس صفحه باشد)، `/shop` و یک شمش،
+   `/about`، یک آدرس اشتباه (۴۰۴)، `/robots.txt`، `/sitemap-shop.xml` و `/healthz`.
+7. **مانیتورینگ** (پیشنهادی): در UptimeRobot یا سرویس مشابه، آدرس `https://arkan.gold/healthz` را هر ۵
+   دقیقه چک کنید؛ هم از قطعی باخبر می‌شوید و هم برنامه در هاست اشتراکی به خواب نمی‌رود (بیدار شدن ۱ تا ۳ ثانیه طول می‌کشد).
+8. **Search Console**: `sitemap-index.xml`، `sitemap-shop.xml` و `mag/sitemap.xml` را ثبت کنید.
+
+### به‌روزرسانی کد (بعد از تغییر کد یا طراحی)
+انتشار مطلب، شمش جدید و تغییر قیمت به build نیاز ندارند. فقط وقتی کد عوض شد:
+1. `npm run build`
+2. محتوای `dist/app` را روی همان پوشه آپلود کنید (**فایل‌های قدیمی را پاک نکنید** تا برنامه‌ی در حال
+   اجرا تا لحظه‌ی راه‌اندازی دوباره سالم بماند) و `tmp/restart.txt` را آخر از همه آپلود کنید؛ Passenger
+   برنامه را با نسخه‌ی جدید راه‌اندازی می‌کند (یا در cPanel دکمه‌ی Restart).
+   GitHub Actions (`.github/workflows/deploy.yml`، اجرا دستی از تب Actions) همین کار را با FTP انجام می‌دهد.
+
+لاگ خطاها: cPanel ← Setup Node.js App یا فایل `stderr.log` در پوشه‌ی برنامه.
+

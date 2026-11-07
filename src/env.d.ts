@@ -14,3 +14,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare namespace App {
+  interface Locals {
+    /** صفحه‌ی سرور (SSR) که قیمت لحظه‌ای طلا باید در HTML آن نوشته شود — src/middleware.ts */
+    livePrice?: boolean;
+  }
+}

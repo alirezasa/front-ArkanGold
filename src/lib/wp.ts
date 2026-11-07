@@ -19,7 +19,7 @@ import { esc, safeHref } from './ingotCard';
 const SITE = SITE_URL;
 /** آدرس عمومی مجله؛ لینک‌هایی که در محتوای قدیمی به این آدرس اشاره می‌کنند هم داخلی حساب می‌شوند */
 export const MAG_PUBLIC_URL = `${SITE}${MAG_PATH}`;
-/** سقف انتظار برای پاسخ وردپرس؛ بعد از آن نسخه‌ی کش‌شده نمایش داده می‌شود (src/lib/magCache.ts) */
+/** سقف انتظار برای پاسخ وردپرس؛ بعد از آن نسخه‌ی کش‌شده نمایش داده می‌شود (src/lib/cache.ts) */
 const FETCH_TIMEOUT = 10_000;
 /** فیلدهای embed موردنیاز هر مطلب (نویسنده، تصویر شاخص، دسته‌ها و برچسب‌ها) */
 export const WP_EMBED = 'author,wp:featuredmedia,wp:term';

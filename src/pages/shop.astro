@@ -1,4 +1,8 @@
 ---
+// فروشگاه — هنگام هر بازدید روی سرور از API شمش‌ها ساخته می‌شود (کش ۶۰ ثانیه، src/lib/goldIngots.ts)
+export const prerender = false;
+Astro.locals.livePrice = true;
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import Icon from '../components/Icon.astro';
@@ -106,8 +110,6 @@ const itemListSchema = {
   const serviceOff = document.getElementById('shop-service-off');
 
   const cards = () => Array.from(grid.querySelectorAll<HTMLElement>('.product-card'));
-  // صفحه‌ی جزئیات ایستا فقط برای شمش‌هایی که در build وجود داشتند ساخته شده است
-  const prebuilt = new Set(cards().map((c) => c.dataset.slug));
 
   // بازگرداندن مرورگر به گزینه‌ی پیش‌فرض (برخی مرورگرها انتخاب قبلی فرم را نگه می‌دارند)
   if (!sortSelect.value) sortSelect.value = DEFAULT_SORT;
@@ -130,12 +132,12 @@ const itemListSchema = {
 
       for (const card of cards()) updateIngotCard(card, bySlug.get(card.dataset.slug!) ?? null, serviceEnabled);
 
-      // شمش‌هایی که بعد از آخرین build اضافه شده‌اند
+      // شمش‌هایی که بعد از بارگذاری صفحه اضافه شده‌اند (هر شمش صفحه‌ی سرور /shop/{slug} دارد)
       const existing = new Set(cards().map((c) => c.dataset.slug));
       for (const p of products) {
         if (existing.has(p.slug)) continue;
         const tpl = document.createElement('template');
-        tpl.innerHTML = ingotCardHtml(p, { hasPage: prebuilt.has(p.slug), serviceEnabled });
+        tpl.innerHTML = ingotCardHtml(p, { serviceEnabled });
         grid.appendChild(tpl.content.firstElementChild as HTMLElement);
       }
 

@@ -12,4 +12,4 @@ interface Props {
 const { product, serviceEnabled = true, headingLevel = 'h2' } = Astro.props;
 ---
 
-<Fragment set:html={ingotCardHtml(product, { hasPage: true, serviceEnabled, headingTag: headingLevel })} />
+<Fragment set:html={ingotCardHtml(product, { serviceEnabled, headingTag: headingLevel })} />

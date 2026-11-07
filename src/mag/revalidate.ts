@@ -6,7 +6,7 @@
  */
 import type { APIRoute } from 'astro';
 import { timingSafeEqual } from 'node:crypto';
-import { purgeMagCache } from '../lib/magCache';
+import { purgeCache } from '../lib/cache';
 
 export const prerender = false;
 
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!tokenMatches(request.headers.get('x-revalidate-token') ?? '', expected)) {
     return new Response(JSON.stringify({ ok: false }), { status: 401, headers: { 'Content-Type': 'application/json' } });
   }
-  const entries = purgeMagCache();
+  const entries = purgeCache('mag:');
   return new Response(JSON.stringify({ ok: true, entries }), {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });

@@ -9,10 +9,10 @@
  *   /mag/{آدرس مطلب یا برگه}                   ← مطلب (دقیقاً همان آدرسی که وردپرس ساخته)
  *   /mag?s=...                                 ← جست‌وجو (noindex)
  *
- * همه‌ی نتیجه‌ها از کش src/lib/magCache.ts می‌گذرند؛ انتشار مطلب در وردپرس کش را پاک می‌کند
+ * همه‌ی نتیجه‌ها از کش src/lib/cache.ts (کلیدهای «mag:») می‌گذرند؛ انتشار مطلب در وردپرس کش را پاک می‌کند
  * (افزونه‌ی wordpress/arkan-headless ← /mag/wp-revalidate).
  */
-import { cached } from './magCache';
+import { cached } from './cache';
 import {
   WP_EMBED,
   WpHttpError,
@@ -74,7 +74,7 @@ export type MagRoute =
  * داده‌های مشترک (کش طولانی‌تر)
  * ------------------------------------------------------------------ */
 
-export const getSite = (): Promise<WpSiteInfo> => cached('site', TTL.lists, () => fetchSiteInfo());
+export const getSite = (): Promise<WpSiteInfo> => cached('mag:site', TTL.lists, () => fetchSiteInfo());
 
 const POST_FIELDS = [
   'id',
@@ -111,7 +111,7 @@ async function wpAll<T>(endpoint: string, params: Record<string, string | number
 
 /** همه‌ی دسته‌ها (معمولا چند ده مورد) — برای تشخیص آدرس آرشیو و زیردسته‌ها */
 export const getCategories = (): Promise<WpTerm[]> =>
-  cached('categories', TTL.lists, () => wpAll<WpTerm>('wp/v2/categories', { _fields: TERM_FIELDS }));
+  cached('mag:categories', TTL.lists, () => wpAll<WpTerm>('wp/v2/categories', { _fields: TERM_FIELDS }));
 
 /** پربازدیدترین دسته‌ها برای نوار دسته‌بندی بالای فهرست مجله */
 export async function topCategories(limit = 10): Promise<{ name: string; path: string }[]> {
@@ -315,12 +315,12 @@ async function resolve(path: string): Promise<MagRoute> {
 /** صفحه‌ی /mag/{path} (مسیر decode‌شده، بدون / اول و آخر) */
 export function resolveMagRoute(path: string): Promise<MagRoute> {
   const clean = path.split('/').filter(Boolean).join('/');
-  return cached(`route:${clean}`, TTL.page, () => resolve(clean));
+  return cached(`mag:route:${clean}`, TTL.page, () => resolve(clean));
 }
 
 export function searchMag(query: string): Promise<MagRoute> {
   const q = query.trim().slice(0, 100);
-  return cached(`search:${q.toLowerCase()}`, TTL.search, async () => {
+  return cached(`mag:search:${q.toLowerCase()}`, TTL.search, async () => {
     const site = await getSite();
     const { data } = await wpGet<WpPost[]>('wp/v2/posts', { search: q, per_page: 24, _embed: WP_EMBED, _fields: POST_FIELDS });
     return { kind: 'search', query: q, posts: data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p) };
@@ -329,7 +329,7 @@ export function searchMag(query: string): Promise<MagRoute> {
 
 /** آخرین مطالب (RSS و بخش «مطالب مجله» صفحه‌ی اصلی) */
 export function latestPosts(count = 30): Promise<MagPost[]> {
-  return cached(`latest:${count}`, TTL.feed, async () => {
+  return cached(`mag:latest:${count}`, TTL.feed, async () => {
     const site = await getSite();
     const listing = await listPosts(site, { per_page: count }, 1, '');
     return listing?.posts.slice(0, count) ?? [];
@@ -347,7 +347,7 @@ export interface SitemapEntry {
 
 /** همه‌ی صفحه‌های قابل‌ایندکس مجله با تاریخ آخرین تغییر */
 export function sitemapEntries(): Promise<SitemapEntry[]> {
-  return cached('sitemap', TTL.lists, async () => {
+  return cached('mag:sitemap', TTL.lists, async () => {
     const site = await getSite();
     const fields = { _fields: 'link,modified_gmt,yoast_head_json' };
     const [posts, pages, cats, tags] = await Promise.all([
