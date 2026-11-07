@@ -5,6 +5,9 @@
  * فقط از همین فایل خوانده می‌شود تا تغییر آن در یک نقطه انجام شود.
  */
 
+/** آدرس اصلی سایت (canonical، sitemap، og:url) — همان SITE_URL در astro.config.mjs */
+export const SITE_URL = 'https://arkan.gold';
+
 /** آدرس اپلیکیشن / نسخه تحت وب — تمام دکمه‌های ورود، ثبت‌نام و معامله به اینجا می‌روند */
 export const APP_URL = 'https://app.arkan.gold';
 
@@ -85,7 +88,8 @@ export const VERIFY_API_URL: string =
  * مجله‌ی آرکان گلد — وردپرس هدلس
  * ----------------------------------------------------
  * نویسنده‌ها در پنل وردپرس (مثلا https://cms.arkan.gold/wp-admin) مطلب می‌نویسند و
- * این پروژه مطالب را از REST API وردپرس می‌خواند و زیر https://arkan.gold/mag می‌سازد.
+ * صفحه‌های https://arkan.gold/mag هنگام بازدید روی سرور Node.js (SSR) از REST API وردپرس
+ * ساخته می‌شوند؛ انتشار مطلب جدید به build نیاز ندارد.
  * آدرس REST API با متغیر محیطی PUBLIC_WP_API_URL تنظیم می‌شود، مثلا:
  *   PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json
  * تا وقتی خالی باشد، صفحه‌های مجله ساخته نمی‌شوند و منوها مثل قبل به وردپرس فعلی

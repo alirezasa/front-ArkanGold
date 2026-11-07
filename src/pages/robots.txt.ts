@@ -3,8 +3,8 @@
  * sitemap مجله که در همین پروژه ساخته می‌شود (/mag/sitemap.xml) معرفی می‌شود.
  */
 import type { APIRoute } from 'astro';
-import { SITE_URL } from '../../astro.config.mjs';
-import { MAG_ENABLED } from '../config/site';
+
+import { MAG_ENABLED, SITE_URL } from '../config/site';
 
 export const GET: APIRoute = () => {
   const lines = [
@@ -13,7 +13,6 @@ export const GET: APIRoute = () => {
     'Disallow: /login',
     'Disallow: /shop/item$',
     'Disallow: /shop/item?',
-    'Disallow: /mag-live',
     '',
     `Sitemap: ${SITE_URL}/sitemap-index.xml`,
     // مجله‌ی هدلس: sitemap ساخته‌شده در همین پروژه؛ در غیر این صورت sitemap افزونه‌ی سئوی وردپرس فعلی

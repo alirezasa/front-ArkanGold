@@ -1,19 +1,17 @@
 <?php
 /**
  * Plugin Name: Arkan Gold — مجله هدلس
- * Description: وردپرس را به پنل محتوای مجله‌ی آرکان گلد تبدیل می‌کند: بازدید از صفحه‌های عمومی وردپرس به همان آدرس در arkan.gold/mag هدایت می‌شود و با هر انتشار/ویرایش مطلب، build سایت از طریق یک Deploy Hook اجرا می‌شود.
- * Version:     1.0.0
+ * Description: وردپرس را به پنل محتوای مجله‌ی آرکان گلد تبدیل می‌کند: بازدید از صفحه‌های عمومی وردپرس به همان آدرس در arkan.gold/mag هدایت می‌شود و با هر انتشار/ویرایش مطلب، کش صفحه‌های مجله روی سرور Node.js پاک می‌شود تا تغییر فوراً دیده شود.
+ * Version:     2.0.0
  * Author:      Arkan Gold
  * Requires PHP: 7.4
  *
  * نصب: پوشه‌ی arkan-headless را در wp-content/plugins کپی و افزونه را فعال کنید.
  * تنظیمات: پیشخوان ← تنظیمات ← مجله هدلس
  *
- * می‌توانید به‌جای صفحه‌ی تنظیمات، مقادیر را در wp-config.php هم تعریف کنید (اولویت دارند):
+ * می‌توانید به‌جای صفحه‌ی تنظیمات، مقادیر را در wp-config.php تعریف کنید (اولویت دارند و امن‌ترند):
  *   define('ARKAN_FRONTEND_URL', 'https://arkan.gold/mag');
- *   define('ARKAN_DEPLOY_HOOK_URL', 'https://api.github.com/repos/OWNER/REPO/dispatches');
- *   define('ARKAN_DEPLOY_HOOK_AUTH', 'Bearer github_pat_...');
- *   define('ARKAN_DEPLOY_HOOK_BODY', '{"event_type":"wordpress-publish"}');
+ *   define('ARKAN_REVALIDATE_TOKEN', '...');   // همان MAG_REVALIDATE_TOKEN برنامه‌ی Node.js
  */
 
 if (!defined('ABSPATH')) {
@@ -21,9 +19,6 @@ if (!defined('ABSPATH')) {
 }
 
 const ARKAN_HEADLESS_OPTION = 'arkan_headless';
-const ARKAN_HEADLESS_EVENT = 'arkan_headless_deploy';
-/** فاصله‌ی تجمیع تغییرات پشت‌سرهم پیش از اجرای build (ثانیه) */
-const ARKAN_HEADLESS_DEBOUNCE = 60;
 
 /* ------------------------------------------------------------------
  * تنظیمات
@@ -33,17 +28,13 @@ function arkan_headless_settings()
 {
     $saved = get_option(ARKAN_HEADLESS_OPTION, []);
     $settings = wp_parse_args(is_array($saved) ? $saved : [], [
-        'frontend_url' => 'https://arkan.gold/mag',
-        'redirect'     => '1',
-        'hook_url'     => '',
-        'hook_auth'    => '',
-        'hook_body'    => '',
+        'frontend_url'     => 'https://arkan.gold/mag',
+        'redirect'         => '1',
+        'revalidate_token' => '',
     ]);
     $constants = [
-        'frontend_url' => 'ARKAN_FRONTEND_URL',
-        'hook_url'     => 'ARKAN_DEPLOY_HOOK_URL',
-        'hook_auth'    => 'ARKAN_DEPLOY_HOOK_AUTH',
-        'hook_body'    => 'ARKAN_DEPLOY_HOOK_BODY',
+        'frontend_url'     => 'ARKAN_FRONTEND_URL',
+        'revalidate_token' => 'ARKAN_REVALIDATE_TOKEN',
     ];
     foreach ($constants as $key => $constant) {
         if (defined($constant)) {
@@ -105,18 +96,20 @@ add_filter('rest_post_dispatch', function ($response) {
 });
 
 /* ------------------------------------------------------------------
- * ۲) Deploy Hook — اجرای build سایت بعد از هر تغییر محتوای عمومی
- *    تغییرات پشت‌سرهم (مثلا ویرایش چند مطلب) با یک فاصله‌ی ۶۰ ثانیه‌ای در یک build تجمیع می‌شوند.
+ * ۲) پاک کردن کش مجله بعد از هر تغییر محتوای عمومی
+ *    POST {frontend_url}/wp-revalidate با هدر X-Revalidate-Token — صفحه‌ها در بازدید بعدی از نو
+ *    ساخته می‌شوند. بدون این تنظیم هم تغییرات حداکثر بعد از ۲ دقیقه (عمر کش) دیده می‌شوند.
  * ------------------------------------------------------------------ */
 
-function arkan_headless_schedule_deploy()
+function arkan_headless_queue_revalidate()
 {
-    if (arkan_headless_settings()['hook_url'] === '') {
+    static $queued = false;
+    if ($queued || arkan_headless_settings()['revalidate_token'] === '') {
         return;
     }
-    if (!wp_next_scheduled(ARKAN_HEADLESS_EVENT)) {
-        wp_schedule_single_event(time() + ARKAN_HEADLESS_DEBOUNCE, ARKAN_HEADLESS_EVENT);
-    }
+    $queued = true;
+    // یک درخواست در پایان همین درخواست (حتی اگر چند مطلب/دسته هم‌زمان تغییر کرده باشند)
+    add_action('shutdown', 'arkan_headless_revalidate');
 }
 
 // انتشار، ویرایش مطلب منتشرشده، خارج کردن از انتشار، حذف و انتشار زمان‌بندی‌شده
@@ -125,52 +118,48 @@ add_action('transition_post_status', function ($new_status, $old_status, $post) 
         return;
     }
     if ($new_status === 'publish' || $old_status === 'publish') {
-        arkan_headless_schedule_deploy();
+        arkan_headless_queue_revalidate();
     }
 }, 10, 3);
 
 // تغییر دسته‌ها و برچسب‌ها (نام، توضیحات، نامک)
-foreach (['edited_term', 'delete_term'] as $hook) {
+foreach (['created_term', 'edited_term', 'delete_term'] as $hook) {
     add_action($hook, function ($term_id, $tt_id, $taxonomy) {
         if (in_array($taxonomy, ['category', 'post_tag'], true)) {
-            arkan_headless_schedule_deploy();
+            arkan_headless_queue_revalidate();
         }
     }, 10, 3);
 }
 
-// تغییر نام یا بیوگرافی نویسنده
-add_action('profile_update', function ($user_id) {
-    if (count_user_posts($user_id, 'post', true) > 0) {
-        arkan_headless_schedule_deploy();
-    }
-});
+// تغییر نام یا بیوگرافی نویسنده، و تغییر نام/توضیح سایت
+add_action('profile_update', 'arkan_headless_queue_revalidate');
+add_action('update_option_blogname', 'arkan_headless_queue_revalidate');
+add_action('update_option_blogdescription', 'arkan_headless_queue_revalidate');
 
-function arkan_headless_trigger_deploy()
+function arkan_headless_revalidate()
 {
     $s = arkan_headless_settings();
-    if ($s['hook_url'] === '') {
-        return new WP_Error('no_hook', 'آدرس Deploy Hook تنظیم نشده است.');
+    if ($s['revalidate_token'] === '' || $s['frontend_url'] === '') {
+        return new WP_Error('not_configured', 'توکن پاک‌سازی کش تنظیم نشده است.');
     }
-    $is_github = wp_parse_url($s['hook_url'], PHP_URL_HOST) === 'api.github.com';
-    $headers = ['User-Agent' => 'ArkanHeadless/1.0', 'Accept' => $is_github ? 'application/vnd.github+json' : 'application/json'];
-    if ($s['hook_auth'] !== '') {
-        $headers['Authorization'] = $s['hook_auth'];
+    // پاسخ ذخیره‌ی مطلب منتظر این درخواست نماند (PHP-FPM / LiteSpeed)
+    if (doing_action('shutdown')) {
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request();
+        }
     }
-    if ($s['hook_body'] !== '') {
-        $headers['Content-Type'] = 'application/json';
-    }
-    $response = wp_remote_post($s['hook_url'], [
-        'timeout' => 20,
-        'headers' => $headers,
-        'body'    => $s['hook_body'] !== '' ? $s['hook_body'] : null,
+    $response = wp_remote_post($s['frontend_url'] . '/wp-revalidate', [
+        'timeout' => 8,
+        'headers' => ['X-Revalidate-Token' => $s['revalidate_token'], 'User-Agent' => 'ArkanHeadless/2.0'],
     ]);
     $result = is_wp_error($response)
         ? 'خطا: ' . $response->get_error_message()
         : 'HTTP ' . wp_remote_retrieve_response_code($response);
-    update_option('arkan_headless_last_deploy', ['time' => time(), 'result' => $result], false);
+    update_option('arkan_headless_last_revalidate', ['time' => time(), 'result' => $result], false);
     return $response;
 }
-add_action(ARKAN_HEADLESS_EVENT, 'arkan_headless_trigger_deploy');
 
 /* ------------------------------------------------------------------
  * ۳) صفحه‌ی تنظیمات: پیشخوان ← تنظیمات ← مجله هدلس
@@ -181,30 +170,23 @@ add_action('admin_init', function () {
         'type'              => 'array',
         'sanitize_callback' => function ($input) {
             $input = is_array($input) ? $input : [];
-            $body = trim((string) ($input['hook_body'] ?? ''));
-            if ($body !== '' && json_decode($body) === null) {
-                add_settings_error(ARKAN_HEADLESS_OPTION, 'bad_json', 'بدنه‌ی درخواست باید JSON معتبر باشد؛ ذخیره نشد.');
-                $body = '';
-            }
             return [
-                'frontend_url' => esc_url_raw(trim((string) ($input['frontend_url'] ?? ''))),
-                'redirect'     => empty($input['redirect']) ? '0' : '1',
-                'hook_url'     => esc_url_raw(trim((string) ($input['hook_url'] ?? ''))),
-                'hook_auth'    => sanitize_text_field((string) ($input['hook_auth'] ?? '')),
-                'hook_body'    => $body,
+                'frontend_url'     => esc_url_raw(trim((string) ($input['frontend_url'] ?? ''))),
+                'redirect'         => empty($input['redirect']) ? '0' : '1',
+                'revalidate_token' => sanitize_text_field((string) ($input['revalidate_token'] ?? '')),
             ];
         },
     ]);
 });
 
-add_action('admin_post_arkan_headless_deploy_now', function () {
+add_action('admin_post_arkan_headless_revalidate_now', function () {
     if (!current_user_can('manage_options')) {
         wp_die('دسترسی ندارید.');
     }
-    check_admin_referer('arkan_headless_deploy_now');
-    $response = arkan_headless_trigger_deploy();
-    $ok = !is_wp_error($response) && wp_remote_retrieve_response_code($response) < 300;
-    wp_safe_redirect(add_query_arg('arkan_deploy', $ok ? 'ok' : 'failed', admin_url('options-general.php?page=arkan-headless')));
+    check_admin_referer('arkan_headless_revalidate_now');
+    $response = arkan_headless_revalidate();
+    $ok = !is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200;
+    wp_safe_redirect(add_query_arg('arkan_revalidate', $ok ? 'ok' : 'failed', admin_url('options-general.php?page=arkan-headless')));
     exit;
 });
 
@@ -215,17 +197,18 @@ add_action('admin_menu', function () {
 function arkan_headless_settings_page()
 {
     $s = arkan_headless_settings();
-    $last = get_option('arkan_headless_last_deploy');
+    $last = get_option('arkan_headless_last_revalidate');
     $name = ARKAN_HEADLESS_OPTION;
     $locked = function ($constant) {
         return defined($constant) ? ' disabled title="در wp-config.php تعریف شده است"' : '';
     };
+    $status = isset($_GET['arkan_revalidate']) ? sanitize_key($_GET['arkan_revalidate']) : '';
     ?>
     <div class="wrap">
         <h1>مجله هدلس آرکان گلد</h1>
-        <?php if (isset($_GET['arkan_deploy'])) : ?>
-            <div class="notice notice-<?php echo $_GET['arkan_deploy'] === 'ok' ? 'success' : 'error'; ?>"><p>
-                <?php echo $_GET['arkan_deploy'] === 'ok' ? 'درخواست build ارسال شد.' : 'ارسال درخواست build ناموفق بود؛ نتیجه را پایین صفحه ببینید.'; ?>
+        <?php if ($status !== '') : ?>
+            <div class="notice notice-<?php echo $status === 'ok' ? 'success' : 'error'; ?>"><p>
+                <?php echo $status === 'ok' ? 'کش مجله پاک شد؛ صفحه‌ها در بازدید بعدی از نو ساخته می‌شوند.' : 'پاک کردن کش ناموفق بود؛ نتیجه را پایین صفحه ببینید.'; ?>
             </p></div>
         <?php endif; ?>
         <form method="post" action="options.php">
@@ -241,35 +224,22 @@ function arkan_headless_settings_page()
                         بازدید از صفحه‌های عمومی وردپرس به همان آدرس روی سایت اصلی هدایت شود (۳۰۱)</label></td>
                 </tr>
                 <tr>
-                    <th scope="row"><label for="ah-hook">آدرس Deploy Hook</label></th>
-                    <td><input id="ah-hook" type="url" class="regular-text code" dir="ltr" name="<?php echo esc_attr($name); ?>[hook_url]" value="<?php echo esc_attr($s['hook_url']); ?>"<?php echo $locked('ARKAN_DEPLOY_HOOK_URL'); ?>>
-                        <p class="description">بعد از هر انتشار یا ویرایش مطلب، یک درخواست POST به این آدرس فرستاده می‌شود تا سایت دوباره build شود.</p></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="ah-auth">هدر Authorization (اختیاری)</label></th>
-                    <td><input id="ah-auth" type="password" class="regular-text code" dir="ltr" autocomplete="off" name="<?php echo esc_attr($name); ?>[hook_auth]" value="<?php echo esc_attr($s['hook_auth']); ?>"<?php echo $locked('ARKAN_DEPLOY_HOOK_AUTH'); ?>>
-                        <p class="description">مثلا <code dir="ltr">Bearer github_pat_...</code> برای GitHub Actions. امن‌تر است در wp-config.php تعریف شود.</p></td>
-                </tr>
-                <tr>
-                    <th scope="row"><label for="ah-body">بدنه‌ی JSON (اختیاری)</label></th>
-                    <td><textarea id="ah-body" class="large-text code" dir="ltr" rows="3" name="<?php echo esc_attr($name); ?>[hook_body]"<?php echo $locked('ARKAN_DEPLOY_HOOK_BODY'); ?>><?php echo esc_textarea($s['hook_body']); ?></textarea>
-                        <p class="description">برای GitHub: <code dir="ltr">{"event_type":"wordpress-publish"}</code></p></td>
+                    <th scope="row"><label for="ah-token">توکن پاک‌سازی کش</label></th>
+                    <td><input id="ah-token" type="password" class="regular-text code" dir="ltr" autocomplete="off" name="<?php echo esc_attr($name); ?>[revalidate_token]" value="<?php echo esc_attr($s['revalidate_token']); ?>"<?php echo $locked('ARKAN_REVALIDATE_TOKEN'); ?>>
+                        <p class="description">همان مقدار متغیر <code dir="ltr">MAG_REVALIDATE_TOKEN</code> در برنامه‌ی Node.js (حداقل ۱۶ کاراکتر). با هر انتشار یا ویرایش مطلب، کش صفحه‌های مجله پاک می‌شود.</p></td>
                 </tr>
             </table>
             <?php submit_button(); ?>
         </form>
 
-        <h2>اجرای دستی build</h2>
+        <h2>پاک کردن دستی کش</h2>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="arkan_headless_deploy_now">
-            <?php wp_nonce_field('arkan_headless_deploy_now'); ?>
-            <?php submit_button('اجرای build الان', 'secondary', 'submit', false, $s['hook_url'] === '' ? ['disabled' => 'disabled'] : []); ?>
+            <input type="hidden" name="action" value="arkan_headless_revalidate_now">
+            <?php wp_nonce_field('arkan_headless_revalidate_now'); ?>
+            <?php submit_button('پاک کردن کش مجله', 'secondary', 'submit', false, $s['revalidate_token'] === '' ? ['disabled' => 'disabled'] : []); ?>
         </form>
         <?php if (is_array($last)) : ?>
             <p>آخرین درخواست: <?php echo esc_html(wp_date('Y/m/d H:i', (int) $last['time'])); ?> — <code dir="ltr"><?php echo esc_html($last['result']); ?></code></p>
-        <?php endif; ?>
-        <?php if (wp_next_scheduled(ARKAN_HEADLESS_EVENT)) : ?>
-            <p>یک build در صف اجرا است (حداکثر <?php echo (int) ARKAN_HEADLESS_DEBOUNCE; ?> ثانیه‌ی دیگر).</p>
         <?php endif; ?>
     </div>
     <?php

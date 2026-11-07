@@ -1,5 +1,5 @@
 ---
-// فرم جست‌وجوی مجله — نتایج در /mag-live مستقیماً از REST API وردپرس خوانده می‌شوند
+// فرم جست‌وجوی مجله — مثل وردپرس: /mag?s=... (نتایج روی سرور از REST API وردپرس)
 interface Props {
   value?: string;
   class?: string;
@@ -7,7 +7,7 @@ interface Props {
 const { value = '', class: className = '' } = Astro.props;
 ---
 
-<form action="/mag-live" method="get" role="search" class={`flex w-full max-w-md items-center gap-2 ${className}`}>
+<form action="/mag" method="get" role="search" class={`flex w-full max-w-md items-center gap-2 ${className}`}>
   <label for="mag-search-input" class="sr-only">جست‌وجو در مجله</label>
   <input
     id="mag-search-input"

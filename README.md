@@ -112,7 +112,7 @@ src/components/Icon.astro
 | `/delivery` | **جدید** — تحویل فیزیکی (دو روش: خرید مستقیم شمش / خرید کم‌کم طلای آب‌شده و تبدیل به شمش) |
 | `/about`, `/contact`, `/faq`, `/services`, `/rules`, `/cooperation` | صفحات تکمیلی |
 | `/login` | هدایت خودکار به اپلیکیشن `https://app.arkan.gold` |
-| `/mag/...` | مجله (وردپرس هدلس) — فقط وقتی `PUBLIC_WP_API_URL` تنظیم شده باشد؛ بخش «مجله» |
+| `/mag/...` | مجله (وردپرس هدلس، SSR روی Node.js) — فقط وقتی `PUBLIC_WP_API_URL` تنظیم شده باشد؛ بخش «مجله» |
 
 ## هدر و فوتر
 
@@ -258,105 +258,103 @@ GET https://api.arkan.gold/public/gold-ingots/{slug}                         ←
 - کد باید دقیقاً ۸ رقم و یکتا باشد (کد تکراری ذخیره نمی‌شود).
 - API: `GET /wp-json/arkan/v1/verify-bar?code=12345678` — محدودیت ۳۰ درخواست در ۱۰ دقیقه برای هر IP.
 
-## مجله آرکان گلد — وردپرس هدلس (`/mag`)
+## مجله آرکان گلد — وردپرس هدلس + SSR (`/mag`)
 
 نویسنده‌ها مثل قبل در **پنل وردپرس** کار می‌کنند (نقش‌های نویسنده/ویرایشگر/مدیر، کتابخانه‌ی رسانه،
-دسته و برچسب، زمان‌بندی انتشار، Yoast SEO یا Rank Math) و این پروژه مطالب را از REST API وردپرس
-می‌خواند و با ظاهر سایت اصلی زیر `https://arkan.gold/mag` می‌سازد. وردپرس روی یک ساب‌دامین
-(مثلا `cms.arkan.gold`) فقط نقش پنل محتوا را دارد.
+دسته و برچسب، زمان‌بندی انتشار، Yoast SEO یا Rank Math). صفحه‌های `https://arkan.gold/mag` روی یک
+**برنامه‌ی Node.js** هنگام هر بازدید از REST API وردپرس ساخته می‌شوند (SSR): HTML کامل با همه‌ی
+تگ‌های سئو، و **انتشار مطلب به build نیاز ندارد**. بقیه‌ی سایت مثل قبل فایل ایستا روی LiteSpeed است.
+وردپرس روی ساب‌دامین (مثلا `cms.arkan.gold`) فقط نقش پنل محتوا را دارد.
 
-### فعال‌سازی
-```bash
-PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run build
 ```
-تا وقتی `PUBLIC_WP_API_URL` خالی باشد هیچ صفحه‌ای زیر `/mag` ساخته نمی‌شود و همه‌چیز مثل قبل است
-(منوها به وردپرس فعلی لینک می‌دهند). برای دیدن مجله روی سیستم خودتان **همین الان و پیش از انتقال**،
-می‌توانید از وردپرس فعلی بخوانید: `PUBLIC_WP_API_URL=https://arkan.gold/mag/wp-json npm run dev`
-(فقط برای پیش‌نمایش؛ این خروجی را روی هاست فعلی آپلود نکنید چون با پوشه‌ی وردپرس تداخل دارد).
+بازدیدکننده ── arkan.gold/*      ← LiteSpeed: فایل‌های ایستا (public_html ← dist/client)
+           └── arkan.gold/mag/* ← Node.js (cPanel ← Setup Node.js App ← dist/mag-app)
+                                     └─ کش حافظه ── REST API ── cms.arkan.gold (وردپرس)
+```
 
-اگر وردپرس هنگام build در دسترس نباشد، **build عمداً شکست می‌خورد** تا نسخه‌ای بدون مطالب
-مجله منتشر نشود.
+### رفتار سرور مجله (برای اینکه بعداً مشکل‌ساز نشود)
+- **کش**: هر صفحه ۲ دقیقه و فهرست دسته‌ها ۱۰ دقیقه کش می‌شود؛ بعد از آن نسخه‌ی قبلی فوراً نمایش
+  داده و در پس‌زمینه تازه می‌شود. درخواست‌های هم‌زمان برای یک صفحه فقط یک درخواست به وردپرس می‌فرستند.
+- **انتشار فوری**: افزونه‌ی `arkan-headless` بعد از هر انتشار/ویرایش/حذف، کش را پاک می‌کند
+  (`POST /mag/wp-revalidate`)؛ بدون آن هم تغییرات حداکثر بعد از ۲ دقیقه دیده می‌شوند.
+- **قطعی یا کندی وردپرس**: تا ۲۴ ساعت آخرین نسخه‌ی سالم هر صفحه نمایش داده می‌شود (حداکثر انتظار
+  برای وردپرس ۱۰ ثانیه، و بعد از خطا ۳۰ ثانیه درخواست دوباره نمی‌فرستد). صفحه‌ای که هرگز کش نشده
+  کد **۵۰۳** با `Retry-After` می‌گیرد که به گوگل می‌گوید مشکل موقت است (نه حذف صفحه).
+- **کدهای وضعیت درست**: ۴۰۴ واقعی برای آدرس ناموجود و صفحه‌ی خارج از محدوده (noindex)، ۳۰۱ برای
+  آدرس‌های قدیمی وردپرس با `/` در انتها، `/page/1`، `/mag/feed`، sitemapهای Yoast/Rank Math و
+  مطلبی که آدرسش عوض شده (مثلا تغییر دسته در ساختار پیوند).
+- **حافظه**: حداکثر ۶۰۰ صفحه در کش (چند ده مگابایت در بدترین حالت).
+- **بدون npm install روی هاست**: همه‌ی وابستگی‌ها داخل `dist/mag-app` باندل می‌شوند (کمتر از ۱ مگابایت).
 
 ### فایل‌ها
 | فایل | کاربرد |
 |---|---|
-| `src/lib/wp.ts` | تبدیل پاسخ REST وردپرس، HTML کارت و صفحه‌ی مطلب، سئو و schema (مشترک build و مرورگر) |
-| `src/lib/magazine.ts` | خواندن همه‌ی مطالب، برگه‌ها، دسته‌ها، برچسب‌ها و نویسنده‌ها در build و ساخت جدول مسیرها |
-| `src/pages/mag/[...path].astro` | همه‌ی صفحه‌های `/mag`: فهرست، صفحه‌بندی، آرشیوها، مطالب و برگه‌ها |
-| `src/pages/mag/[feed].xml.ts` / `[sitemap].xml.ts` | `/mag/rss.xml` و `/mag/sitemap.xml` |
-| `src/pages/mag-live.astro` | جست‌وجو و نمایش مطلبی که بعد از آخرین build منتشر شده (در مرورگر، noindex) |
-| `src/pages/robots.txt.ts` | robots.txt (جایگزین `public/robots.txt`) |
-| `wordpress/arkan-headless/` | افزونه‌ی وردپرس: هدایت صفحه‌های وردپرس به سایت اصلی + Deploy Hook |
+| `src/lib/wp.ts` | تبدیل پاسخ REST وردپرس، HTML کارت و صفحه‌ی مطلب، سئو و schema |
+| `src/lib/magazine.ts` | پیدا کردن صفحه بر اساس آدرس و خواندن فقط داده‌ی همان صفحه از وردپرس |
+| `src/lib/magCache.ts` | کش حافظه با نمایش نسخه‌ی قبلی در قطعی وردپرس |
+| `src/mag/MagPage.astro` | همه‌ی صفحه‌های `/mag`: فهرست، صفحه‌بندی، آرشیوها، مطلب، جست‌وجو، ۴۰۴ |
+| `src/mag/rss.ts`، `sitemap.ts`، `revalidate.ts` | `/mag/rss.xml`، `/mag/sitemap.xml`، `/mag/wp-revalidate` |
+| `src/mag/integration.mjs` | اضافه کردن مسیرهای بالا فقط وقتی `PUBLIC_WP_API_URL` تنظیم شده + ساخت `dist/mag-app` |
+| `server/server.mjs`، `server/app.cjs` | سرور Node.js مجله و فایل شروع Passenger |
+| `wordpress/arkan-headless/` | افزونه‌ی وردپرس: هدایت صفحه‌های وردپرس به سایت اصلی + پاک کردن کش |
+
+بدون `PUBLIC_WP_API_URL` هیچ‌کدام از این‌ها فعال نیست و خروجی build دقیقاً مثل قبل (پوشه‌ی `dist`) است.
+
+### build
+```bash
+PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run build
+```
+خروجی:
+- `dist/client` ← محتوای `public_html` (همان فایل‌های ایستای قبلی)
+- `dist/mag-app` ← پوشه‌ی برنامه‌ی Node.js مجله
+
+این دو باید **همیشه با هم** آپلود شوند (صفحه‌های مجله از CSS/JS همان build در `public_html/_astro`
+استفاده می‌کنند). **ترتیب**: اول `dist/client` (فایل‌های قدیمی `_astro` را پاک نکنید)، بعد `dist/mag-app`.
+انتشار مطلب به build نیاز ندارد؛ build فقط برای تغییر کد یا طراحی لازم است. GitHub Actions
+(`.github/workflows/deploy.yml`) هم همین دو مرحله را با FTP انجام می‌دهد (اجرا دستی از تب Actions).
+
+اجرای محلی: `PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json npm run dev` (صفحه‌های مجله هم در dev کار می‌کنند).
+
+### راه‌اندازی (یک بار)
+1. **انتقال وردپرس** به `cms.arkan.gold` (مثلا با Duplicator یا All-in-One WP Migration). در
+   «تنظیمات ← عمومی» هر دو نشانی `https://cms.arkan.gold`. «پیوندهای یکتا» را تغییر ندهید. افزونه‌ی
+   استعلام شمش همراه وردپرس منتقل می‌شود و API آن خودکار `{PUBLIC_WP_API_URL}/arkan/v1/verify-bar` می‌شود.
+2. **پوشه‌ی قدیمی `public_html/mag`** (وردپرس قبلی) را بعد از اطمینان از انتقال، حذف یا تغییر نام دهید.
+3. **build** با دستور بالا، و آپلود `dist/client` در `public_html` و `dist/mag-app` در یک پوشه‌ی جدا
+   **بیرون از** `public_html` (مثلا `/home/USER/arkan-mag`).
+4. **cPanel ← Setup Node.js App ← Create Application**:
+   - Node.js version: ۱۸ یا بالاتر (ترجیحا ۲۰)
+   - Application mode: Production
+   - Application root: `arkan-mag`
+   - Application URL: `arkan.gold` / `mag`
+   - Application startup file: `app.cjs`
+   - Environment variables: `MAG_REVALIDATE_TOKEN` = یک رشته‌ی تصادفی بلند (حداقل ۱۶ کاراکتر)
+   - Create، سپس Start/Restart. (`Run NPM Install` لازم نیست.)
+   cPanel برای آدرس `/mag` یک `.htaccess` در `public_html/mag` می‌سازد؛ آن را پاک نکنید.
+5. **افزونه‌ی وردپرس** `wordpress/arkan-headless` را نصب و فعال کنید؛ در «تنظیمات ← مجله هدلس» همان
+   `MAG_REVALIDATE_TOKEN` را در «توکن پاک‌سازی کش» وارد و «پاک کردن کش مجله» را بزنید (باید موفق باشد).
+6. **بررسی**: `https://arkan.gold/mag`، یک مطلب، `https://arkan.gold/mag/sitemap.xml` و یک آدرس اشتباه
+   (باید ۴۰۴ بدهد). یک مطلب آزمایشی منتشر کنید و ببینید فوراً روی سایت می‌آید.
+7. **Search Console**: sitemap `https://arkan.gold/mag/sitemap.xml` را ثبت کنید.
+
+بعد از هر آپلود جدید `dist/mag-app`، فایل `tmp/restart.txt` داخل آن عوض می‌شود و Passenger برنامه
+را با نسخه‌ی جدید راه‌اندازی می‌کند (یا در cPanel دکمه‌ی Restart را بزنید). لاگ خطاها در cPanel ←
+Setup Node.js App یا فایل `stderr.log` در پوشه‌ی برنامه است.
 
 ### آدرس‌ها — حفظ رتبه‌های فعلی
-آدرس هر صفحه دقیقاً از فیلد `link` وردپرس ساخته می‌شود؛ هر ساختار «پیوند یکتا» که در وردپرس
-تنظیم شده باشد (`/%postname%/`، با تاریخ، با دسته و ...) همان آدرس زیر `/mag` ساخته می‌شود:
-`/mag/{مطلب}`، `/mag/category/{دسته}`، `/mag/tag/{برچسب}`، `/mag/author/{نویسنده}` و صفحه‌بندی
-`.../page/2`. لینک‌های داخلی داخل متن مطالب (به آدرس وردپرس یا به `arkan.gold/mag`) خودکار به
-`/mag/...` تبدیل می‌شوند. `public/.htaccess` آدرس‌های قدیمی `/mag/feed` و sitemap افزونه‌ی سئو
-(`/mag/sitemap_index.xml`، `post-sitemap.xml` و ...) را با ۳۰۱ به نسخه‌های جدید می‌برد.
-ساختار پیوند «ساده» (`?p=123`) پشتیبانی نمی‌شود.
+آدرس هر صفحه دقیقاً از فیلد `link` وردپرس گرفته می‌شود؛ هر ساختار «پیوند یکتا» (`/%postname%/`، با
+تاریخ، با دسته و ...) همان آدرس زیر `/mag` را دارد: `/mag/{مطلب}`، `/mag/category/{دسته}`،
+`/mag/tag/{برچسب}`، `/mag/author/{نویسنده}`، صفحه‌بندی `.../page/2` و جست‌وجو `/mag?s=...`.
+لینک‌های داخلی داخل متن مطالب خودکار به `/mag/...` تبدیل می‌شوند. ساختار پیوند «ساده» (`?p=123`)
+پشتیبانی نمی‌شود.
 
 ### سئو
-- **Yoast SEO**: عنوان سئو، توضیحات متا، تصویر شبکه‌های اجتماعی و noindex هر مطلب، دسته، برچسب و
-  نویسنده از `yoast_head_json` خوانده می‌شود.
-- **Rank Math**: در تنظیمات Rank Math گزینه‌ی «Headless CMS Support» را روشن کنید؛ همان داده‌ها از
-  `rankmath/v1/getHead` خوانده می‌شوند.
+- **Yoast SEO**: عنوان سئو، توضیحات متا، تصویر شبکه‌های اجتماعی و noindex هر مطلب، دسته، برچسب و نویسنده.
+- **Rank Math**: گزینه‌ی «Headless CMS Support» را در تنظیمات Rank Math روشن کنید.
 - بدون افزونه: عنوان مطلب، خلاصه (یا ابتدای متن) و تصویر شاخص.
-- canonical، Open Graph و `article:*`، JSON-LD از نوع `BlogPosting` (نویسنده، ناشر، تاریخ انتشار و
-  ویرایش، دسته، برچسب‌ها)، `BreadcrumbList`، `Blog`/`CollectionPage` برای فهرست‌ها.
-- `/mag/sitemap.xml` با `lastmod` هر مطلب (صفحه‌های noindex حذف می‌شوند) و معرفی در `robots.txt`؛
-  خوراک RSS با `<link rel="alternate">` در همه‌ی صفحه‌های مجله.
+- canonical، Open Graph و `article:*`، JSON-LD از نوع `BlogPosting` و `BreadcrumbList`، `Blog`/`CollectionPage`
+  برای فهرست‌ها، `/mag/sitemap.xml` با `lastmod`، خوراک RSS، و صفحه‌ی جست‌وجو/۴۰۴ با noindex.
+- بخش «مطالب مجله» صفحه‌ی اصلی در build ساخته و در مرورگر از وردپرس به‌روز می‌شود.
 
-### راه‌اندازی وردپرس (یک بار)
-1. وردپرس را به ساب‌دامین `cms.arkan.gold` منتقل کنید (مثلا با افزونه‌ی Duplicator یا All-in-One WP
-   Migration) و در «تنظیمات ← عمومی» هر دو نشانی را `https://cms.arkan.gold` بگذارید.
-   «تنظیمات ← پیوندهای یکتا» را **تغییر ندهید** تا آدرس مطالب ثابت بماند.
-2. افزونه‌ی استعلام شمش (`wordpress/arkan-bar-verify`) همراه وردپرس منتقل می‌شود؛ آدرس API آن
-   خودکار `{PUBLIC_WP_API_URL}/arkan/v1/verify-bar` می‌شود.
-3. افزونه‌ی `wordpress/arkan-headless` را نصب و فعال کنید. بازدید از صفحه‌های عمومی
-   `cms.arkan.gold` با ۳۰۱ به همان آدرس در `arkan.gold/mag` هدایت می‌شود (پیشخوان، REST API،
-   پیش‌نمایش پیش‌نویس‌ها و فایل‌های `wp-content/uploads` دست‌نخورده می‌مانند).
-4. پروژه را با `PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json` build و آپلود کنید (پوشه‌ی قدیمی
-   `mag` وردپرس دیگر نباید روی هاست اصلی باشد).
-5. در Google Search Console، sitemap جدید `https://arkan.gold/mag/sitemap.xml` را ثبت کنید.
-
-### انتشار مطلب جدید
-سایت ایستا است؛ برای اینکه مطلب جدید صفحه‌ی ایستا و سئوی کامل داشته باشد، یک build دوباره لازم است:
-- **خودکار**: در «تنظیمات ← مجله هدلس» آدرس Deploy Hook را وارد کنید. با هر انتشار، ویرایش، حذف یا
-  انتشار زمان‌بندی‌شده (و تغییر دسته/برچسب) یک درخواست POST فرستاده می‌شود؛ تغییرات پشت‌سرهم در ۶۰
-  ثانیه یکی می‌شوند. دکمه‌ی «اجرای build الان» هم در همان صفحه هست.
-- **تا پیش از build بعدی** لینک مطلب جدید هم کار می‌کند: `.htaccess` آدرس‌هایی از `/mag` را که صفحه‌ی
-  ایستا ندارند به `mag-live` می‌دهد که مطلب را در مرورگر از REST API وردپرس نمایش می‌دهد.
-- جست‌وجوی مجله (`/mag-live?s=...`) هم مستقیم از وردپرس خوانده می‌شود و همیشه به‌روز است.
-
-### انتشار خودکار (GitHub Actions + FTP)
-فایل `.github/workflows/deploy.yml` سایت را build می‌کند و فقط فایل‌های تغییرکرده را با FTP روی هاست
-آپلود می‌کند. با هر انتشار مطلب (Deploy Hook افزونه) یا دستی از تب Actions اجرا می‌شود.
-
-1. **این شاخه را در `main` ادغام کنید** — رویداد `repository_dispatch` فقط فایل workflow روی شاخه‌ی اصلی را اجرا می‌کند.
-2. **حساب FTP**: در cPanel/DirectAdmin هاست یک حساب FTP بسازید که به پوشه‌ی سایت (`public_html`) دسترسی دارد.
-3. **Secrets** (GitHub ← Settings ← Secrets and variables ← Actions ← Secrets):
-   `FTP_SERVER` (مثلا `ftp.arkan.gold`)، `FTP_USERNAME`، `FTP_PASSWORD`.
-4. **Variables** (همان صفحه ← تب Variables): `PUBLIC_WP_API_URL` = `https://cms.arkan.gold/wp-json`؛
-   اختیاری: `FTP_SERVER_DIR` (پیش‌فرض `public_html/`، حتما با `/` در انتها؛ اگر حساب FTP مستقیم در
-   `public_html` باز می‌شود `./` بگذارید)، `FTP_PROTOCOL` (پیش‌فرض `ftps`؛ اگر هاست FTPS ندارد `ftp`)،
-   و `PUBLIC_GA4_ID`، `PUBLIC_YEKTANET_ID`، `PUBLIC_ENAMAD_ID`، `PUBLIC_ENAMAD_CODE` اگر استفاده می‌کنید.
-5. **اجرای اول دستی**: Actions ← Deploy ← Run workflow. اولین اجرا همه‌ی فایل‌ها را آپلود می‌کند.
-6. **توکن GitHub برای وردپرس**: GitHub ← Settings (حساب کاربری) ← Developer settings ← Fine-grained tokens
-   ← Generate new token؛ Repository access: فقط `alirezasa/front-ArkanGold`؛ Permissions ← Contents: **Read and write**.
-7. **وردپرس ← تنظیمات ← مجله هدلس**:
-   - آدرس Deploy Hook: `https://api.github.com/repos/alirezasa/front-ArkanGold/dispatches`
-   - هدر Authorization: `Bearer github_pat_...` (توکن مرحله‌ی ۶)
-   - بدنه‌ی JSON: `{"event_type":"wordpress-publish"}`
-   - «اجرای build الان» را بزنید؛ نتیجه‌ی موفق `HTTP 204` است و یک اجرای جدید در تب Actions دیده می‌شود.
-
-اگر هاست ایرانی اتصال از سرورهای خارج از ایران را می‌بندد، FTP یا REST API وردپرس از GitHub در دسترس
-نخواهد بود (خطای اتصال در لاگ Actions)؛ در این صورت از پشتیبانی هاست بخواهید دسترسی FTP و
-`cms.arkan.gold` را برای IPهای خارجی باز کنند. توکن GitHub تاریخ انقضا دارد؛ قبل از انقضا توکن جدید
-بسازید و در تنظیمات افزونه جایگزین کنید.
-
-REST API وردپرس به‌طور پیش‌فرض درخواست‌های مرورگر از دامنه‌ی دیگر (CORS) را می‌پذیرد؛ اگر افزونه‌ی
-امنیتی دارید، دسترسی عمومی به `/wp-json/wp/v2/` (posts، pages، categories، tags و users برای نام نویسنده)
-را باز بگذارید.
-
+REST API وردپرس باید عمومی بماند (`/wp-json/wp/v2/` برای posts، pages، categories، tags و users)؛ اگر
+افزونه‌ی امنیتی دارید آن را نبندید. بستن `users` فقط آرشیو نویسنده‌ها را غیرفعال می‌کند.

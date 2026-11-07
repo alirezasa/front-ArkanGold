@@ -1,21 +1,20 @@
-# build و آپلود خودکار سایت روی هاست با FTP
+# انتشار کد سایت روی هاست (FTP) — فقط برای تغییر کد/طراحی لازم است، نه برای انتشار مطلب
 # ----------------------------------------------------
-# اجرا می‌شود:
-#   - با هر انتشار/ویرایش مطلب در وردپرس (افزونه‌ی arkan-headless ← repository_dispatch: wordpress-publish)
-#   - دستی: تب Actions ← Deploy ← Run workflow
-# تنظیمات لازم در GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «انتشار خودکار»
+# مطالب مجله روی سرور Node.js هنگام بازدید از وردپرس ساخته می‌شوند و به build نیاز ندارند.
+# اجرا: تب Actions ← Deploy ← Run workflow
+#
+# تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «مجله»
 #   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
-#   Variables: PUBLIC_WP_API_URL، FTP_SERVER_DIR (پیش‌فرض public_html/)، FTP_PROTOCOL (پیش‌فرض ftps)
+#   Variables: PUBLIC_WP_API_URL (مثلا https://cms.arkan.gold/wp-json)
+#              FTP_SERVER_DIR  پوشه‌ی سایت نسبت به ریشه‌ی FTP (پیش‌فرض public_html)
+#              FTP_APP_DIR     پوشه‌ی برنامه‌ی Node.js مجله نسبت به ریشه‌ی FTP (پیش‌فرض arkan-mag)
+#              FTP_VERIFY_CERT اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
 #              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
-# نکته: repository_dispatch فقط وقتی کار می‌کند که این فایل روی شاخه‌ی اصلی (main) باشد.
 name: Deploy
 
 on:
-  repository_dispatch:
-    types: [wordpress-publish]
   workflow_dispatch:
 
-# اگر چند مطلب پشت‌سرهم منتشر شود، اجراها در صف می‌مانند (آپلود نیمه‌کاره لغو نمی‌شود)
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -24,6 +23,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PUBLIC_WP_API_URL: ${{ vars.PUBLIC_WP_API_URL }}
+      PUBLIC_ARKAN_API_URL: ${{ vars.PUBLIC_ARKAN_API_URL }}
+      PUBLIC_VERIFY_API_URL: ${{ vars.PUBLIC_VERIFY_API_URL }}
+      PUBLIC_GA4_ID: ${{ vars.PUBLIC_GA4_ID }}
+      PUBLIC_YEKTANET_ID: ${{ vars.PUBLIC_YEKTANET_ID }}
+      PUBLIC_ENAMAD_ID: ${{ vars.PUBLIC_ENAMAD_ID }}
+      PUBLIC_ENAMAD_CODE: ${{ vars.PUBLIC_ENAMAD_CODE }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,26 +40,29 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run build
 
-      - name: Build
-        run: npm run build
-        env:
-          PUBLIC_WP_API_URL: ${{ vars.PUBLIC_WP_API_URL }}
-          PUBLIC_ARKAN_API_URL: ${{ vars.PUBLIC_ARKAN_API_URL }}
-          PUBLIC_VERIFY_API_URL: ${{ vars.PUBLIC_VERIFY_API_URL }}
-          PUBLIC_GA4_ID: ${{ vars.PUBLIC_GA4_ID }}
-          PUBLIC_YEKTANET_ID: ${{ vars.PUBLIC_YEKTANET_ID }}
-          PUBLIC_ENAMAD_ID: ${{ vars.PUBLIC_ENAMAD_ID }}
-          PUBLIC_ENAMAD_CODE: ${{ vars.PUBLIC_ENAMAD_CODE }}
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
-      # فقط فایل‌های تغییرکرده آپلود می‌شوند (فهرست فایل‌ها در .ftp-deploy-sync-state.json روی هاست
-      # نگه داشته می‌شود). فایل‌هایی که این action آپلود نکرده (مثلا پوشه‌های دیگر هاست) پاک نمی‌شوند.
+      # ترتیب مهم است: اول فایل‌های ایستا (بدون حذف فایل‌های قدیمی _astro تا صفحه‌های مجله‌ی در حال
+      # اجرا خراب نشوند)، بعد برنامه‌ی Node.js که با tmp/restart.txt دوباره راه‌اندازی می‌شود.
       - name: Upload to host (FTP)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
-          local-dir: ./dist/
-          server-dir: ${{ vars.FTP_SERVER_DIR || 'public_html/' }}
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || 'public_html' }}
+          FTP_APP_DIR: ${{ vars.FTP_APP_DIR || 'arkan-mag' }}
+          FTP_VERIFY_CERT: ${{ vars.FTP_VERIFY_CERT || 'true' }}
+        run: |
+          STATIC_DIR=dist
+          APP_CMD=""
+          if [ -d dist/mag-app ]; then
+            STATIC_DIR=dist/client
+            APP_CMD="mirror -R --parallel=4 dist/mag-app $FTP_APP_DIR;"
+          fi
+          lftp -u "$FTP_USERNAME,$FTP_PASSWORD" "$FTP_SERVER" -e "
+            set ftp:ssl-allow true; set ssl:verify-certificate $FTP_VERIFY_CERT; set net:max-retries 3; set net:timeout 30;
+            mirror -R --parallel=4 $STATIC_DIR $FTP_SERVER_DIR;
+            $APP_CMD
+            bye"

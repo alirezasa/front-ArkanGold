@@ -1,11 +1,13 @@
 ---
 // آخرین مطالب مجله در صفحه‌ی اصلی.
-// - مجله‌ی هدلس فعال (PUBLIC_WP_API_URL): همان داده‌ی صفحه‌های /mag و همان کارت مطلب، با لینک داخلی
+// - مجله‌ی هدلس فعال (PUBLIC_WP_API_URL): همان کارت صفحه‌های /mag با لینک داخلی. صفحه‌ی اصلی ایستاست،
+//   پس کارت‌ها در build ساخته و در مرورگر از REST API وردپرس به‌روز می‌شوند تا مطلب تازه هم بدون
+//   build جدید دیده شود (اگر وردپرس هنگام build در دسترس نباشد، بخش در مرورگر پر می‌شود).
 // - در غیر این صورت: از REST API وردپرس فعلی (arkan.gold/mag) خوانده می‌شود و اگر در دسترس
 //   نباشد این بخش بی‌صدا حذف می‌شود (خطا صفحه را نمی‌شکند).
 import { MAG_ENABLED, MAG_NAME } from '../../config/site';
 import { MAG_URL } from '../../data/nav';
-import { loadMagazine } from '../../lib/magazine';
+import { latestPosts } from '../../lib/magazine';
 import { magCardHtml, type MagPost } from '../../lib/wp';
 
 interface WpPost {
@@ -20,7 +22,10 @@ let magPosts: MagPost[] = [];
 let legacyPosts: WpPost[] = [];
 
 if (MAG_ENABLED) {
-  magPosts = (await loadMagazine()).posts.slice(0, 3);
+  magPosts = await latestPosts(3).catch((err) => {
+    console.warn('[mag] مطالب صفحه‌ی اصلی در build خوانده نشد؛ در مرورگر بارگذاری می‌شوند:', err?.message ?? err);
+    return [];
+  });
 } else {
   try {
     const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
@@ -36,8 +41,8 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
 const hasPosts = magPosts.length > 0 || legacyPosts.length > 0;
 ---
 
-{hasPosts && (
-  <section class="container-page py-14">
+{(hasPosts || MAG_ENABLED) && (
+  <section class:list={['container-page py-14', { hidden: !hasPosts }]} data-mag-teaser={MAG_ENABLED ? '' : undefined}>
     <div class="flex items-center justify-between mb-8">
       <h2 class="text-xl md:text-2xl font-bold text-brand">مطالب {MAG_NAME}</h2>
       <a
@@ -50,7 +55,7 @@ const hasPosts = magPosts.length > 0 || legacyPosts.length > 0;
       </a>
     </div>
 
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-mag-teaser-grid>
       {magPosts.map((post) => <Fragment set:html={magCardHtml(post, { headingTag: 'h3' })} />)}
       {legacyPosts.map((post) => (
         <a
@@ -69,3 +74,21 @@ const hasPosts = magPosts.length > 0 || legacyPosts.length > 0;
     </div>
   </section>
 )}
+
+<script>
+  import { WP_API_URL } from '../../config/site';
+  import { WP_EMBED, fetchSiteInfo, magCardHtml, toMagPost, wpGet, type WpPost } from '../../lib/wp';
+
+  // آخرین مطالب مجله مستقیم از وردپرس (صفحه‌ی اصلی ایستاست و مطلب جدید بدون build دیده می‌شود)
+  const section = document.querySelector<HTMLElement>('[data-mag-teaser]');
+  if (section && WP_API_URL) {
+    Promise.all([fetchSiteInfo(), wpGet<WpPost[]>('wp/v2/posts', { per_page: 3, _embed: WP_EMBED })])
+      .then(([site, res]) => {
+        const posts = res.data.map((p) => toMagPost(p, site.home)).filter((p) => !!p);
+        if (!posts.length) return;
+        section.querySelector('[data-mag-teaser-grid]')!.innerHTML = posts.map((p) => magCardHtml(p!, { headingTag: 'h3' })).join('');
+        section.classList.remove('hidden');
+      })
+      .catch(() => {});
+  }
+</script>

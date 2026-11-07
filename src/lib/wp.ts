@@ -3,9 +3,8 @@
  * ----------------------------------------------------
  * نویسنده‌ها در پنل وردپرس مطلب می‌نویسند؛ این فایل پاسخ REST API وردپرس را به
  * مدل ساده‌ی MagPost تبدیل می‌کند و HTML کارت مطلب، صفحه‌ی مطلب و داده‌های سئو را
- * می‌سازد. همین تابع‌ها هم در build (صفحه‌های ایستای /mag برای سئو) و هم در مرورگر
- * (صفحه‌ی /mag-live برای مطالبی که بعد از آخرین build منتشر شده‌اند و جست‌وجو)
- * استفاده می‌شوند تا ظاهر هر دو یکسان باشد.
+ * می‌سازد. صفحه‌های /mag روی سرور (SSR) با همین تابع‌ها ساخته می‌شوند؛ کارت‌های
+ * «مطالب مجله» صفحه‌ی اصلی هم در مرورگر با همین تابع‌ها به‌روز می‌شوند.
  *
  *   GET {WP_API_URL}/?_fields=name,description,home,namespaces
  *   GET {WP_API_URL}/wp/v2/posts?_embed=author,wp:featuredmedia,wp:term
@@ -14,13 +13,14 @@
  * آدرس هر صفحه دقیقاً از فیلد link وردپرس گرفته می‌شود (هر ساختار پیوند یکتایی که در
  * «تنظیمات ← پیوندهای یکتا» انتخاب شده باشد)، پس آدرس‌های قبلی مجله حفظ می‌شوند.
  */
-import { MAG_NAME, MAG_PATH, WP_API_URL } from '../config/site';
+import { MAG_NAME, MAG_PATH, SITE_URL, WP_API_URL } from '../config/site';
 import { esc, safeHref } from './ingotCard';
 
-const SITE = 'https://arkan.gold';
+const SITE = SITE_URL;
 /** آدرس عمومی مجله؛ لینک‌هایی که در محتوای قدیمی به این آدرس اشاره می‌کنند هم داخلی حساب می‌شوند */
 export const MAG_PUBLIC_URL = `${SITE}${MAG_PATH}`;
-const FETCH_TIMEOUT = 20_000;
+/** سقف انتظار برای پاسخ وردپرس؛ بعد از آن نسخه‌ی کش‌شده نمایش داده می‌شود (src/lib/magCache.ts) */
+const FETCH_TIMEOUT = 10_000;
 /** فیلدهای embed موردنیاز هر مطلب (نویسنده، تصویر شاخص، دسته‌ها و برچسب‌ها) */
 export const WP_EMBED = 'author,wp:featuredmedia,wp:term';
 
@@ -426,6 +426,16 @@ export function toMagPost(raw: WpPost, home: string): MagPost | null {
  * فراخوانی API (build و مرورگر)
  * ------------------------------------------------------------------ */
 
+/** خطای HTTP از وردپرس (مثلا 400 برای شماره صفحه‌ی خارج از محدوده) */
+export class WpHttpError extends Error {
+  constructor(
+    public status: number,
+    url: string
+  ) {
+    super(`${status} ${url}`);
+  }
+}
+
 export interface WpResponse<T> {
   data: T;
   total: number;
@@ -444,7 +454,7 @@ export async function wpGet<T>(
     cache: 'no-store',
     signal: AbortSignal.timeout(FETCH_TIMEOUT),
   });
-  if (!res.ok) throw new Error(`${res.status} ${url}`);
+  if (!res.ok) throw new WpHttpError(res.status, url.toString());
   return {
     data: (await res.json()) as T,
     total: Number(res.headers.get('X-WP-Total')) || 0,

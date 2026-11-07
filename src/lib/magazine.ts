@@ -1,36 +1,47 @@
 /**
- * مجله آرکان گلد — بارگذاری کامل محتوای وردپرس در زمان build
+ * مجله آرکان گلد — خواندن محتوای وردپرس هنگام بازدید (SSR)
  * ----------------------------------------------------
- * همه‌ی مطالب، برگه‌ها، دسته‌ها، برچسب‌ها و نویسنده‌ها یک بار از REST API وردپرس
- * خوانده می‌شوند و جدول مسیرهای /mag (فهرست، صفحه‌بندی، آرشیوها و مطالب) ساخته می‌شود.
+ * هر درخواست /mag/... به یکی از این حالت‌ها تبدیل می‌شود و فقط داده‌ی همان صفحه از REST API
+ * وردپرس خوانده می‌شود (نه کل مجله):
  *
- * اگر PUBLIC_WP_API_URL تنظیم شده باشد ولی وردپرس در دسترس نباشد، build عمداً
- * شکست می‌خورد تا نسخه‌ای بدون مطالب مجله منتشر نشود (و سئوی مجله آسیب نبیند).
+ *   /mag، /mag/page/2                         ← فهرست مطالب
+ *   /mag/{آدرس دسته/برچسب/نویسنده}[/page/n]    ← آرشیو
+ *   /mag/{آدرس مطلب یا برگه}                   ← مطلب (دقیقاً همان آدرسی که وردپرس ساخته)
+ *   /mag?s=...                                 ← جست‌وجو (noindex)
  *
- * فقط در build (Node) استفاده می‌شود.
+ * همه‌ی نتیجه‌ها از کش src/lib/magCache.ts می‌گذرند؛ انتشار مطلب در وردپرس کش را پاک می‌کند
+ * (افزونه‌ی wordpress/arkan-headless ← /mag/wp-revalidate).
  */
-import { MAG_ENABLED, WP_API_URL } from '../config/site';
+import { cached } from './magCache';
 import {
   WP_EMBED,
+  WpHttpError,
   fetchSiteInfo,
   htmlToText,
-  pagedPath,
   seoFromHeadHtml,
   seoFromYoast,
+  toAuthor,
   toMagPost,
   wpGet,
   wpPath,
-  type MagAuthor,
   type MagPost,
   type SeoHead,
   type WpPost,
   type WpSiteInfo,
   type WpTerm,
+  type WpUser,
 } from './wp';
 
 /** تعداد مطالب در هر صفحه‌ی فهرست و آرشیو */
 export const MAG_PER_PAGE = 12;
-const MAX_API_PAGES = 200;
+
+/** مدت تازه ماندن کش (بعد از آن در پس‌زمینه تازه می‌شود؛ انتشار مطلب کش را فوراً پاک می‌کند) */
+const TTL = {
+  page: 2 * 60_000,
+  lists: 10 * 60_000,
+  feed: 10 * 60_000,
+  search: 60_000,
+};
 
 export interface MagArchive {
   kind: 'category' | 'tag' | 'author';
@@ -40,57 +51,30 @@ export interface MagArchive {
   description: string;
   seo: SeoHead;
   avatar?: string;
-  posts: MagPost[];
+  count?: number;
 }
 
-export interface Magazine {
-  site: WpSiteInfo;
-  /** مطالب (نوشته‌ها) به ترتیب جدیدترین */
+export interface MagListing {
+  page: number;
+  totalPages: number;
   posts: MagPost[];
-  /** برگه‌های وردپرس (مثلا «درباره مجله») */
-  pages: MagPost[];
-  categories: MagArchive[];
-  tags: MagArchive[];
-  authors: MagArchive[];
+  /** مسیر صفحه‌ی اول همین فهرست (برای لینک‌های صفحه‌بندی) */
+  basePath: string;
 }
+
+export type MagRoute =
+  | ({ kind: 'home' } & MagListing)
+  | ({ kind: 'archive'; archive: MagArchive } & MagListing)
+  | { kind: 'post'; post: MagPost; related: MagPost[] }
+  | { kind: 'search'; query: string; posts: MagPost[] }
+  | { kind: 'redirect'; path: string }
+  | { kind: 'notfound' };
 
 /* ------------------------------------------------------------------
- * فراخوانی API
+ * داده‌های مشترک (کش طولانی‌تر)
  * ------------------------------------------------------------------ */
 
-/** همه‌ی صفحه‌های یک endpoint (۱۰۰ مورد در هر درخواست) */
-async function wpAll<T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T[]> {
-  const out: T[] = [];
-  for (let page = 1; page <= MAX_API_PAGES; page++) {
-    const res = await wpGet<T[]>(endpoint, { ...params, per_page: 100, page });
-    out.push(...(Array.isArray(res.data) ? res.data : []));
-    if (page >= res.totalPages) break;
-  }
-  return out;
-}
-
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const out = new Array<R>(items.length);
-  let next = 0;
-  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const i = next++;
-      out[i] = await fn(items[i]);
-    }
-  });
-  await Promise.all(workers);
-  return out;
-}
-
-/** سئوی یک آدرس از افزونه‌ی Rank Math (وقتی Yoast نصب نیست) — نیازمند فعال بودن «Headless CMS Support» */
-async function rankMathSeo(link: string): Promise<SeoHead> {
-  try {
-    const { data } = await wpGet<{ success?: boolean; head?: string }>('rankmath/v1/getHead', { url: link });
-    return data?.head ? seoFromHeadHtml(data.head) : {};
-  } catch {
-    return {};
-  }
-}
+export const getSite = (): Promise<WpSiteInfo> => cached('site', TTL.lists, () => fetchSiteInfo());
 
 const POST_FIELDS = [
   'id',
@@ -111,181 +95,285 @@ const POST_FIELDS = [
   '_links',
   '_embedded',
 ].join(',');
-
 const TERM_FIELDS = 'id,name,slug,link,taxonomy,description,count,parent,yoast_head_json';
+const USER_FIELDS = 'id,name,slug,link,description,avatar_urls,yoast_head_json';
+
+/** همه‌ی صفحه‌های یک endpoint (۱۰۰ مورد در هر درخواست) */
+async function wpAll<T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T[]> {
+  const out: T[] = [];
+  for (let page = 1; page <= 100; page++) {
+    const res = await wpGet<T[]>(endpoint, { ...params, per_page: 100, page });
+    out.push(...(Array.isArray(res.data) ? res.data : []));
+    if (page >= res.totalPages) break;
+  }
+  return out;
+}
+
+/** همه‌ی دسته‌ها (معمولا چند ده مورد) — برای تشخیص آدرس آرشیو و زیردسته‌ها */
+export const getCategories = (): Promise<WpTerm[]> =>
+  cached('categories', TTL.lists, () => wpAll<WpTerm>('wp/v2/categories', { _fields: TERM_FIELDS }));
+
+/** پربازدیدترین دسته‌ها برای نوار دسته‌بندی بالای فهرست مجله */
+export async function topCategories(limit = 10): Promise<{ name: string; path: string }[]> {
+  const [site, cats] = await Promise.all([getSite(), getCategories()]);
+  return cats
+    .filter((c) => (c.count ?? 0) > 0)
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, limit)
+    .map((c) => ({ name: htmlToText(c.name), path: wpPath(c.link, site.home) ?? '' }))
+    .filter((c) => c.path);
+}
 
 /* ------------------------------------------------------------------
- * بارگذاری
+ * سئو از Rank Math (وقتی Yoast نصب نیست)
  * ------------------------------------------------------------------ */
 
-async function load(): Promise<Magazine> {
-  const site = await fetchSiteInfo();
-  const home = site.home;
-
-  const [rawPosts, rawPages, rawCategories, rawTags] = await Promise.all([
-    wpAll<WpPost>('wp/v2/posts', { _embed: WP_EMBED, _fields: POST_FIELDS, orderby: 'date', order: 'desc' }),
-    wpAll<WpPost>('wp/v2/pages', { _embed: WP_EMBED, _fields: POST_FIELDS }),
-    wpAll<WpTerm>('wp/v2/categories', { hide_empty: 'true', _fields: TERM_FIELDS }),
-    wpAll<WpTerm>('wp/v2/tags', { hide_empty: 'true', _fields: TERM_FIELDS }),
-  ]);
-
-  const skipped: string[] = [];
-  const convert = (raws: WpPost[]) =>
-    raws
-      .map((raw) => {
-        const post = toMagPost(raw, home);
-        if (!post) skipped.push(raw.link);
-        return post ? { post, link: raw.link } : null;
-      })
-      .filter((x): x is { post: MagPost; link: string } => !!x);
-
-  const postItems = convert(rawPosts);
-  const pageItems = convert(rawPages);
-  if (skipped.length) {
-    console.warn(
-      `[mag] ${skipped.length} مطلب آدرس قابل‌استفاده نداشت و ساخته نشد (ساختار پیوند یکتای «ساده» یا صفحه‌ی اصلی وردپرس):`,
-      skipped.slice(0, 5)
-    );
+async function withRankMath(site: WpSiteInfo, link: string, seo: SeoHead): Promise<SeoHead> {
+  if (seo.title || seo.description || !site.namespaces?.includes('rankmath/v1')) return seo;
+  try {
+    const { data } = await wpGet<{ head?: string }>('rankmath/v1/getHead', { url: link });
+    return data?.head ? seoFromHeadHtml(data.head) : seo;
+  } catch {
+    return seo;
   }
+}
 
-  // Rank Math: اگر Yoast نصب نیست، سئوی هر مطلب از getHead خوانده می‌شود
-  if (site.namespaces?.includes('rankmath/v1')) {
-    await mapLimit([...postItems, ...pageItems], 6, async ({ post, link }) => {
-      if (!post.seo.title && !post.seo.description) post.seo = await rankMathSeo(link);
+/* ------------------------------------------------------------------
+ * فهرست مطالب
+ * ------------------------------------------------------------------ */
+
+async function listPosts(
+  site: WpSiteInfo,
+  params: Record<string, string | number>,
+  page: number,
+  basePath: string
+): Promise<MagListing | null> {
+  try {
+    const res = await wpGet<WpPost[]>('wp/v2/posts', {
+      per_page: MAG_PER_PAGE,
+      orderby: 'date',
+      order: 'desc',
+      ...params,
+      page,
+      _embed: WP_EMBED,
+      _fields: POST_FIELDS,
     });
+    const posts = res.data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p);
+    if (!posts.length && page > 1) return null;
+    return { page, totalPages: Math.max(1, res.totalPages), posts, basePath };
+  } catch (err) {
+    // شماره صفحه‌ی بیشتر از تعداد صفحه‌ها
+    if (err instanceof WpHttpError && err.status === 400) return null;
+    throw err;
   }
+}
 
-  const posts = postItems.map((x) => x.post);
-  const pages = pageItems.map((x) => x.post);
+/* ------------------------------------------------------------------
+ * پیدا کردن صفحه بر اساس آدرس
+ * ------------------------------------------------------------------ */
 
-  // آرشیو دسته‌ها (شامل مطالب زیردسته‌ها، مثل وردپرس) و برچسب‌ها
-  const childrenOf = new Map<number, number[]>();
-  for (const c of rawCategories) {
-    if (c.parent) childrenOf.set(c.parent, [...(childrenOf.get(c.parent) ?? []), c.id]);
+const lastSegment = (path: string) => path.split('/').pop() || '';
+
+/** دسته با همین آدرس (و شناسه‌ی زیردسته‌هایش، چون آرشیو وردپرس مطالب زیردسته‌ها را هم نشان می‌دهد) */
+async function findCategory(site: WpSiteInfo, path: string): Promise<{ archive: MagArchive; ids: number[] } | null> {
+  const cats = await getCategories();
+  const cat = cats.find((c) => wpPath(c.link, site.home) === path);
+  if (!cat) return null;
+  const ids = [cat.id];
+  for (let i = 0; i < ids.length; i++) for (const c of cats) if (c.parent === ids[i] && !ids.includes(c.id)) ids.push(c.id);
+  const archive: MagArchive = {
+    kind: 'category',
+    id: cat.id,
+    name: htmlToText(cat.name),
+    path,
+    description: htmlToText(cat.description || ''),
+    seo: await withRankMath(site, cat.link, seoFromYoast(cat.yoast_head_json)),
+    count: cat.count,
+  };
+  return { archive, ids };
+}
+
+async function findTag(site: WpSiteInfo, path: string): Promise<MagArchive | null> {
+  const { data } = await wpGet<WpTerm[]>('wp/v2/tags', { slug: lastSegment(path), _fields: TERM_FIELDS });
+  const tag = data.find((t) => wpPath(t.link, site.home) === path);
+  if (!tag) return null;
+  return {
+    kind: 'tag',
+    id: tag.id,
+    name: htmlToText(tag.name),
+    path,
+    description: htmlToText(tag.description || ''),
+    seo: await withRankMath(site, tag.link, seoFromYoast(tag.yoast_head_json)),
+    count: tag.count,
+  };
+}
+
+async function findAuthor(site: WpSiteInfo, path: string): Promise<MagArchive | null> {
+  let users: WpUser[] = [];
+  try {
+    users = (await wpGet<WpUser[]>('wp/v2/users', { slug: lastSegment(path), _fields: USER_FIELDS })).data;
+  } catch (err) {
+    // بعضی افزونه‌های امنیتی فهرست کاربران را می‌بندند؛ در این صورت آرشیو نویسنده وجود ندارد
+    if (err instanceof WpHttpError && err.status < 500) return null;
+    throw err;
   }
-  const descendants = (id: number): Set<number> => {
-    const out = new Set([id]);
-    const stack = [id];
-    while (stack.length) for (const child of childrenOf.get(stack.pop()!) ?? []) if (!out.has(child)) out.add(child), stack.push(child);
-    return out;
-  };
-
-  const toArchives = async (terms: WpTerm[], kind: 'category' | 'tag'): Promise<MagArchive[]> => {
-    const list = terms
-      .map((t): MagArchive | null => {
-        const path = wpPath(t.link, home);
-        if (!path) return null;
-        const ids = kind === 'category' ? descendants(t.id) : new Set([t.id]);
-        const termPosts = posts.filter((p) => (kind === 'category' ? p.categories : p.tags).some((r) => ids.has(r.id)));
-        if (!termPosts.length) return null;
-        return {
-          kind,
-          id: t.id,
-          name: htmlToText(t.name),
-          path,
-          description: htmlToText(t.description || ''),
-          seo: seoFromYoast(t.yoast_head_json),
-          posts: termPosts,
-        };
-      })
-      .filter((a): a is MagArchive => !!a);
-    if (site.namespaces?.includes('rankmath/v1')) {
-      const links = new Map(terms.map((t) => [t.id, t.link]));
-      await mapLimit(list, 6, async (a) => {
-        if (!a.seo.title && !a.seo.description) a.seo = await rankMathSeo(links.get(a.id)!);
-      });
-    }
-    return list;
-  };
-
-  // آرشیو نویسنده‌ها از روی نویسنده‌ی مطالب
-  const authorMap = new Map<number, MagAuthor>();
-  for (const p of posts) if (p.author?.path && !authorMap.has(p.author.id)) authorMap.set(p.author.id, p.author);
-  const authors: MagArchive[] = [...authorMap.values()].map((a) => ({
+  const user = users.find((u) => wpPath(u.link, site.home) === path);
+  const author = toAuthor(user, site.home);
+  if (!user || !author) return null;
+  return {
     kind: 'author',
-    id: a.id,
-    name: a.name,
-    path: a.path!,
-    description: a.description,
-    seo: a.seo,
-    avatar: a.avatar,
-    posts: posts.filter((p) => p.author?.id === a.id),
-  }));
-
-  const [categories, tags] = await Promise.all([toArchives(rawCategories, 'category'), toArchives(rawTags, 'tag')]);
-
-  console.log(
-    `[mag] ${posts.length} مطلب، ${pages.length} برگه، ${categories.length} دسته، ${tags.length} برچسب و ${authors.length} نویسنده از ${WP_API_URL} خوانده شد.`
-  );
-  return { site, posts, pages, categories, tags, authors };
+    id: author.id,
+    name: author.name,
+    path,
+    description: author.description,
+    seo: author.seo,
+    avatar: author.avatar,
+  };
 }
 
-let magPromise: Promise<Magazine> | null = null;
-
-/** محتوای کامل مجله (یک بار در هر build خوانده و بین صفحه‌ها به اشتراک گذاشته می‌شود) */
-export function loadMagazine(): Promise<Magazine> {
-  if (!MAG_ENABLED) throw new Error('[mag] PUBLIC_WP_API_URL تنظیم نشده است.');
-  if (!magPromise) {
-    magPromise = load().catch((err) => {
-      throw new Error(
-        `[mag] خواندن مطالب از وردپرس (${WP_API_URL}) ناموفق بود؛ build متوقف شد تا نسخه‌ای بدون مطالب مجله منتشر نشود.\n${err?.message ?? err}`
-      );
-    });
+/** مطلب یا برگه با این آدرس؛ اگر نامک پیدا شد ولی آدرس فرق داشت (مثلا تغییر دسته) آدرس درست برمی‌گردد */
+async function findPost(site: WpSiteInfo, path: string): Promise<{ post: MagPost; link: string } | null> {
+  const slug = lastSegment(path);
+  let moved: { post: MagPost; link: string } | null = null;
+  for (const type of ['posts', 'pages']) {
+    const { data } = await wpGet<WpPost[]>(`wp/v2/${type}`, { slug, _embed: WP_EMBED, _fields: POST_FIELDS });
+    for (const raw of data) {
+      const post = toMagPost(raw, site.home);
+      if (!post) continue;
+      if (post.path === path) return { post, link: raw.link };
+      moved ??= { post, link: raw.link };
+    }
   }
-  return magPromise;
+  return moved;
+}
+
+async function relatedPosts(site: WpSiteInfo, post: MagPost): Promise<MagPost[]> {
+  if (post.type !== 'post') return [];
+  const fetchList = async (params: Record<string, string | number>) =>
+    (
+      await wpGet<WpPost[]>('wp/v2/posts', { ...params, per_page: 3, exclude: post.id, _embed: WP_EMBED, _fields: POST_FIELDS })
+    ).data
+      .map((p) => toMagPost(p, site.home))
+      .filter((p): p is MagPost => !!p);
+  try {
+    const sameCategory = post.categories.length ? await fetchList({ categories: post.categories.map((c) => c.id).join(',') }) : [];
+    if (sameCategory.length >= 3) return sameCategory;
+    const latest = await fetchList({});
+    return [...sameCategory, ...latest.filter((p) => !sameCategory.some((s) => s.id === p.id))].slice(0, 3);
+  } catch {
+    return []; // مطالب مرتبط اختیاری‌اند؛ خطای آن‌ها صفحه را خراب نمی‌کند
+  }
+}
+
+/** «category/طلا/page/3» → { base: «category/طلا», page: 3 } */
+function splitPaged(path: string): { base: string; page: number } {
+  const m = path.match(/^(?:(.*)\/)?page\/(\d+)$/);
+  if (!m) return { base: path, page: 1 };
+  return { base: m[1] ?? '', page: parseInt(m[2], 10) };
+}
+
+async function resolve(path: string): Promise<MagRoute> {
+  const site = await getSite();
+  const { base, page } = splitPaged(path);
+  if (page < 1) return { kind: 'notfound' };
+  // /mag/page/1 و /category/x/page/1 تکراری صفحه‌ی اول هستند
+  if (page === 1 && base !== path) return { kind: 'redirect', path: base };
+
+  if (base === '') {
+    const listing = await listPosts(site, {}, page, '');
+    return listing ? { kind: 'home', ...listing } : { kind: 'notfound' };
+  }
+
+  const category = await findCategory(site, base);
+  if (category) {
+    const listing = await listPosts(site, { categories: category.ids.join(',') }, page, base);
+    return listing ? { kind: 'archive', archive: category.archive, ...listing } : { kind: 'notfound' };
+  }
+
+  if (page === 1) {
+    const found = await findPost(site, base);
+    if (found) {
+      if (found.post.path !== base) return { kind: 'redirect', path: found.post.path };
+      const [seo, related] = await Promise.all([withRankMath(site, found.link, found.post.seo), relatedPosts(site, found.post)]);
+      return { kind: 'post', post: { ...found.post, seo }, related };
+    }
+  }
+
+  // آرشیو برچسب و نویسنده همیشه حداقل دو بخش دارند (tag/x، author/x)
+  if (base.includes('/')) {
+    const archive = (await findTag(site, base)) ?? (await findAuthor(site, base));
+    if (archive) {
+      const params: Record<string, number> = archive.kind === 'tag' ? { tags: archive.id } : { author: archive.id };
+      const listing = await listPosts(site, params, page, base);
+      return listing ? { kind: 'archive', archive, ...listing } : { kind: 'notfound' };
+    }
+  }
+
+  return { kind: 'notfound' };
+}
+
+/** صفحه‌ی /mag/{path} (مسیر decode‌شده، بدون / اول و آخر) */
+export function resolveMagRoute(path: string): Promise<MagRoute> {
+  const clean = path.split('/').filter(Boolean).join('/');
+  return cached(`route:${clean}`, TTL.page, () => resolve(clean));
+}
+
+export function searchMag(query: string): Promise<MagRoute> {
+  const q = query.trim().slice(0, 100);
+  return cached(`search:${q.toLowerCase()}`, TTL.search, async () => {
+    const site = await getSite();
+    const { data } = await wpGet<WpPost[]>('wp/v2/posts', { search: q, per_page: 24, _embed: WP_EMBED, _fields: POST_FIELDS });
+    return { kind: 'search', query: q, posts: data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p) };
+  });
+}
+
+/** آخرین مطالب (RSS و بخش «مطالب مجله» صفحه‌ی اصلی) */
+export function latestPosts(count = 30): Promise<MagPost[]> {
+  return cached(`latest:${count}`, TTL.feed, async () => {
+    const site = await getSite();
+    const listing = await listPosts(site, { per_page: count }, 1, '');
+    return listing?.posts.slice(0, count) ?? [];
+  });
 }
 
 /* ------------------------------------------------------------------
- * مسیرها
+ * sitemap
  * ------------------------------------------------------------------ */
 
-export interface MagListing {
-  page: number;
-  totalPages: number;
-  posts: MagPost[];
-  /** مسیر صفحه‌ی اول همین فهرست (برای ساخت لینک صفحه‌بندی) */
-  basePath: string;
+export interface SitemapEntry {
+  path: string;
+  lastmod?: string;
 }
 
-export type MagRoute =
-  | ({ kind: 'home' } & MagListing)
-  | ({ kind: 'archive'; archive: MagArchive } & MagListing)
-  | { kind: 'post'; post: MagPost; related: MagPost[] };
+/** همه‌ی صفحه‌های قابل‌ایندکس مجله با تاریخ آخرین تغییر */
+export function sitemapEntries(): Promise<SitemapEntry[]> {
+  return cached('sitemap', TTL.lists, async () => {
+    const site = await getSite();
+    const fields = { _fields: 'link,modified_gmt,yoast_head_json' };
+    const [posts, pages, cats, tags] = await Promise.all([
+      wpAll<WpPost>('wp/v2/posts', fields),
+      wpAll<WpPost>('wp/v2/pages', fields),
+      getCategories(),
+      wpAll<WpTerm>('wp/v2/tags', { hide_empty: 'true', _fields: TERM_FIELDS }),
+    ]);
+    const users = await wpAll<WpUser>('wp/v2/users', { _fields: USER_FIELDS }).catch(() => [] as WpUser[]);
 
-function paginate(posts: MagPost[], basePath: string): MagListing[] {
-  const totalPages = Math.max(1, Math.ceil(posts.length / MAG_PER_PAGE));
-  return Array.from({ length: totalPages }, (_, i) => ({
-    page: i + 1,
-    totalPages,
-    basePath,
-    posts: posts.slice(i * MAG_PER_PAGE, (i + 1) * MAG_PER_PAGE),
-  }));
-}
-
-function relatedPosts(post: MagPost, all: MagPost[]): MagPost[] {
-  const cats = new Set(post.categories.map((c) => c.id));
-  const others = all.filter((p) => p.id !== post.id);
-  return [...others.filter((p) => p.categories.some((c) => cats.has(c.id))), ...others.filter((p) => !p.categories.some((c) => cats.has(c.id)))].slice(0, 3);
-}
-
-/** همه‌ی صفحه‌های /mag؛ کلید هر مسیر نسبت به /mag است («» برای خود /mag) */
-export function magRoutes(mag: Magazine): Map<string, MagRoute> {
-  const routes = new Map<string, MagRoute>();
-  const add = (path: string, route: MagRoute) => {
-    if (routes.has(path)) {
-      console.warn(`[mag] آدرس تکراری «/mag/${path}» نادیده گرفته شد.`);
-      return;
+    const iso = (v: string) => (v && !/[zZ]$/.test(v) ? `${v}Z` : v);
+    const out: SitemapEntry[] = [];
+    const latest = posts.reduce((a, p) => (p.modified_gmt > a ? p.modified_gmt : a), '');
+    out.push({ path: '', lastmod: latest ? iso(latest) : undefined });
+    for (const p of [...posts, ...pages]) {
+      const path = wpPath(p.link, site.home);
+      if (path && p.yoast_head_json?.robots?.index !== 'noindex') out.push({ path, lastmod: iso(p.modified_gmt) });
     }
-    routes.set(path, route);
-  };
-
-  for (const post of mag.posts) add(post.path, { kind: 'post', post, related: relatedPosts(post, mag.posts) });
-  for (const page of mag.pages) add(page.path, { kind: 'post', post: page, related: [] });
-  for (const archive of [...mag.categories, ...mag.tags, ...mag.authors]) {
-    for (const listing of paginate(archive.posts, archive.path)) add(pagedPath(archive.path, listing.page), { kind: 'archive', archive, ...listing });
-  }
-  // مثل وردپرس: مطالب سنجاق‌شده (sticky) اول فهرست اصلی می‌آیند
-  const homePosts = [...mag.posts.filter((p) => p.sticky), ...mag.posts.filter((p) => !p.sticky)];
-  for (const listing of paginate(homePosts, '')) add(pagedPath('', listing.page), { kind: 'home', ...listing });
-  return routes;
+    for (const t of [...cats.filter((c) => (c.count ?? 0) > 0), ...tags]) {
+      const path = wpPath(t.link, site.home);
+      if (path && t.yoast_head_json?.robots?.index !== 'noindex') out.push({ path });
+    }
+    for (const u of users) {
+      const path = u.link ? wpPath(u.link, site.home) : null;
+      if (path && u.yoast_head_json?.robots?.index !== 'noindex') out.push({ path });
+    }
+    return out;
+  });
 }
