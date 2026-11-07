@@ -1,5 +1,6 @@
 /**
- * سرور Node.js سایت آرکان گلد — روی هاست با cPanel «Setup Node.js App» (Passenger) اجرا می‌شود.
+ * سرور Node.js سایت آرکان گلد — اجرا: `npm start` (یا `node dist/app/server.mjs`)، روی پورت PORT.
+ * روی رانفلر/هر پلتفرم Node یا Docker، و روی cPanel (Passenger با app.cjs) کار می‌کند.
  * در build همراه باندل سرور در dist/app کپی می‌شود؛ راهنما: README ← «اجرا روی Node.js».
  *
  * ترتیب پاسخ به هر درخواست:
@@ -139,4 +140,14 @@ const server = http.createServer((req, res) => {
 });
 
 server.keepAliveTimeout = 65_000;
-server.listen(port, () => console.log(`[arkan] سایت روی پورت ${port} آماده است`));
+// HOST پیش‌فرض: همه‌ی رابط‌ها (لازم در کانتینر/PaaS مثل رانفلر)؛ PORT را پلتفرم تعیین می‌کند
+const host = process.env.HOST || undefined;
+server.listen(port, host, () => console.log(`[arkan] سایت روی پورت ${port} آماده است`));
+
+// خاموش شدن تمیز در کانتینر (دیپلوی جدید): درخواست‌های در حال اجرا تمام می‌شوند
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.once(signal, () => {
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 10_000).unref();
+  });
+}

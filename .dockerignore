@@ -1,0 +1,10 @@
+# فایل‌هایی که نباید در ایمیج/آپلود باشند (حجم آپلود را از صدها مگابایت به چند مگابایت می‌رساند)
+node_modules
+dist
+dist.zip
+.astro
+.git
+.github
+.env
+*.log
+wordpress
