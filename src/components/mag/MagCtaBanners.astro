@@ -1,0 +1,39 @@
+---
+// دو بنر میان بخش‌های مجله: قیمت زنده‌ی طلا و خرید طلا / استعلام اصالت شمش
+import Icon from '../Icon.astro';
+---
+
+<section class="grid gap-4 md:grid-cols-2" aria-label="خدمات آرکان گلد">
+  <a href="/price" class="group relative flex items-center gap-5 overflow-hidden rounded-xl2 bg-cta-gradient p-5 sm:p-6 text-white shadow-glow-brand">
+    <span class="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/5" aria-hidden="true"></span>
+    <span class="absolute left-16 -bottom-14 h-32 w-32 rounded-full bg-gold/10" aria-hidden="true"></span>
+    <span class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-gold-300 ring-1 ring-white/15">
+      <Icon name="trend-up" class="h-7 w-7" />
+    </span>
+    <span class="relative min-w-0">
+      <span class="flex items-center gap-2 text-xs text-white/75"><span class="live-dot"></span> قیمت لحظه‌ای طلای ۱۸ عیار</span>
+      <b class="mt-1 block text-xl sm:text-2xl font-extrabold tnum" data-price-bind="pricePerGram" data-price-format="toman">در حال دریافت...</b>
+      <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-gold-300">
+        نمودار و تحلیل قیمت <Icon name="arrow-left" class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+      </span>
+    </span>
+  </a>
+
+  <a href="/buy-gold" class="group relative flex items-center gap-5 overflow-hidden rounded-xl2 border border-brand-100/60 bg-white p-5 sm:p-6 shadow-card card-lift">
+    <span class="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-brand-50" aria-hidden="true"></span>
+    <span class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand text-white">
+      <Icon name="gold-bar" class="h-7 w-7" />
+    </span>
+    <span class="relative min-w-0">
+      <b class="block text-base sm:text-lg font-bold text-brand">خرید و فروش آنلاین طلا با پشتوانه‌ی واقعی</b>
+      <span class="mt-1 block text-xs leading-6 text-ink-soft">طلای آب‌شده و شمش ۷۵۰ عیار، با فاکتور رسمی و امکان تحویل فیزیکی</span>
+      <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand">
+        شروع خرید <Icon name="arrow-left" class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+      </span>
+    </span>
+  </a>
+</section>
+
+<script>
+  import '../../lib/priceBinding';
+</script>

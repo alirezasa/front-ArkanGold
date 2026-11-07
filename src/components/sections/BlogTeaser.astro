@@ -7,7 +7,8 @@ import { MAG_ENABLED, MAG_NAME } from '../../config/site';
 import { MAG_URL } from '../../data/nav';
 import { cached } from '../../lib/cache';
 import { latestPosts } from '../../lib/magazine';
-import { magCardHtml, type MagPost } from '../../lib/wp';
+import MagCard from '../mag/MagCard.astro';
+import type { MagPost } from '../../lib/wp';
 
 interface WpPost {
   id: number;
@@ -21,7 +22,7 @@ let magPosts: MagPost[] = [];
 let legacyPosts: WpPost[] = [];
 
 if (MAG_ENABLED) {
-  magPosts = await latestPosts(3).catch(() => []);
+  magPosts = await latestPosts(4).catch(() => []);
 } else {
   legacyPosts = await cached('legacy-mag:latest', 10 * 60_000, async () => {
     const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
@@ -49,8 +50,8 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
       </a>
     </div>
 
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {magPosts.map((post) => <Fragment set:html={magCardHtml(post, { headingTag: 'h3' })} />)}
+    <div class:list={['grid gap-5 sm:grid-cols-2', magPosts.length ? 'lg:grid-cols-4' : 'lg:grid-cols-3']}>
+      {magPosts.map((post) => <MagCard post={post} />)}
       {legacyPosts.map((post) => (
         <a
           href={post.link}

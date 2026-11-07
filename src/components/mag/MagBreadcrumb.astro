@@ -1,0 +1,24 @@
+---
+import type { Crumb } from '../../lib/wp';
+
+interface Props {
+  crumbs: Crumb[];
+  class?: string;
+}
+const { crumbs, class: className = 'mb-5' } = Astro.props;
+---
+
+<nav aria-label="مسیر صفحه" class:list={['text-xs text-ink-soft', className]}>
+  <ol class="flex flex-wrap items-center gap-1.5">
+    {crumbs.map((c, i) =>
+      i === crumbs.length - 1 ? (
+        <li aria-current="page" class="max-w-full truncate font-semibold text-brand">{c.name}</li>
+      ) : (
+        <>
+          <li><a href={c.href} class="hover:text-brand hover:underline">{c.name}</a></li>
+          <li aria-hidden="true" class="text-brand-200">/</li>
+        </>
+      )
+    )}
+  </ol>
+</nav>

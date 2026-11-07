@@ -8,24 +8,29 @@
 // کدهای وضعیت: ۴۰۴ برای آدرس ناموجود، ۳۰۱ برای آدرس قدیمی/تغییرکرده، ۵۰۳ اگر وردپرس در دسترس
 // نباشد و نسخه‌ی کش‌شده‌ای هم وجود نداشته باشد.
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import MagArticle from '../components/mag/MagArticle.astro';
+import MagBreadcrumb from '../components/mag/MagBreadcrumb.astro';
+import MagCard from '../components/mag/MagCard.astro';
+import MagLanding from '../components/mag/MagLanding.astro';
 import MagPagination from '../components/mag/MagPagination.astro';
 import MagSearch from '../components/mag/MagSearch.astro';
 import { MAG_NAME, MAG_PATH, SITE_URL } from '../config/site';
-import { getSite, resolveMagRoute, searchMag, topCategories, type MagRoute } from '../lib/magazine';
 import {
-  breadcrumbHtml,
-  breadcrumbSchema,
-  magArticleHtml,
-  magCardHtml,
-  magHref,
-  magPostSeo,
-  magUrl,
-  pagedPath,
-  truncate,
-  type Crumb,
-} from '../lib/wp';
+  getSite,
+  latestPosts,
+  magLanding,
+  resolveMagRoute,
+  searchMag,
+  topCategories,
+  type MagLanding as Landing,
+  type MagRoute,
+} from '../lib/magazine';
+import { breadcrumbSchema, faNum, magPostSeo, magUrl, magHref, pagedPath, truncate, type Crumb, type MagPost } from '../lib/wp';
 
 export const prerender = false;
+// قیمت لحظه‌ای طلا در ویجت‌ها و بنرهای مجله روی سرور در HTML نوشته می‌شود (src/middleware.ts)
+Astro.locals.livePrice = true;
 
 // آدرس‌های قدیمی وردپرس که دیگر صفحه نیستند
 const rawPath = (Astro.params.path ?? '').split('/').filter(Boolean).join('/');
@@ -43,11 +48,19 @@ const isSearch = rawPath === '' && query.length > 0;
 let route: MagRoute;
 let siteDescription = '';
 let cats: { name: string; path: string }[] = [];
+let landing: Landing | null = null;
+let latest: MagPost[] = [];
 try {
   route = isSearch ? await searchMag(query) : await resolveMagRoute(rawPath);
-  if (route.kind === 'home') {
-    [siteDescription, cats] = await Promise.all([getSite().then((s) => s.description), topCategories().catch(() => [])]);
+  // داده‌های جانبی اختیاری‌اند: خطای آن‌ها صفحه را خراب نمی‌کند
+  if (route.kind === 'home' || route.kind === 'post') {
+    [siteDescription, cats] = await Promise.all([
+      getSite().then((s) => s.description).catch(() => ''),
+      topCategories(12).catch(() => []),
+    ]);
   }
+  if (route.kind === 'home' && route.page === 1) landing = await magLanding().catch(() => null);
+  if (route.kind === 'post') latest = await latestPosts(6).catch(() => []);
 } catch (err) {
   console.error(`[mag] /mag/${rawPath}:`, err);
   route = { kind: 'notfound' };
@@ -68,7 +81,7 @@ Astro.response.headers.set(
   route.kind === 'notfound' || route.kind === 'search' ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300'
 );
 
-const fa = (n: number) => n.toLocaleString('fa-IR');
+const fa = faNum;
 const DEFAULT_DESCRIPTION =
   'مجله آرکان گلد: اخبار و تحلیل بازار طلا، آموزش خرید و فروش طلای آب‌شده و شمش، و راهنمای سرمایه‌گذاری در طلا.';
 const magCrumbs: Crumb[] = [
@@ -90,7 +103,7 @@ interface View {
   kicker?: string;
   intro?: string;
   avatar?: string;
-  crumbsHtml?: string;
+  crumbs?: Crumb[];
 }
 
 let view: View;
@@ -139,7 +152,7 @@ if (route.kind === 'post') {
     kicker,
     intro,
     avatar,
-    crumbsHtml: breadcrumbHtml(crumbs),
+    crumbs,
     schemas: [
       {
         '@context': 'https://schema.org',
@@ -166,7 +179,7 @@ if (route.kind === 'post') {
     meta: [],
     schemas: [],
     heading: `نتایج جست‌وجو برای «${route.query}»`,
-    crumbsHtml: breadcrumbHtml([...magCrumbs, { name: 'جست‌وجو', href: MAG_PATH }]),
+    crumbs: [...magCrumbs, { name: 'جست‌وجو', href: MAG_PATH }],
   };
 } else {
   view = {
@@ -196,78 +209,58 @@ const listing = route.kind === 'home' || route.kind === 'archive' ? route : null
 >
   <link slot="head" rel="alternate" type="application/rss+xml" title={MAG_NAME} href={`${MAG_PATH}/rss.xml`} />
 
-  {route.kind === 'post' && (
-    <>
-      <Fragment set:html={magArticleHtml(route.post)} />
-      {route.related.length > 0 && (
-        <section class="container-page pb-14">
-          <div class="mb-6 flex items-center justify-between">
-            <h2 class="text-xl font-bold text-brand">مطالب مرتبط</h2>
-            <a href={MAG_PATH} class="text-sm text-brand hover:underline">همه‌ی مطالب مجله</a>
-          </div>
-          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {route.related.map((p) => <Fragment set:html={magCardHtml(p, { headingTag: 'h3' })} />)}
-          </div>
-        </section>
-      )}
-    </>
-  )}
+  {route.kind === 'post' && <MagArticle post={route.post} related={route.related} latest={latest} categories={cats} />}
 
-  {(listing || route.kind === 'search') && (
-    <section class="container-page py-10">
-      <Fragment set:html={view.crumbsHtml} />
-      <header class="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div class="flex items-center gap-4">
-          {view.avatar && <img src={view.avatar} alt={view.heading} width="72" height="72" class="h-16 w-16 rounded-full object-cover" />}
-          <div>
-            {view.kicker && <p class="mb-1 text-xs text-ink-soft">{view.kicker}</p>}
-            <h1 class="text-2xl md:text-3xl font-bold text-brand">
-              {view.heading}
-              {listing && listing.page > 1 && <span class="text-base font-normal text-ink-soft"> — صفحه {fa(listing.page)}</span>}
-            </h1>
-            {view.intro && <p class="mt-2 max-w-2xl text-sm leading-7 text-ink-soft">{view.intro}</p>}
+  {route.kind === 'home' && landing && <MagLanding landing={landing} listing={route} intro={view.intro ?? ''} />}
+
+  {((listing && !landing) || route.kind === 'search') && (
+    <div class="container-page py-8 sm:py-10">
+      {view.crumbs && <MagBreadcrumb crumbs={view.crumbs} />}
+      <header class="relative mb-8 overflow-hidden rounded-xl2 bg-cta-gradient p-6 sm:p-8 text-white shadow-glow-brand">
+        <span class="absolute -left-16 -top-16 h-56 w-56 rounded-full bg-white/5" aria-hidden="true"></span>
+        <span class="absolute left-24 -bottom-20 h-40 w-40 rounded-full bg-gold/10" aria-hidden="true"></span>
+        <div class="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div class="flex items-center gap-4">
+            {view.avatar && <img src={view.avatar} alt={view.heading} width="72" height="72" class="h-16 w-16 rounded-full object-cover ring-2 ring-white/30" />}
+            <div>
+              {view.kicker && <p class="mb-1 flex items-center gap-2 text-xs text-white/70"><span class="h-1.5 w-1.5 rounded-full bg-gold"></span>{view.kicker}</p>}
+              <h1 class="text-2xl md:text-3xl font-extrabold">
+                {view.heading}
+                {listing && listing.page > 1 && <span class="text-base font-normal text-white/70"> — صفحه {fa(listing.page)}</span>}
+              </h1>
+              {view.intro && <p class="mt-2 max-w-2xl text-sm leading-7 text-white/80">{view.intro}</p>}
+            </div>
           </div>
+          <MagSearch value={route.kind === 'search' ? route.query : ''} />
         </div>
-        <MagSearch value={route.kind === 'search' ? route.query : ''} />
       </header>
 
-      {route.kind === 'home' && cats.length > 0 && (
-        <nav aria-label="دسته‌بندی‌های مجله" class="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-          {cats.map((c) => (
-            <a href={magHref(c.path)} class="shrink-0 rounded-full bg-white px-4 py-1.5 text-sm text-brand shadow-card hover:bg-brand hover:text-white transition-colors">
-              {c.name}
-            </a>
-          ))}
-        </nav>
-      )}
-
       {route.kind === 'search' && route.posts.length === 0 && (
-        <p class="py-10 text-center text-sm text-ink-soft">مطلبی با این عبارت پیدا نشد. عبارت دیگری را امتحان کنید.</p>
+        <p class="rounded-xl2 bg-white py-14 text-center text-sm text-ink-soft shadow-card">مطلبی با این عبارت پیدا نشد. عبارت دیگری را امتحان کنید.</p>
       )}
 
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {(listing?.posts ?? (route.kind === 'search' ? route.posts : [])).map((p, i) => (
-          <Fragment set:html={magCardHtml(p, { eager: !!listing && listing.page === 1 && i < 3 })} />
+          <MagCard post={p} headingTag="h2" eager={!!listing && listing.page === 1 && i < 4} />
         ))}
       </div>
 
       {listing && <MagPagination page={listing.page} totalPages={listing.totalPages} basePath={listing.basePath} />}
-    </section>
+    </div>
   )}
 
   {route.kind === 'notfound' && (
-    <section class="container-page py-20 text-center">
-      <h1 class="text-2xl md:text-3xl font-bold text-brand">{unavailable ? 'مجله موقتاً در دسترس نیست' : 'این صفحه پیدا نشد'}</h1>
-      <p class="mt-3 text-sm text-ink-soft">
-        {unavailable ? 'لطفاً چند دقیقه‌ی دیگر دوباره سر بزنید.' : 'ممکن است مطلب حذف شده یا آدرس آن تغییر کرده باشد. در مطالب مجله جست‌وجو کنید:'}
-      </p>
-      {!unavailable && <MagSearch class="mx-auto mt-6" />}
-      <a href={MAG_PATH} class="btn-primary mt-8">بازگشت به مجله</a>
+    <section class="container-page py-20">
+      <div class="mx-auto max-w-xl rounded-xl2 bg-white p-8 sm:p-10 text-center shadow-card">
+        <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-brand"><Icon name={unavailable ? 'clock' : 'search'} class="h-8 w-8" /></span>
+        <h1 class="mt-5 text-2xl font-bold text-brand">{unavailable ? 'مجله موقتاً در دسترس نیست' : 'این صفحه پیدا نشد'}</h1>
+        <p class="mt-3 text-sm leading-7 text-ink-soft">
+          {unavailable ? 'لطفاً چند دقیقه‌ی دیگر دوباره سر بزنید.' : 'ممکن است مطلب حذف شده یا آدرس آن تغییر کرده باشد. در مطالب مجله جست‌وجو کنید:'}
+        </p>
+        {!unavailable && <MagSearch class="mx-auto mt-6" />}
+        <a href={MAG_PATH} class="btn-primary mt-8">بازگشت به مجله</a>
+      </div>
     </section>
   )}
 </BaseLayout>
 
-<script>
-  import { initMagArticle } from '../lib/magClient';
-  initMagArticle();
-</script>
