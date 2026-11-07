@@ -8,6 +8,7 @@
  *      فشرده‌ی br/gz، ETag و کش طولانی برای فایل‌های hash‌دار /_astro
  *   ۳. صفحه‌های پویای Astro (صفحه‌ی اصلی، قیمت، خرید/فروش، فروشگاه، تحویل، مجله)
  *   ۴. صفحه‌ی ۴۰۴ سایت
+ * (/healthz برای مانیتورینگ: src/pages/healthz.ts)
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -120,13 +121,6 @@ const server = http.createServer((req, res) => {
   const q = raw.indexOf('?');
   const pathname = (q === -1 ? raw : raw.slice(0, q)).replace(/\/{2,}/g, '/');
   const search = q === -1 ? '' : raw.slice(q);
-
-  // بررسی سلامت برای سرویس مانیتورینگ (برنامه را بیدار نگه می‌دارد)
-  if (pathname === '/healthz') {
-    res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' });
-    res.end('ok');
-    return;
-  }
 
   if (pathname.length > 1 && pathname.endsWith('/')) {
     res.writeHead(301, { Location: pathname.replace(/\/+$/, '') + search, 'Cache-Control': 'public, max-age=86400' });

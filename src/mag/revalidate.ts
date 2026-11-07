@@ -20,11 +20,14 @@ export const POST: APIRoute = async ({ request }) => {
   const expected = process.env.MAG_REVALIDATE_TOKEN ?? '';
   if (expected.length < 16) return new Response('Not found', { status: 404 });
   if (!tokenMatches(request.headers.get('x-revalidate-token') ?? '', expected)) {
-    return new Response(JSON.stringify({ ok: false }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ ok: false }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'X-Robots-Tag': 'noindex' },
+    });
   }
   const entries = purgeCache('mag:');
   return new Response(JSON.stringify({ ok: true, entries }), {
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
   });
 };
 

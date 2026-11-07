@@ -75,28 +75,30 @@ export const ENAMAD_CODE: string = import.meta.env.PUBLIC_ENAMAD_CODE || '';
 export const ARKAN_API_URL: string = (import.meta.env.PUBLIC_ARKAN_API_URL || 'https://api.arkan.gold').replace(/\/$/, '');
 
 /**
- * API استعلام اصالت شمش (افزونه‌ی وردپرس wordpress/arkan-bar-verify/).
+ * مجله‌ی آرکان گلد — وردپرس هدلس
+ * ----------------------------------------------------
+ * نویسنده‌ها در پنل وردپرس (https://cms.arkan.gold/wp-admin) مطلب می‌نویسند و صفحه‌های
+ * https://arkan.gold/mag هنگام بازدید روی سرور Node.js (SSR) از REST API وردپرس ساخته می‌شوند؛
+ * انتشار مطلب جدید به build نیاز ندارد. راهنمای کامل: بخش «مجله» در README.
+ *
+ * پیش‌فرض: https://cms.arkan.gold/wp-json — با متغیر محیطی PUBLIC_WP_API_URL قابل تغییر است و
+ * با PUBLIC_WP_API_URL=off مجله غیرفعال می‌شود (منوها به https://arkan.gold/mag لینک می‌دهند).
+ * همین منطق در astro.config.mjs هم هست (مسیرهای /mag فقط وقتی مجله فعال است ساخته می‌شوند).
+ */
+export const DEFAULT_WP_API_URL = 'https://cms.arkan.gold/wp-json';
+const wpSetting = (import.meta.env.PUBLIC_WP_API_URL ?? '').trim();
+export const WP_API_URL: string = /^(off|false|0|no)$/i.test(wpSetting) ? '' : (wpSetting || DEFAULT_WP_API_URL).replace(/\/$/, '');
+export const MAG_ENABLED = WP_API_URL !== '';
+
+/**
+ * API استعلام اصالت شمش (افزونه‌ی وردپرس wordpress/arkan-bar-verify/ روی همان وردپرس مجله).
  * کد ۸ رقمی هولوگرام به‌صورت query ارسال می‌شود:
  *   GET {VERIFY_API_URL}?code=12345678
  * با متغیر محیطی PUBLIC_VERIFY_API_URL قابل تغییر است.
  */
 export const VERIFY_API_URL: string =
-  import.meta.env.PUBLIC_VERIFY_API_URL ||
-  `${(import.meta.env.PUBLIC_WP_API_URL || 'https://arkan.gold/mag/wp-json').replace(/\/$/, '')}/arkan/v1/verify-bar`;
+  import.meta.env.PUBLIC_VERIFY_API_URL || `${WP_API_URL || DEFAULT_WP_API_URL}/arkan/v1/verify-bar`;
 
-/**
- * مجله‌ی آرکان گلد — وردپرس هدلس
- * ----------------------------------------------------
- * نویسنده‌ها در پنل وردپرس (مثلا https://cms.arkan.gold/wp-admin) مطلب می‌نویسند و
- * صفحه‌های https://arkan.gold/mag هنگام بازدید روی سرور Node.js (SSR) از REST API وردپرس
- * ساخته می‌شوند؛ انتشار مطلب جدید به build نیاز ندارد.
- * آدرس REST API با متغیر محیطی PUBLIC_WP_API_URL تنظیم می‌شود، مثلا:
- *   PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json
- * تا وقتی خالی باشد، صفحه‌های مجله ساخته نمی‌شوند و منوها مثل قبل به وردپرس فعلی
- * (https://arkan.gold/mag) لینک می‌دهند. راهنمای کامل: بخش «مجله» در README.
- */
-export const WP_API_URL: string = (import.meta.env.PUBLIC_WP_API_URL || '').trim().replace(/\/$/, '');
-export const MAG_ENABLED = WP_API_URL !== '';
 /** مسیر مجله روی سایت اصلی */
 export const MAG_PATH = '/mag';
 /** نام مجله (در عنوان صفحه‌ها، breadcrumb و RSS) */

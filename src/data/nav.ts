@@ -17,7 +17,7 @@ export interface NavItem extends NavLink {
   children?: NavLink[];
 }
 
-/** با فعال بودن مجله‌ی هدلس (PUBLIC_WP_API_URL) صفحه‌های مجله بخشی از همین سایت هستند */
+/** مجله (وردپرس هدلس) بخشی از همین سایت است؛ فقط با PUBLIC_WP_API_URL=off به آدرس قدیمی لینک می‌دهد */
 export const MAG_URL = MAG_ENABLED ? MAG_PATH : 'https://arkan.gold/mag';
 
 export const servicesMenu: NavLink[] = [

@@ -16,8 +16,9 @@ export const SITE_URL = 'https://arkan.gold';
 //   روی سرور ساخته می‌شوند: `export const prerender = false` در همان صفحه
 const mode = process.argv.includes('dev') ? 'development' : 'production';
 const env = loadEnv(mode, process.cwd(), '');
-// مجله (وردپرس هدلس) فقط وقتی آدرس REST API وردپرس تنظیم شده باشد فعال است
-const MAG_ENABLED = Boolean((env.PUBLIC_WP_API_URL ?? '').trim());
+// مجله (وردپرس هدلس روی https://cms.arkan.gold) به‌طور پیش‌فرض فعال است؛ PUBLIC_WP_API_URL=off غیرفعالش
+// می‌کند (همان منطق src/config/site.ts)
+const MAG_ENABLED = !/^(off|false|0|no)$/i.test((env.PUBLIC_WP_API_URL ?? '').trim());
 
 export default defineConfig({
   site: SITE_URL,

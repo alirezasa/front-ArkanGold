@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Arkan Gold — مجله هدلس
  * Description: وردپرس را به پنل محتوای مجله‌ی آرکان گلد تبدیل می‌کند: بازدید از صفحه‌های عمومی وردپرس به همان آدرس در arkan.gold/mag هدایت می‌شود و با هر انتشار/ویرایش مطلب، کش صفحه‌های مجله روی سرور Node.js پاک می‌شود تا تغییر فوراً دیده شود.
- * Version:     2.0.0
+ * Version:     2.1.0
  * Author:      Arkan Gold
  * Requires PHP: 7.4
  *
@@ -87,12 +87,44 @@ add_action('template_redirect', function () {
     exit;
 }, 1);
 
-// پاسخ‌های REST API نباید در نتایج جست‌وجو بیایند
+/* ------------------------------------------------------------------
+ * cms.arkan.gold نباید در نتایج جست‌وجو بیاید
+ *   - صفحه‌های عمومی با ۳۰۱ به arkan.gold/mag می‌روند (بالا)
+ *   - همه‌ی پاسخ‌های وردپرس (API، ورود، پیشخوان، پیش‌نمایش، sitemap افزونه‌ی سئو) هدر noindex دارند
+ *   - sitemap خود وردپرس خاموش است (sitemap مجله: https://arkan.gold/mag/sitemap.xml)
+ *   فایل‌های wp-content/uploads را خود وب‌سرور سرو می‌کند؛ برای آن‌ها قطعه‌ی .htaccess در README
+ *   (بخش مجله) را به cms اضافه کنید. سایت اصلی تصاویر را با آدرس arkan.gold سرو می‌کند.
+ * ------------------------------------------------------------------ */
+
+function arkan_headless_noindex_header()
+{
+    if (!headers_sent()) {
+        header('X-Robots-Tag: noindex, nofollow', true);
+    }
+}
+add_action('send_headers', 'arkan_headless_noindex_header');
+add_action('login_init', 'arkan_headless_noindex_header');
+add_action('admin_init', 'arkan_headless_noindex_header');
+
 add_filter('rest_post_dispatch', function ($response) {
     if ($response instanceof WP_REST_Response) {
         $response->header('X-Robots-Tag', 'noindex, nofollow');
     }
     return $response;
+});
+
+add_filter('wp_sitemaps_enabled', '__return_false');
+
+// «جلوگیری از ایندکس توسط موتورهای جست‌وجو» نباید روشن باشد: Yoast/Rank Math در این حالت همه‌ی
+// مطالب را noindex اعلام می‌کنند و همین روی arkan.gold/mag هم اعمال می‌شود. cms با هدر بالا مخفی است.
+add_action('admin_notices', function () {
+    if (!current_user_can('manage_options') || get_option('blog_public') !== '0') {
+        return;
+    }
+    echo '<div class="notice notice-error"><p><strong>مجله آرکان گلد:</strong> گزینه‌ی «جلوگیری از ایندکس توسط موتورهای جست‌وجو» در '
+        . '<a href="' . esc_url(admin_url('options-reading.php')) . '">تنظیمات ← خواندن</a> روشن است. '
+        . 'آن را خاموش کنید؛ وگرنه همه‌ی مطالب مجله روی arkan.gold هم از گوگل حذف می‌شوند. '
+        . 'خود cms.arkan.gold با افزونه‌ی «مجله هدلس» از نتایج جست‌وجو مخفی است.</p></div>';
 });
 
 /* ------------------------------------------------------------------
