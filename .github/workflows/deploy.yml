@@ -1,0 +1,60 @@
+# انتشار کد سایت روی هاست Node.js (FTP) — فقط برای تغییر کد/طراحی؛ مطالب مجله، محصولات و قیمت‌ها
+# هنگام بازدید روی سرور از API ها خوانده می‌شوند و به build نیاز ندارند.
+# اجرا: تب Actions ← Deploy ← Run workflow
+#
+# تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «اجرا روی Node.js»
+#   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
+#   Variables: FTP_APP_DIR      پوشه‌ی برنامه‌ی Node.js نسبت به ریشه‌ی FTP (پیش‌فرض arkan-site)
+#              PUBLIC_WP_API_URL (مثلا https://cms.arkan.gold/wp-json) — بدون آن مجله غیرفعال است
+#              FTP_VERIFY_CERT  اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
+#              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLIC_WP_API_URL: ${{ vars.PUBLIC_WP_API_URL }}
+      PUBLIC_ARKAN_API_URL: ${{ vars.PUBLIC_ARKAN_API_URL }}
+      PUBLIC_VERIFY_API_URL: ${{ vars.PUBLIC_VERIFY_API_URL }}
+      PUBLIC_GA4_ID: ${{ vars.PUBLIC_GA4_ID }}
+      PUBLIC_YEKTANET_ID: ${{ vars.PUBLIC_YEKTANET_ID }}
+      PUBLIC_ENAMAD_ID: ${{ vars.PUBLIC_ENAMAD_ID }}
+      PUBLIC_ENAMAD_CODE: ${{ vars.PUBLIC_ENAMAD_CODE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      # فایل‌های قدیمی پاک نمی‌شوند تا برنامه‌ی در حال اجرا تا لحظه‌ی راه‌اندازی دوباره سالم بماند؛
+      # tmp/restart.txt آخر از همه آپلود می‌شود و Passenger برنامه را با نسخه‌ی جدید راه‌اندازی می‌کند.
+      - name: Upload to host (FTP)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_APP_DIR: ${{ vars.FTP_APP_DIR || 'arkan-site' }}
+          FTP_VERIFY_CERT: ${{ vars.FTP_VERIFY_CERT || 'true' }}
+        run: |
+          lftp -u "$FTP_USERNAME,$FTP_PASSWORD" "$FTP_SERVER" -e "
+            set ftp:ssl-allow true; set ssl:verify-certificate $FTP_VERIFY_CERT; set net:max-retries 3; set net:timeout 30;
+            mirror -R --parallel=4 --exclude ^tmp/ dist/app $FTP_APP_DIR;
+            mkdir -pf $FTP_APP_DIR/tmp;
+            put -O $FTP_APP_DIR/tmp dist/app/tmp/restart.txt;
+            bye"

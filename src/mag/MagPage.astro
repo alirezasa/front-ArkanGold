@@ -1,0 +1,269 @@
+---
+// مجله آرکان گلد — همه‌ی صفحه‌های /mag هنگام بازدید روی سرور (SSR) از REST API وردپرس ساخته می‌شوند.
+// این route فقط وقتی PUBLIC_WP_API_URL تنظیم شده باشد به سایت اضافه می‌شود (src/mag/integration.mjs).
+//   /mag، /mag/page/2           ← فهرست مطالب
+//   /mag/category/x[/page/n] و آرشیو برچسب/نویسنده
+//   /mag/{آدرس مطلب یا برگه}     ← دقیقاً همان آدرسی که وردپرس ساخته است
+//   /mag?s=...                   ← جست‌وجو (noindex)
+// کدهای وضعیت: ۴۰۴ برای آدرس ناموجود، ۳۰۱ برای آدرس قدیمی/تغییرکرده، ۵۰۳ اگر وردپرس در دسترس
+// نباشد و نسخه‌ی کش‌شده‌ای هم وجود نداشته باشد.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MagPagination from '../components/mag/MagPagination.astro';
+import MagSearch from '../components/mag/MagSearch.astro';
+import { MAG_NAME, MAG_PATH, SITE_URL } from '../config/site';
+import { getSite, resolveMagRoute, searchMag, topCategories, type MagRoute } from '../lib/magazine';
+import {
+  breadcrumbHtml,
+  breadcrumbSchema,
+  magArticleHtml,
+  magCardHtml,
+  magHref,
+  magPostSeo,
+  magUrl,
+  pagedPath,
+  truncate,
+  type Crumb,
+} from '../lib/wp';
+
+export const prerender = false;
+
+// آدرس‌های قدیمی وردپرس که دیگر صفحه نیستند
+const rawPath = (Astro.params.path ?? '').split('/').filter(Boolean).join('/');
+const legacy: Record<string, string> = { feed: '/mag/rss.xml', 'sitemap_index.xml': '/mag/sitemap.xml' };
+if (legacy[rawPath]) return Astro.redirect(legacy[rawPath], 301);
+if (/^[a-z_-]+-sitemap\d*\.xml$/.test(rawPath)) return Astro.redirect('/mag/sitemap.xml', 301);
+
+const query = (Astro.url.searchParams.get('s') ?? '').trim();
+const isSearch = rawPath === '' && query.length > 0;
+
+let route: MagRoute;
+let siteDescription = '';
+let cats: { name: string; path: string }[] = [];
+try {
+  route = isSearch ? await searchMag(query) : await resolveMagRoute(rawPath);
+  if (route.kind === 'home') {
+    [siteDescription, cats] = await Promise.all([getSite().then((s) => s.description), topCategories().catch(() => [])]);
+  }
+} catch (err) {
+  console.error(`[mag] /mag/${rawPath}:`, err);
+  route = { kind: 'notfound' };
+  Astro.response.status = 503;
+  Astro.response.headers.set('Retry-After', '120');
+}
+
+if (route.kind === 'redirect') return Astro.redirect(magHref(route.path), 301);
+
+const unavailable = Astro.response.status === 503;
+if (route.kind === 'notfound' && !unavailable) Astro.response.status = 404;
+// صفحه‌ی ۴۰۴ همین فایل نمایش داده شود؛ در غیر این صورت Astro صفحه‌ی 404.html ایستا را از خود سرور
+// درخواست می‌کند که برنامه‌ی Node.js فقط /mag را پاسخ می‌دهد و آن درخواست در حلقه می‌افتد
+if (route.kind === 'notfound') Astro.response.headers.set('X-Astro-Reroute', 'no');
+// کش مرورگر/CDN کوتاه است؛ تازه بودن محتوا را کش سرور و پاک‌سازی بعد از انتشار تضمین می‌کنند
+Astro.response.headers.set(
+  'Cache-Control',
+  route.kind === 'notfound' || route.kind === 'search' ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300'
+);
+
+const fa = (n: number) => n.toLocaleString('fa-IR');
+const DEFAULT_DESCRIPTION =
+  'مجله آرکان گلد: اخبار و تحلیل بازار طلا، آموزش خرید و فروش طلای آب‌شده و شمش، و راهنمای سرمایه‌گذاری در طلا.';
+const magCrumbs: Crumb[] = [
+  { name: 'آرکان گلد', href: '/' },
+  { name: MAG_NAME, href: MAG_PATH },
+];
+
+interface View {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  imageAlt?: string;
+  noindex: boolean;
+  ogType: string;
+  meta: { property: string; content: string }[];
+  schemas: Record<string, unknown>[];
+  heading?: string;
+  kicker?: string;
+  intro?: string;
+  avatar?: string;
+  crumbsHtml?: string;
+}
+
+let view: View;
+
+if (route.kind === 'post') {
+  view = magPostSeo(route.post);
+} else if (route.kind === 'home' || route.kind === 'archive') {
+  const pageSuffix = route.page > 1 ? ` — صفحه ${fa(route.page)}` : '';
+  const path = magHref(pagedPath(route.basePath, route.page));
+  const crumbs = [...magCrumbs];
+  let title: string;
+  let description: string;
+  let heading: string;
+  let kicker = '';
+  let intro = '';
+  let avatar: string | undefined;
+
+  if (route.kind === 'home') {
+    heading = MAG_NAME;
+    intro = siteDescription || DEFAULT_DESCRIPTION;
+    title = `${MAG_NAME}: اخبار، آموزش و تحلیل بازار طلا${pageSuffix}`;
+    description = intro;
+  } else {
+    const a = route.archive;
+    kicker = a.kind === 'category' ? 'دسته‌بندی' : a.kind === 'tag' ? 'برچسب' : 'نویسنده';
+    heading = a.kind === 'tag' ? `#${a.name}` : a.name;
+    intro = a.description;
+    avatar = a.avatar;
+    title = `${a.seo.title || `${kicker} ${a.name} | ${MAG_NAME}`}${pageSuffix}`;
+    description = truncate(
+      a.seo.description || a.description || `${a.kind === 'author' ? 'مطالب' : 'جدیدترین مطالب'} ${a.name} در ${MAG_NAME}.`,
+      160
+    );
+    crumbs.push({ name: a.name, href: magHref(a.path) });
+  }
+  if (route.page > 1) crumbs.push({ name: `صفحه ${fa(route.page)}`, href: path });
+
+  view = {
+    title,
+    description,
+    path,
+    noindex: route.kind === 'archive' && !!route.archive.seo.noindex,
+    ogType: 'website',
+    meta: [],
+    heading,
+    kicker,
+    intro,
+    avatar,
+    crumbsHtml: breadcrumbHtml(crumbs),
+    schemas: [
+      {
+        '@context': 'https://schema.org',
+        '@type': route.kind === 'home' ? 'Blog' : 'CollectionPage',
+        name: heading,
+        description,
+        url: new URL(path, SITE_URL).toString(),
+        inLanguage: 'fa-IR',
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: route.posts.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: magUrl(p.path), name: p.title })),
+        },
+      },
+      breadcrumbSchema(crumbs),
+    ],
+  };
+} else if (route.kind === 'search') {
+  view = {
+    title: `جست‌وجوی «${route.query}» در ${MAG_NAME}`,
+    description: `نتایج جست‌وجوی «${route.query}» در مطالب ${MAG_NAME}.`,
+    path: MAG_PATH,
+    noindex: true,
+    ogType: 'website',
+    meta: [],
+    schemas: [],
+    heading: `نتایج جست‌وجو برای «${route.query}»`,
+    crumbsHtml: breadcrumbHtml([...magCrumbs, { name: 'جست‌وجو', href: MAG_PATH }]),
+  };
+} else {
+  view = {
+    title: unavailable ? `${MAG_NAME} موقتاً در دسترس نیست` : 'صفحه پیدا نشد',
+    description: 'صفحه‌ی موردنظر در مجله آرکان گلد پیدا نشد.',
+    path: magHref(rawPath),
+    noindex: true,
+    ogType: 'website',
+    meta: [],
+    schemas: [],
+  };
+}
+
+const listing = route.kind === 'home' || route.kind === 'archive' ? route : null;
+---
+
+<BaseLayout
+  title={view.title}
+  description={view.description}
+  path={view.path}
+  image={view.image}
+  imageAlt={view.imageAlt}
+  noindex={view.noindex}
+  ogType={view.ogType}
+  meta={view.meta}
+  jsonLd={view.schemas}
+>
+  <link slot="head" rel="alternate" type="application/rss+xml" title={MAG_NAME} href={`${MAG_PATH}/rss.xml`} />
+
+  {route.kind === 'post' && (
+    <>
+      <Fragment set:html={magArticleHtml(route.post)} />
+      {route.related.length > 0 && (
+        <section class="container-page pb-14">
+          <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-brand">مطالب مرتبط</h2>
+            <a href={MAG_PATH} class="text-sm text-brand hover:underline">همه‌ی مطالب مجله</a>
+          </div>
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {route.related.map((p) => <Fragment set:html={magCardHtml(p, { headingTag: 'h3' })} />)}
+          </div>
+        </section>
+      )}
+    </>
+  )}
+
+  {(listing || route.kind === 'search') && (
+    <section class="container-page py-10">
+      <Fragment set:html={view.crumbsHtml} />
+      <header class="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div class="flex items-center gap-4">
+          {view.avatar && <img src={view.avatar} alt={view.heading} width="72" height="72" class="h-16 w-16 rounded-full object-cover" />}
+          <div>
+            {view.kicker && <p class="mb-1 text-xs text-ink-soft">{view.kicker}</p>}
+            <h1 class="text-2xl md:text-3xl font-bold text-brand">
+              {view.heading}
+              {listing && listing.page > 1 && <span class="text-base font-normal text-ink-soft"> — صفحه {fa(listing.page)}</span>}
+            </h1>
+            {view.intro && <p class="mt-2 max-w-2xl text-sm leading-7 text-ink-soft">{view.intro}</p>}
+          </div>
+        </div>
+        <MagSearch value={route.kind === 'search' ? route.query : ''} />
+      </header>
+
+      {route.kind === 'home' && cats.length > 0 && (
+        <nav aria-label="دسته‌بندی‌های مجله" class="mb-8 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          {cats.map((c) => (
+            <a href={magHref(c.path)} class="shrink-0 rounded-full bg-white px-4 py-1.5 text-sm text-brand shadow-card hover:bg-brand hover:text-white transition-colors">
+              {c.name}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {route.kind === 'search' && route.posts.length === 0 && (
+        <p class="py-10 text-center text-sm text-ink-soft">مطلبی با این عبارت پیدا نشد. عبارت دیگری را امتحان کنید.</p>
+      )}
+
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {(listing?.posts ?? (route.kind === 'search' ? route.posts : [])).map((p, i) => (
+          <Fragment set:html={magCardHtml(p, { eager: !!listing && listing.page === 1 && i < 3 })} />
+        ))}
+      </div>
+
+      {listing && <MagPagination page={listing.page} totalPages={listing.totalPages} basePath={listing.basePath} />}
+    </section>
+  )}
+
+  {route.kind === 'notfound' && (
+    <section class="container-page py-20 text-center">
+      <h1 class="text-2xl md:text-3xl font-bold text-brand">{unavailable ? 'مجله موقتاً در دسترس نیست' : 'این صفحه پیدا نشد'}</h1>
+      <p class="mt-3 text-sm text-ink-soft">
+        {unavailable ? 'لطفاً چند دقیقه‌ی دیگر دوباره سر بزنید.' : 'ممکن است مطلب حذف شده یا آدرس آن تغییر کرده باشد. در مطالب مجله جست‌وجو کنید:'}
+      </p>
+      {!unavailable && <MagSearch class="mx-auto mt-6" />}
+      <a href={MAG_PATH} class="btn-primary mt-8">بازگشت به مجله</a>
+    </section>
+  )}
+</BaseLayout>
+
+<script>
+  import { initMagArticle } from '../lib/magClient';
+  initMagArticle();
+</script>

@@ -1,0 +1,23 @@
+---
+// فرم جست‌وجوی مجله — مثل وردپرس: /mag?s=... (نتایج روی سرور از REST API وردپرس)
+interface Props {
+  value?: string;
+  class?: string;
+}
+const { value = '', class: className = '' } = Astro.props;
+---
+
+<form action="/mag" method="get" role="search" class={`flex w-full max-w-md items-center gap-2 ${className}`}>
+  <label for="mag-search-input" class="sr-only">جست‌وجو در مجله</label>
+  <input
+    id="mag-search-input"
+    type="search"
+    name="s"
+    value={value}
+    required
+    minlength="2"
+    placeholder="جست‌وجو در مطالب مجله..."
+    class="w-full rounded-lg border border-brand-100 bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brand focus:outline-none"
+  />
+  <button type="submit" class="btn-primary !px-5 !py-2.5 shrink-0">جست‌وجو</button>
+</form>

@@ -1,26 +1,9 @@
 ---
 // ورود و ثبت‌نام فقط در اپلیکیشن آرکان گلد انجام می‌شود؛ این مسیر برای لینک‌های قدیمی
-// نگه داشته شده و کاربر را بلافاصله به app.arkan.gold هدایت می‌کند.
-import BaseLayout from '../layouts/BaseLayout.astro';
-import SimplePage from '../components/sections/SimplePage.astro';
+// نگه داشته شده و کاربر را روی سرور بلافاصله (۳۰۲) به app.arkan.gold می‌فرستد.
 import { APP_URL } from '../config/site';
----
-<BaseLayout
-  title="ورود / ثبت‌نام"
-  description="ورود یا ثبت‌نام در اپلیکیشن آرکان گلد با شماره موبایل."
-  path="/login"
-  noindex={true}
->
-  <meta http-equiv="refresh" content={`0;url=${APP_URL}`} slot="head" />
-  <SimplePage
-    eyebrow="ورود / ثبت‌نام"
-    title="در حال انتقال به اپلیکیشن آرکان گلد..."
-    intro="ورود و ثبت‌نام با شماره موبایل در اپلیکیشن (نسخه تحت وب) آرکان گلد انجام می‌شود."
-  >
-    <a href={APP_URL} class="btn-primary">ورود به app.arkan.gold</a>
-  </SimplePage>
-</BaseLayout>
 
-<script is:inline define:vars={{ APP_URL }}>
-  window.location.replace(APP_URL);
-</script>
+export const prerender = false;
+
+return Astro.redirect(APP_URL, 302);
+---

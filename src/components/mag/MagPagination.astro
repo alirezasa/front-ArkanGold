@@ -1,0 +1,37 @@
+---
+// صفحه‌بندی فهرست‌های مجله با همان ساختار آدرس وردپرس: /mag/page/2 ، /mag/category/x/page/3
+import { magHref, pagedPath } from '../../lib/wp';
+
+interface Props {
+  page: number;
+  totalPages: number;
+  basePath: string;
+}
+const { page, totalPages, basePath } = Astro.props;
+const href = (n: number) => magHref(pagedPath(basePath, n));
+
+// شماره‌های نمایشی: اول، آخر و دو صفحه‌ی اطراف صفحه‌ی فعلی
+const numbers: (number | '…')[] = [];
+for (let n = 1; n <= totalPages; n++) {
+  if (n === 1 || n === totalPages || Math.abs(n - page) <= 2) numbers.push(n);
+  else if (numbers[numbers.length - 1] !== '…') numbers.push('…');
+}
+const fa = (n: number) => n.toLocaleString('fa-IR');
+const btn = 'inline-flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm transition-colors';
+---
+
+{totalPages > 1 && (
+  <nav aria-label="صفحه‌بندی مطالب" class="mt-12 flex flex-wrap items-center justify-center gap-2">
+    {page > 1 && <a href={href(page - 1)} rel="prev" class={`${btn} bg-white text-brand hover:bg-brand hover:text-white`}>صفحه‌ی قبل</a>}
+    {numbers.map((n) =>
+      n === '…' ? (
+        <span class="px-1 text-ink-soft">…</span>
+      ) : n === page ? (
+        <span aria-current="page" class={`${btn} bg-brand text-white font-bold`}>{fa(n)}</span>
+      ) : (
+        <a href={href(n)} class={`${btn} bg-white text-brand hover:bg-brand hover:text-white`}>{fa(n)}</a>
+      )
+    )}
+    {page < totalPages && <a href={href(page + 1)} rel="next" class={`${btn} bg-white text-brand hover:bg-brand hover:text-white`}>صفحه‌ی بعد</a>}
+  </nav>
+)}

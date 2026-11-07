@@ -5,6 +5,9 @@
  * فقط از همین فایل خوانده می‌شود تا تغییر آن در یک نقطه انجام شود.
  */
 
+/** آدرس اصلی سایت (canonical، sitemap، og:url) — همان SITE_URL در astro.config.mjs */
+export const SITE_URL = 'https://arkan.gold';
+
 /** آدرس اپلیکیشن / نسخه تحت وب — تمام دکمه‌های ورود، ثبت‌نام و معامله به اینجا می‌روند */
 export const APP_URL = 'https://app.arkan.gold';
 
@@ -78,7 +81,26 @@ export const ARKAN_API_URL: string = (import.meta.env.PUBLIC_ARKAN_API_URL || 'h
  * با متغیر محیطی PUBLIC_VERIFY_API_URL قابل تغییر است.
  */
 export const VERIFY_API_URL: string =
-  import.meta.env.PUBLIC_VERIFY_API_URL || 'https://arkan.gold/mag/wp-json/arkan/v1/verify-bar';
+  import.meta.env.PUBLIC_VERIFY_API_URL ||
+  `${(import.meta.env.PUBLIC_WP_API_URL || 'https://arkan.gold/mag/wp-json').replace(/\/$/, '')}/arkan/v1/verify-bar`;
+
+/**
+ * مجله‌ی آرکان گلد — وردپرس هدلس
+ * ----------------------------------------------------
+ * نویسنده‌ها در پنل وردپرس (مثلا https://cms.arkan.gold/wp-admin) مطلب می‌نویسند و
+ * صفحه‌های https://arkan.gold/mag هنگام بازدید روی سرور Node.js (SSR) از REST API وردپرس
+ * ساخته می‌شوند؛ انتشار مطلب جدید به build نیاز ندارد.
+ * آدرس REST API با متغیر محیطی PUBLIC_WP_API_URL تنظیم می‌شود، مثلا:
+ *   PUBLIC_WP_API_URL=https://cms.arkan.gold/wp-json
+ * تا وقتی خالی باشد، صفحه‌های مجله ساخته نمی‌شوند و منوها مثل قبل به وردپرس فعلی
+ * (https://arkan.gold/mag) لینک می‌دهند. راهنمای کامل: بخش «مجله» در README.
+ */
+export const WP_API_URL: string = (import.meta.env.PUBLIC_WP_API_URL || '').trim().replace(/\/$/, '');
+export const MAG_ENABLED = WP_API_URL !== '';
+/** مسیر مجله روی سایت اصلی */
+export const MAG_PATH = '/mag';
+/** نام مجله (در عنوان صفحه‌ها، breadcrumb و RSS) */
+export const MAG_NAME = 'مجله آرکان گلد';
 
 /** فرمت فارسی درصد کارمزد، مثلا «۱» */
 export const TRADE_FEE_LABEL = TRADE_FEE_PERCENT.toLocaleString('fa-IR');

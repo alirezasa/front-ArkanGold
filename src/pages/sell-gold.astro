@@ -1,4 +1,8 @@
 ---
+// صفحه‌ی پویا: هنگام هر بازدید روی سرور ساخته می‌شود و قیمت لحظه‌ای طلا در HTML آن نوشته می‌شود (src/middleware.ts)
+export const prerender = false;
+Astro.locals.livePrice = true;
+
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { TRADE_FEE_LABEL } from '../config/site';
 import GoldCalculator from '../components/sections/GoldCalculator.astro';

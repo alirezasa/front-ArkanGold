@@ -1,79 +1,100 @@
 ---
-// صفحه‌ی اختصاصی هر شمش — در build برای همه‌ی شمش‌های API ساخته می‌شود (سئو).
+// صفحه‌ی هر شمش — هنگام بازدید روی سرور از API ساخته می‌شود؛ شمشی که تازه در پنل اضافه شده
+// از همان لحظه صفحه‌ی کامل با سئو دارد و قیمت schema (Offer) همیشه به‌روز است.
 // HTML از ingotDetailHtml و متادیتا/schema از ingotSeo می‌آید (src/lib/ingotDetail.ts).
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import { loadIngotCatalog, type GoldIngot } from '../../lib/goldIngots';
+import { loadIngot, loadIngotCatalog, type GoldIngot } from '../../lib/goldIngots';
 import { ingotDetailHtml, ingotSeo } from '../../lib/ingotDetail';
 import { compareIngots } from '../../lib/ingotCard';
 
-export async function getStaticPaths() {
-  const { products, serviceEnabled } = await loadIngotCatalog();
-  const sorted = [...products].sort(compareIngots('price-asc'));
-  return products.map((p) => ({
-    params: { slug: p.slug },
-    props: {
-      product: p,
-      serviceEnabled,
-      // شمش‌های مشابه: اول هم‌دسته‌ها، بعد بقیه — به ترتیب قیمت
-      related: [
-        ...sorted.filter((r) => r.id !== p.id && r.category?.slug === p.category?.slug),
-        ...sorted.filter((r) => r.id !== p.id && r.category?.slug !== p.category?.slug),
-      ].slice(0, 4),
-    },
-  }));
+export const prerender = false;
+Astro.locals.livePrice = true;
+
+const slug = Astro.params.slug ?? '';
+let product: GoldIngot | null = null;
+let serviceEnabled = true;
+let unavailable = false;
+try {
+  ({ product, serviceEnabled } = await loadIngot(slug));
+} catch (err) {
+  console.error(`[shop] /shop/${slug}:`, err);
+  unavailable = true;
 }
 
-interface Props {
-  product: GoldIngot;
-  serviceEnabled: boolean;
-  related: GoldIngot[];
+// شمش‌های مشابه: اول هم‌دسته‌ها، بعد بقیه — به ترتیب قیمت
+let related: GoldIngot[] = [];
+if (product) {
+  const p = product;
+  const sorted = [...(await loadIngotCatalog()).products].sort(compareIngots('price-asc'));
+  related = [
+    ...sorted.filter((r) => r.slug !== p.slug && r.category?.slug === p.category?.slug),
+    ...sorted.filter((r) => r.slug !== p.slug && r.category?.slug !== p.category?.slug),
+  ].slice(0, 4);
+} else {
+  // ۴۰۴ یا ۵۰۳ واقعی با صفحه‌ی همین فایل (نه صفحه‌ی 404 ایستا)
+  Astro.response.status = unavailable ? 503 : 404;
+  Astro.response.headers.set('X-Astro-Reroute', 'no');
+  if (unavailable) Astro.response.headers.set('Retry-After', '120');
 }
-const { product, serviceEnabled, related } = Astro.props;
-const seo = ingotSeo(product, serviceEnabled);
+const seo = product ? ingotSeo(product, serviceEnabled) : null;
 ---
 
-<BaseLayout
-  title={seo.title}
-  description={seo.description}
-  path={seo.path}
-  image={seo.image}
-  imageAlt={seo.imageAlt}
-  ogType="product"
-  meta={seo.meta}
-  jsonLd={seo.schemas}
->
-  <Fragment set:html={ingotDetailHtml(product, { serviceEnabled })} />
+{seo && product ? (
+  <BaseLayout
+    title={seo.title}
+    description={seo.description}
+    path={seo.path}
+    image={seo.image}
+    imageAlt={seo.imageAlt}
+    ogType="product"
+    meta={seo.meta}
+    jsonLd={seo.schemas}
+  >
+    <Fragment set:html={ingotDetailHtml(product, { serviceEnabled })} />
 
-  {related.length > 0 && (
-    <section class="container-page py-10">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-brand">شمش‌های مشابه</h2>
-        <a href="/shop" class="text-sm text-brand hover:underline">مشاهده همه</a>
-      </div>
-      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {related.map((r) => <ProductCard product={r} serviceEnabled={serviceEnabled} headingLevel="h3" />)}
-      </div>
+    {related.length > 0 && (
+      <section class="container-page py-10">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-brand">شمش‌های مشابه</h2>
+          <a href="/shop" class="text-sm text-brand hover:underline">مشاهده همه</a>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {related.map((r) => <ProductCard product={r} serviceEnabled={serviceEnabled} headingLevel="h3" />)}
+        </div>
+      </section>
+    )}
+
+    <div id="ingot-meta" hidden data-slug={product.slug} data-service-enabled={serviceEnabled ? 'true' : 'false'}></div>
+  </BaseLayout>
+) : (
+  <BaseLayout title={unavailable ? 'فروشگاه موقتاً در دسترس نیست' : 'محصول پیدا نشد'} description="این محصول در فروشگاه آرکان گلد پیدا نشد." path={`/shop/${slug}`} noindex>
+    <section class="container-page py-24 text-center">
+      <h1 class="text-2xl font-bold text-brand mb-3">{unavailable ? 'اطلاعات محصول موقتاً در دسترس نیست' : 'این محصول پیدا نشد'}</h1>
+      <p class="text-sm text-ink-soft mb-8">
+        {unavailable ? 'لطفاً چند دقیقه‌ی دیگر دوباره سر بزنید.' : 'ممکن است این شمش دیگر در فروشگاه موجود نباشد یا آدرس آن تغییر کرده باشد.'}
+      </p>
+      <a href="/shop" class="btn-primary">مشاهده‌ی همه‌ی شمش‌ها</a>
     </section>
-  )}
-
-  <div id="ingot-meta" hidden data-slug={product.slug} data-service-enabled={serviceEnabled ? 'true' : 'false'}></div>
-</BaseLayout>
+  </BaseLayout>
+)}
 
 <script>
   import { initIngotDetail } from '../../lib/ingotDetailClient';
   import { updateIngotCard } from '../../lib/ingotCard';
   import { watchIngotList } from '../../lib/liveIngots';
 
-  const meta = document.getElementById('ingot-meta')!;
-  initIngotDetail({ slug: meta.dataset.slug!, serviceEnabled: meta.dataset.serviceEnabled === 'true' });
+  const meta = document.getElementById('ingot-meta');
+  if (meta) {
+    initIngotDetail({ slug: meta.dataset.slug!, serviceEnabled: meta.dataset.serviceEnabled === 'true' });
 
-  // کارت‌های «شمش‌های مشابه» هم لحظه‌ای می‌شوند
-  const relatedCards = Array.from(document.querySelectorAll<HTMLElement>('.product-card'));
-  if (relatedCards.length) {
-    watchIngotList(({ products, serviceEnabled }) => {
-      const bySlug = new Map(products.map((p) => [p.slug, p]));
-      relatedCards.forEach((c) => updateIngotCard(c, bySlug.get(c.dataset.slug!) ?? null, serviceEnabled));
-    });
+    // کارت‌های «شمش‌های مشابه» هم لحظه‌ای می‌شوند
+    const relatedCards = Array.from(document.querySelectorAll<HTMLElement>('.product-card'));
+    if (relatedCards.length) {
+      watchIngotList(({ products, serviceEnabled }) => {
+        const bySlug = new Map(products.map((p) => [p.slug, p]));
+        relatedCards.forEach((c) => updateIngotCard(c, bySlug.get(c.dataset.slug!) ?? null, serviceEnabled));
+      });
+    }
   }
 </script>

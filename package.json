@@ -8,9 +8,11 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "serve": "node dist/app/app.cjs"
   },
   "dependencies": {
+    "@astrojs/node": "8.3.4",
     "@astrojs/sitemap": "3.2.1",
     "@astrojs/tailwind": "^5.1.2",
     "astro": "^4.16.0",

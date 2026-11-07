@@ -35,10 +35,6 @@ export function ingotDetailPath(slug: string): string {
 }
 
 /** صفحه‌ی جزئیات شمش‌هایی که بعد از آخرین build اضافه شده‌اند (در مرورگر ساخته می‌شود) */
-export function ingotLiveDetailPath(slug: string): string {
-  return `/shop/item?slug=${encodeURIComponent(slug)}`;
-}
-
 export type IngotSortMode = 'price-asc' | 'price-desc' | 'weight-asc' | 'weight-desc';
 /** ترتیب پیش‌فرض فروشگاه: ارزان‌ترین و در قیمت برابر، سبک‌ترین */
 export const DEFAULT_SORT: IngotSortMode = 'price-asc';
@@ -79,16 +75,14 @@ export function ingotCardCtaLabel(p: GoldIngot | null, serviceEnabled: boolean):
 }
 
 interface CardOptions {
-  /** صفحه‌ی جزئیات ایستای این محصول در build ساخته شده است؟ (وگرنه صفحه‌ی /shop/item) */
-  hasPage: boolean;
   serviceEnabled: boolean;
   headingTag?: 'h2' | 'h3';
 }
 
-export function ingotCardHtml(p: GoldIngot, { hasPage, serviceEnabled, headingTag = 'h2' }: CardOptions): string {
+export function ingotCardHtml(p: GoldIngot, { serviceEnabled, headingTag = 'h2' }: CardOptions): string {
   const image = ingotImages(p)[0];
   const weights = ingotWeights(p);
-  const detailHref = hasPage ? ingotDetailPath(p.slug) : ingotLiveDetailPath(p.slug);
+  const detailHref = ingotDetailPath(p.slug);
   const h = headingTag;
 
   return `<article class="product-card group relative flex flex-col rounded-card bg-white border border-brand-100/40 shadow-card overflow-hidden card-lift" data-slug="${esc(p.slug)}" data-weight="${weights[0] ?? ''}" data-price="${priceRange(p).from || ''}" data-in-stock="${p.inStock}">
