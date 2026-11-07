@@ -19,4 +19,22 @@ ErrorDocument 404 /404.html
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^shop/([^/]+)/?$ shop/item/index.html [L]
+
+  # ---- مجله (وردپرس هدلس، /mag) ----
+  # تا وقتی وردپرس هنوز در پوشه‌ی /mag همین هاست است، .htaccess خود وردپرس در آن پوشه
+  # جایگزین این قوانین می‌شود و این بخش اثری ندارد.
+
+  # آدرس‌های قدیمی RSS و sitemap وردپرس (Yoast / Rank Math) ← نسخه‌های ساخته‌شده در این پروژه
+  RewriteRule ^mag/feed/?$ /mag/rss.xml [R=301,L]
+  RewriteRule ^mag/(sitemap_index|[a-z_-]+-sitemap[0-9]*)\.xml$ /mag/sitemap.xml [R=301,L]
+
+  # جست‌وجوی قدیمی وردپرس: /mag/?s=...
+  RewriteCond %{QUERY_STRING} (^|&)s=
+  RewriteRule ^mag/?$ /mag-live [R=302,L]
+
+  # مطلبی که بعد از آخرین build منتشر شده و صفحه‌ی ایستا ندارد: محتوا در مرورگر از
+  # REST API وردپرس با همان آدرس نمایش داده می‌شود (src/pages/mag-live.astro)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^mag/(.+)$ mag-live/index.html [L]
 </IfModule>

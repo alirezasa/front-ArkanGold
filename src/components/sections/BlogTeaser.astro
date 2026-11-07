@@ -1,8 +1,12 @@
 ---
-// این بخش آخرین مطالب مجله (arkan.gold/mag که با وردپرس اجرا می‌شود) را
-// از طریق REST API وردپرس می‌خواند و به‌صورت زنده نمایش می‌دهد.
-// چون این درخواست در زمان build/SSR اجرا می‌شود، اگر بلاگ در دسترس نباشد
-// یا تعداد پست کافی نباشد، این بخش بی‌صدا حذف می‌شود (خطا صفحه را نمی‌شکند).
+// آخرین مطالب مجله در صفحه‌ی اصلی.
+// - مجله‌ی هدلس فعال (PUBLIC_WP_API_URL): همان داده‌ی صفحه‌های /mag و همان کارت مطلب، با لینک داخلی
+// - در غیر این صورت: از REST API وردپرس فعلی (arkan.gold/mag) خوانده می‌شود و اگر در دسترس
+//   نباشد این بخش بی‌صدا حذف می‌شود (خطا صفحه را نمی‌شکند).
+import { MAG_ENABLED, MAG_NAME } from '../../config/site';
+import { MAG_URL } from '../../data/nav';
+import { loadMagazine } from '../../lib/magazine';
+import { magCardHtml, type MagPost } from '../../lib/wp';
 
 interface WpPost {
   id: number;
@@ -12,30 +16,43 @@ interface WpPost {
   date: string;
 }
 
-let posts: WpPost[] = [];
-try {
-  const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
-    signal: AbortSignal.timeout(4000),
-  });
-  if (res.ok) posts = await res.json();
-} catch {
-  posts = [];
+let magPosts: MagPost[] = [];
+let legacyPosts: WpPost[] = [];
+
+if (MAG_ENABLED) {
+  magPosts = (await loadMagazine()).posts.slice(0, 3);
+} else {
+  try {
+    const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) legacyPosts = await res.json();
+  } catch {
+    legacyPosts = [];
+  }
 }
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
+const hasPosts = magPosts.length > 0 || legacyPosts.length > 0;
 ---
 
-{posts.length > 0 && (
+{hasPosts && (
   <section class="container-page py-14">
     <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl md:text-2xl font-bold text-brand">مطالب مجله آرکان گلد</h2>
-      <a href="https://arkan.gold/mag" target="_blank" rel="noopener" class="text-sm text-brand hover:underline">
+      <h2 class="text-xl md:text-2xl font-bold text-brand">مطالب {MAG_NAME}</h2>
+      <a
+        href={MAG_URL}
+        target={MAG_ENABLED ? undefined : '_blank'}
+        rel={MAG_ENABLED ? undefined : 'noopener'}
+        class="text-sm text-brand hover:underline"
+      >
         مشاهده همه مطالب
       </a>
     </div>
 
     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {posts.map((post) => (
+      {magPosts.map((post) => <Fragment set:html={magCardHtml(post, { headingTag: 'h3' })} />)}
+      {legacyPosts.map((post) => (
         <a
           href={post.link}
           target="_blank"

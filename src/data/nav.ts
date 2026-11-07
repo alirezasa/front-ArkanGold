@@ -3,6 +3,7 @@
  * با تغییر عنوان یا لینک در همین فایل، همه‌ی منوها یک‌جا به‌روز می‌شوند.
  */
 import type { IconName } from '../lib/icons';
+import { MAG_ENABLED, MAG_PATH } from '../config/site';
 
 export interface NavLink {
   label: string;
@@ -16,7 +17,8 @@ export interface NavItem extends NavLink {
   children?: NavLink[];
 }
 
-export const MAG_URL = 'https://arkan.gold/mag';
+/** با فعال بودن مجله‌ی هدلس (PUBLIC_WP_API_URL) صفحه‌های مجله بخشی از همین سایت هستند */
+export const MAG_URL = MAG_ENABLED ? MAG_PATH : 'https://arkan.gold/mag';
 
 export const servicesMenu: NavLink[] = [
   { label: 'خرید و فروش طلای آب‌شده', href: '/buy-gold', desc: 'خرید و فروش آنلاین طلای آب‌شده با قیمت لحظه‌ای', icon: 'gold-drop' },
@@ -25,7 +27,7 @@ export const servicesMenu: NavLink[] = [
 ];
 
 export const otherMenu: NavLink[] = [
-  { label: 'مجله آرکان گلد', href: MAG_URL, external: true, desc: 'مقالات، اخبار و آموزش بازار طلا', icon: 'document' },
+  { label: 'مجله آرکان گلد', href: MAG_URL, external: !MAG_ENABLED, desc: 'مقالات، اخبار و آموزش بازار طلا', icon: 'document' },
   { label: 'سوالات متداول', href: '/faq', desc: 'پاسخ پرسش‌های پرتکرار کاربران', icon: 'question' },
   { label: 'قوانین و مقررات', href: '/rules', desc: 'شرایط و مقررات استفاده از خدمات', icon: 'book' },
   { label: 'درباره ما', href: '/about', desc: 'آشنایی با آرکان گلد', icon: 'info' },

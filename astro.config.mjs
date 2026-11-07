@@ -13,8 +13,8 @@ export default defineConfig({
       applyBaseStyles: false,
     }),
     sitemap({
-      // صفحات بلاگ خارج از این پروژه (وردپرس) هستند، در sitemap این پروژه نباید بیایند
-      // صفحه‌ی /shop/item (جزئیات شمش‌های جدید در مرورگر) noindex است
+      // مجله sitemap اختصاصی خودش را دارد (/mag/sitemap.xml با lastmod هر مطلب و بدون صفحه‌های noindex)
+      // صفحه‌ی /shop/item (جزئیات شمش‌های جدید در مرورگر) و /mag-live (جست‌وجو و مطالب جدید) noindex هستند
       filter: (page) => !page.includes('/mag') && !page.includes('/shop/item'),
     }),
   ],

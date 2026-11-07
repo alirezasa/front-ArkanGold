@@ -1,0 +1,130 @@
+---
+// مجله — صفحه‌ای که محتوایش در مرورگر مستقیماً از REST API وردپرس ساخته می‌شود. دو کاربرد:
+//   /mag-live?s=...   ← جست‌وجو در مطالب مجله
+//   /mag/{آدرس}       ← مطلبی که بعد از آخرین build منتشر شده و هنوز صفحه‌ی ایستا ندارد؛
+//                        public/.htaccess همین فایل را با همان آدرس نمایش می‌دهد تا لینک مطلب
+//                        جدید از همان لحظه‌ی انتشار کار کند (build بعدی صفحه‌ی ایستا و سئوی کامل را می‌سازد)
+// این صفحه noindex است و در robots.txt و sitemap حذف شده است.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MagSearch from '../components/mag/MagSearch.astro';
+import { MAG_NAME, MAG_PATH } from '../config/site';
+---
+
+<BaseLayout title={`جست‌وجو در ${MAG_NAME}`} description="جست‌وجو در مطالب مجله آرکان گلد." path="/mag-live" noindex>
+  <div id="mag-live-root">
+    <section id="mag-search" class="container-page hidden py-10">
+      <nav aria-label="مسیر صفحه" class="mb-6 text-xs text-ink-soft">
+        <a href="/" class="hover:text-brand hover:underline">آرکان گلد</a> /
+        <a href={MAG_PATH} class="hover:text-brand hover:underline">{MAG_NAME}</a> / <span class="text-brand font-semibold">جست‌وجو</span>
+      </nav>
+      <header class="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <h1 class="text-2xl md:text-3xl font-bold text-brand" data-search-title>جست‌وجو در مجله</h1>
+        <MagSearch />
+      </header>
+      <p data-search-status class="py-10 text-center text-sm text-ink-soft"></p>
+      <div data-search-grid class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+    <p id="mag-live-status" class="container-page py-24 text-center text-sm text-ink-soft">در حال دریافت مطلب...</p>
+  </div>
+</BaseLayout>
+
+<script>
+  import { MAG_PATH, WP_API_URL } from '../config/site';
+  import { WP_EMBED, fetchSiteInfo, magArticleHtml, magCardHtml, magPostSeo, toMagPost, wpGet, type WpPost } from '../lib/wp';
+  import { initMagArticle } from '../lib/magClient';
+
+  const root = document.getElementById('mag-live-root')!;
+  const status = document.getElementById('mag-live-status')!;
+  const params = new URLSearchParams(location.search);
+  const query = (params.get('s') || '').trim();
+
+  function safeDecode(s: string) {
+    try {
+      return decodeURIComponent(s);
+    } catch {
+      return s;
+    }
+  }
+
+  function setRobots(content: string) {
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', content);
+  }
+
+  async function search() {
+    status.remove();
+    const section = document.getElementById('mag-search')!;
+    section.classList.remove('hidden');
+    const msg = section.querySelector<HTMLElement>('[data-search-status]')!;
+    const grid = section.querySelector<HTMLElement>('[data-search-grid]')!;
+    const input = section.querySelector<HTMLInputElement>('input[name="s"]');
+    if (input) input.value = query;
+    section.querySelector('[data-search-title]')!.textContent = `نتایج جست‌وجو برای «${query}»`;
+    document.title = `جست‌وجوی «${query}» | مجله آرکان گلد`;
+    msg.textContent = 'در حال جست‌وجو...';
+    try {
+      const [site, res] = await Promise.all([
+        fetchSiteInfo(),
+        wpGet<WpPost[]>('wp/v2/posts', { search: query, per_page: 24, _embed: WP_EMBED }),
+      ]);
+      const posts = res.data.map((p) => toMagPost(p, site.home)).filter((p) => !!p);
+      grid.innerHTML = posts.map((p) => magCardHtml(p!)).join('');
+      msg.textContent = posts.length ? '' : 'مطلبی با این عبارت پیدا نشد. عبارت دیگری را امتحان کنید.';
+      msg.classList.toggle('hidden', posts.length > 0);
+    } catch (err) {
+      console.error('[mag] search failed:', err);
+      msg.textContent = 'جست‌وجو انجام نشد. لطفاً دوباره تلاش کنید.';
+    }
+  }
+
+  function fail(message: string) {
+    setRobots('noindex, follow');
+    document.title = 'مطلب پیدا نشد | مجله آرکان گلد';
+    status.innerHTML = `${message}<br><a href="${MAG_PATH}" class="btn-primary mt-6">بازگشت به مجله</a>`;
+  }
+
+  async function loadPost() {
+    const inMag = location.pathname.startsWith(`${MAG_PATH}/`);
+    const segments = inMag ? location.pathname.slice(MAG_PATH.length).split('/').filter(Boolean).map(safeDecode) : [];
+    const slug = (params.get('slug') || segments[segments.length - 1] || '').trim();
+    if (!inMag) setRobots('noindex, follow');
+    if (!slug) return fail('مطلب موردنظر مشخص نشده است.');
+
+    try {
+      const site = await fetchSiteInfo();
+      let raw: WpPost | undefined;
+      for (const type of ['posts', 'pages']) {
+        const res = await wpGet<WpPost[]>(`wp/v2/${type}`, { slug, _embed: WP_EMBED });
+        raw = res.data[0];
+        if (raw) break;
+      }
+      const post = raw ? toMagPost(raw, site.home) : null;
+      if (!post) return fail('این مطلب پیدا نشد یا دیگر منتشر نمی‌شود.');
+
+      const seo = magPostSeo(post);
+      document.title = seo.title.includes('آرکان گلد') ? seo.title : `${seo.title} | آرکان گلد`;
+      document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description);
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', seo.url);
+      document.querySelector('meta[property="og:url"]')?.setAttribute('content', seo.url);
+      if (seo.noindex) setRobots('noindex, follow');
+      for (const schema of seo.schemas) {
+        const tag = document.createElement('script');
+        tag.type = 'application/ld+json';
+        tag.textContent = JSON.stringify(schema);
+        document.head.appendChild(tag);
+      }
+      root.innerHTML = magArticleHtml(post);
+      initMagArticle(root);
+    } catch (err) {
+      console.error('[mag] post load failed:', err);
+      fail('دریافت مطلب انجام نشد. لطفاً صفحه را دوباره بارگذاری کنید.');
+    }
+  }
+
+  if (!WP_API_URL) {
+    status.innerHTML = `مجله در دسترس نیست.<br><a href="https://arkan.gold/mag" class="btn-primary mt-6">رفتن به مجله</a>`;
+  } else if (query) {
+    search();
+  } else {
+    loadPost();
+  }
+</script>
