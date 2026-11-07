@@ -287,9 +287,49 @@ export const pagedPath = (base: string, page: number) =>
  * محتوا
  * ------------------------------------------------------------------ */
 
+/** مسیر فایل‌های آپلود وردپرس روی سایت اصلی (از وردپرس پروکسی و کش می‌شوند — src/mag/media.ts) */
+export const MEDIA_PATH = '/wp-content/uploads';
+
+/**
+ * آدرس فایل آپلود وردپرس (تصویر، PDF و ...) روی سایت اصلی:
+ *   https://cms.arkan.gold/wp-content/uploads/2026/10/a.jpg  →  /wp-content/uploads/2026/10/a.jpg
+ * آدرس‌های قدیمی https://arkan.gold/mag/wp-content/uploads/... هم تبدیل می‌شوند. این‌طوری هیچ آدرسی
+ * از cms.arkan.gold در صفحه‌ها و نتایج گوگل (از جمله Google Images) دیده نمی‌شود.
+ */
+export function localMedia(url: string | undefined, home: string): string | undefined {
+  if (!url) return url;
+  let u: URL;
+  try {
+    u = new URL(url, home);
+  } catch {
+    return url;
+  }
+  let homeHost = '';
+  try {
+    homeHost = new URL(home).host;
+  } catch {
+    /* home نامعتبر */
+  }
+  const hosts = new Set([homeHost, new URL(SITE).host, `www.${new URL(SITE).host}`]);
+  const m = u.pathname.match(/\/wp-content\/uploads\/(.+)$/);
+  if (!hosts.has(u.host) || !m) return url;
+  return `${MEDIA_PATH}/${m[1]}${u.search}`;
+}
+
+/** srcset: هر آدرس جداگانه به آدرس سایت اصلی تبدیل می‌شود */
+const localSrcset = (srcset: string, home: string) =>
+  srcset
+    .split(',')
+    .map((part) => {
+      const [url, ...rest] = part.trim().split(/\s+/);
+      return [localMedia(url, home), ...rest].join(' ');
+    })
+    .join(', ');
+
 /**
  * آماده‌سازی HTML محتوای وردپرس برای نمایش روی سایت اصلی:
  * - لینک‌های داخلی مجله (چه به آدرس وردپرس، چه به arkan.gold/mag) به /mag/... تبدیل می‌شوند
+ * - تصاویر و فایل‌های آپلود از آدرس سایت اصلی (/wp-content/uploads/...) سرو می‌شوند
  * - اسکریپت‌ها و رویدادهای inline حذف می‌شوند (embed ها با iframe باقی می‌مانند)
  */
 export function prepareContent(html: string, home: string): string {
@@ -298,6 +338,11 @@ export function prepareContent(html: string, home: string): string {
     .replace(/<script[^>]*\/?>/gi, '')
     .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"')
+    .replace(/\b(src|href|poster|data-src|data-lazy-src|srcset|data-srcset|data-lazy-srcset)\s*=\s*("|')([^"']*)\2/gi, (m, attr: string, q: string, value: string) => {
+      const decoded = decodeEntities(value);
+      const local = /srcset$/i.test(attr) ? localSrcset(decoded, home) : localMedia(decoded, home);
+      return local === decoded ? m : `${attr}=${q}${esc(local ?? '')}${q}`;
+    })
     .replace(/\bhref\s*=\s*("|')([^"']*)\1/gi, (m, q: string, url: string) => {
       const decoded = decodeEntities(url);
       if (!/^https?:\/\//i.test(decoded)) return m;
@@ -309,7 +354,7 @@ export function prepareContent(html: string, home: string): string {
 }
 
 /** تصویر شاخص با srcset (فقط اندازه‌های هم‌نسبت با تصویر اصلی، نه برش‌های مربعی) */
-export function mediaToImage(media: WpMedia | undefined, fallbackAlt: string): MagImage | undefined {
+export function mediaToImage(media: WpMedia | undefined, fallbackAlt: string, home: string): MagImage | undefined {
   if (!media || media.code || !media.source_url) return undefined;
   const d = media.media_details ?? {};
   const ratio = d.width && d.height ? d.width / d.height : 0;
@@ -317,14 +362,14 @@ export function mediaToImage(media: WpMedia | undefined, fallbackAlt: string): M
     (s) => s?.source_url && s.width && s.height && (!ratio || Math.abs(s.width / s.height - ratio) < 0.03)
   );
   const unique = new Map<number, string>();
-  for (const s of sizes) unique.set(s.width, s.source_url);
-  if (d.width) unique.set(d.width, media.source_url);
+  for (const s of sizes) unique.set(s.width, localMedia(s.source_url, home)!);
+  if (d.width) unique.set(d.width, localMedia(media.source_url, home)!);
   const srcset = [...unique.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([w, url]) => `${url.replace(/ /g, '%20').replace(/,/g, '%2C')} ${w}w`)
     .join(', ');
   return {
-    src: media.source_url,
+    src: localMedia(media.source_url, home)!,
     width: d.width,
     height: d.height,
     alt: decodeEntities(media.alt_text || '') || fallbackAlt,
@@ -363,7 +408,7 @@ export function seoFromHeadHtml(head: string): SeoHead {
 export function toAuthor(user: WpUser | undefined, home: string): MagAuthor | undefined {
   if (!user || user.code || !user.name) return undefined;
   const avatars = user.avatar_urls ?? {};
-  const avatar = avatars['96'] || avatars['48'] || Object.values(avatars).pop();
+  const avatar = localMedia(avatars['96'] || avatars['48'] || Object.values(avatars).pop(), home);
   return {
     id: user.id,
     name: decodeEntities(user.name),
@@ -401,6 +446,7 @@ export function toMagPost(raw: WpPost, home: string): MagPost | null {
       .map((t) => termRef(t, home))
       .filter((t): t is MagTermRef => !!t);
 
+  const seo = seoFromYoast(raw.yoast_head_json);
   return {
     id: raw.id,
     type: raw.type === 'page' ? 'page' : 'post',
@@ -415,10 +461,10 @@ export function toMagPost(raw: WpPost, home: string): MagPost | null {
     sticky: !!raw.sticky,
     readingMinutes: Math.max(1, Math.round(words / 200)),
     author: toAuthor(raw._embedded?.author?.[0], home),
-    image: mediaToImage(raw._embedded?.['wp:featuredmedia']?.[0], title),
+    image: mediaToImage(raw._embedded?.['wp:featuredmedia']?.[0], title, home),
     categories: refs('category'),
     tags: refs('post_tag'),
-    seo: seoFromYoast(raw.yoast_head_json),
+    seo: { ...seo, image: localMedia(seo.image, home) },
   };
 }
 
@@ -668,7 +714,9 @@ export function magPostSeo(post: MagPost): PageSeo {
   const isPost = post.type === 'post';
   const url = magUrl(post.path);
   const description = truncate(post.seo.description || post.excerpt || post.title, 160);
-  const image = post.seo.image || post.image?.src;
+  const rawImage = post.seo.image || post.image?.src;
+  // og:image و schema آدرس کامل لازم دارند (تصاویر مجله از /wp-content/uploads سایت اصلی سرو می‌شوند)
+  const image = rawImage ? new URL(rawImage, SITE).toString() : undefined;
   const meta: PageSeo['meta'] = [];
   if (isPost) {
     meta.push({ property: 'article:published_time', content: post.date });

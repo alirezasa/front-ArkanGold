@@ -5,7 +5,7 @@
 # تنظیمات GitHub (Settings ← Secrets and variables ← Actions) — راهنما: README ← «اجرا روی Node.js»
 #   Secrets:   FTP_SERVER، FTP_USERNAME، FTP_PASSWORD
 #   Variables: FTP_APP_DIR      پوشه‌ی برنامه‌ی Node.js نسبت به ریشه‌ی FTP (پیش‌فرض arkan-site)
-#              PUBLIC_WP_API_URL (مثلا https://cms.arkan.gold/wp-json) — بدون آن مجله غیرفعال است
+#              PUBLIC_WP_API_URL پیش‌فرض https://cms.arkan.gold/wp-json؛ off = مجله غیرفعال
 #              FTP_VERIFY_CERT  اگر گواهی FTPS هاست با نام سرور نمی‌خواند: false
 #              و در صورت نیاز PUBLIC_GA4_ID، PUBLIC_YEKTANET_ID، PUBLIC_ENAMAD_ID، PUBLIC_ENAMAD_CODE
 name: Deploy

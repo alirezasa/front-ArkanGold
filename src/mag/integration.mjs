@@ -2,6 +2,7 @@
  * مسیرهای مجله (SSR) — فقط وقتی PUBLIC_WP_API_URL تنظیم شده باشد به سایت اضافه می‌شوند.
  * بدون آن هیچ صفحه‌ای زیر /mag وجود ندارد و منوها به وردپرس فعلی (arkan.gold/mag) لینک می‌دهند.
  * مسیرهای ثابت (rss.xml، sitemap.xml، wp-revalidate) بر مسیر عمومی [...path] اولویت دارند.
+ * /wp-content/uploads/... فایل‌های آپلود وردپرس را از دامنه‌ی اصلی سرو می‌کند.
  */
 export default function magazine() {
   return {
@@ -12,6 +13,8 @@ export default function magazine() {
         injectRoute({ pattern: '/mag/sitemap.xml', entrypoint: './src/mag/sitemap.ts', prerender: false });
         injectRoute({ pattern: '/mag/wp-revalidate', entrypoint: './src/mag/revalidate.ts', prerender: false });
         injectRoute({ pattern: '/mag/[...path]', entrypoint: './src/mag/MagPage.astro', prerender: false });
+        // تصاویر و فایل‌های مطالب از وردپرس، با آدرس دامنه‌ی اصلی (src/mag/media.ts)
+        injectRoute({ pattern: '/wp-content/uploads/[...file]', entrypoint: './src/mag/media.ts', prerender: false });
       },
     },
   };

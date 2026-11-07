@@ -32,6 +32,10 @@ const rawPath = (Astro.params.path ?? '').split('/').filter(Boolean).join('/');
 const legacy: Record<string, string> = { feed: '/mag/rss.xml', 'sitemap_index.xml': '/mag/sitemap.xml' };
 if (legacy[rawPath]) return Astro.redirect(legacy[rawPath], 301);
 if (/^[a-z_-]+-sitemap\d*\.xml$/.test(rawPath)) return Astro.redirect('/mag/sitemap.xml', 301);
+// آدرس قدیمی فایل‌ها وقتی وردپرس در /mag بود: /mag/wp-content/uploads/... ← /wp-content/uploads/...
+if (rawPath.startsWith('wp-content/uploads/')) {
+  return Astro.redirect(`/${rawPath.split('/').map(encodeURIComponent).join('/')}${Astro.url.search}`, 301);
+}
 
 const query = (Astro.url.searchParams.get('s') ?? '').trim();
 const isSearch = rawPath === '' && query.length > 0;
