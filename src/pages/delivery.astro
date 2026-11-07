@@ -10,10 +10,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import FaqAccordion from '../components/sections/FaqAccordion.astro';
 import { APP_URL, BAR_PURITY, OFFICE_ADDRESS, OFFICE_HOURS } from '../config/site';
-import { formatGrams, ingotWeights, loadIngotCatalog } from '../lib/goldIngots';
+import { formatGrams, ingotWeights, loadIngotCatalog, UNAVAILABLE_CATALOG } from '../lib/goldIngots';
+import { withDeadline } from '../lib/cache';
 
 // وزن‌های شمش موجود در فروشگاه (از API، با کش؛ در صورت عدم دسترسی، فهرست نمایش داده نمی‌شود)
-const catalog = await loadIngotCatalog();
+// حداکثر ۴ ثانیه انتظار برای API؛ بعد از آن صفحه بدون معطلی ساخته می‌شود (فروشگاه محصولات را در مرورگر می‌گیرد)
+const catalog = await withDeadline(loadIngotCatalog(), 4000, UNAVAILABLE_CATALOG);
 const barWeights = [...new Set(catalog.products.flatMap((p) => ingotWeights(p)))].sort((a, b) => a - b);
 
 const purityFa = BAR_PURITY.toLocaleString('fa-IR');

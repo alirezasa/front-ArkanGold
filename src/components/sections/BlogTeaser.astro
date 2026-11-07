@@ -5,7 +5,7 @@
 // اگر وردپرس در دسترس نباشد این بخش بی‌صدا حذف می‌شود (خطا صفحه را نمی‌شکند).
 import { MAG_ENABLED, MAG_NAME } from '../../config/site';
 import { MAG_URL } from '../../data/nav';
-import { cached } from '../../lib/cache';
+import { cached, withDeadline } from '../../lib/cache';
 import { latestPosts } from '../../lib/magazine';
 import MagCard from '../mag/MagCard.astro';
 import type { MagPost } from '../../lib/wp';
@@ -22,15 +22,16 @@ let magPosts: MagPost[] = [];
 let legacyPosts: WpPost[] = [];
 
 if (MAG_ENABLED) {
-  magPosts = await latestPosts(4).catch(() => []);
+  // حداکثر ۱.۵ ثانیه انتظار؛ اگر وردپرس کند است، صفحه‌ی اصلی بدون این بخش ساخته می‌شود
+  magPosts = await withDeadline(latestPosts(4), 1500, []);
 } else {
-  legacyPosts = await cached('legacy-mag:latest', 10 * 60_000, async () => {
+  legacyPosts = await withDeadline(cached('legacy-mag:latest', 10 * 60_000, async () => {
     const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) throw new Error(String(res.status));
     return (await res.json()) as WpPost[];
-  }).catch(() => []);
+  }), 1500, []);
 }
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();

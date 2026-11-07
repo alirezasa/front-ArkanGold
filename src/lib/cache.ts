@@ -116,3 +116,16 @@ export function purgeCache(prefix = ''): number {
   }
   return n;
 }
+
+/**
+ * داده‌ی اختیاری صفحه با سقف انتظار: اگر تا ms میلی‌ثانیه آماده نشد، fallback برمی‌گردد و صفحه بدون
+ * معطلی ساخته می‌شود؛ درخواست در پس‌زمینه ادامه پیدا می‌کند و نتیجه‌اش برای بازدید بعدی در کش می‌ماند.
+ * (صفحه‌ی اصلی هرگز به‌خاطر کندی وردپرس یا API قیمت دیر بالا نمی‌آید — health check پلتفرم هم رد نمی‌شود.)
+ */
+export function withDeadline<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const guarded = promise.catch(() => fallback);
+  return Promise.race([guarded, new Promise<T>((resolve) => (timer = setTimeout(() => resolve(fallback), ms)))]).finally(() =>
+    clearTimeout(timer)
+  );
+}

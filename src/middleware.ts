@@ -4,6 +4,7 @@
  * صفحه‌های ایستا در build این مقدار را ندارند و دست‌نخورده می‌مانند.
  */
 import { defineMiddleware } from 'astro:middleware';
+import { withDeadline } from './lib/cache';
 import { fillPriceBindings, serverGoldPrice } from './lib/serverPrice';
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -18,7 +19,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   if (!context.locals.livePrice || !isHtml) return response;
 
-  const price = await serverGoldPrice().catch(() => null);
+  // حداکثر ۱.۲ ثانیه انتظار برای قیمت؛ بعد از آن صفحه با متن پیش‌فرض می‌رود و مرورگر قیمت را پر می‌کند
+  const price = await withDeadline(serverGoldPrice(), 1200, null);
   if (!price) return response; // API قیمت در دسترس نیست: متن پیش‌فرض می‌ماند و مرورگر پر می‌کند
 
   const html = fillPriceBindings(await response.text(), price);
