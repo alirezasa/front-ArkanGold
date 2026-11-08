@@ -279,6 +279,30 @@ GET https://api.arkan.gold/public/gold-ingots/{slug}                         ←
 - **آرشیوها** (دسته، برچسب، نویسنده و جست‌وجو): سربرگ تیره‌ی برند و شبکه‌ی کارت‌ها.
 - **کارت مطلب** (`MagCard.astro`) سه حالت دارد: `card`، `overlay` و `mini`. بخش «مطالب مجله»ی صفحه‌ی اصلی سایت هم از همین کارت استفاده می‌کند.
 
+### Rank Math (Pro) — تنظیمات لازم
+سایت از Rank Math این‌ها را می‌خواند (`src/lib/magazine.ts` و افزونه‌ی `arkan-headless` نسخه ۲.۲):
+- عنوان سئو، توضیحات متا و robots.
+- تصویر شبکه‌های اجتماعی، با آدرس arkan.gold.
+- schema های Pro: FAQ، HowTo، ویدیو، دستور پخت، دوره، رویداد، نقد و ... . آدرس‌های داخلشان به arkan.gold تبدیل می‌شوند.
+- noindex هر مطلب، دسته، برچسب و نویسنده. این صفحه‌ها از `/mag/sitemap.xml` هم حذف می‌شوند.
+- ریدایرکت‌های ماژول Redirections، روی `arkan.gold/mag`: انطباق exact، contains، start، end و regex، و کدهای ۳۰۱، ۳۰۲، ۳۰۷، ۴۱۰ و ۴۵۱.
+
+Article، BlogPosting، Breadcrumb و Organization را خود سایت می‌سازد. نسخه‌ی Rank Math این‌ها کنار گذاشته می‌شود تا تکراری نشوند.
+
+| تنظیم در Rank Math | مقدار | دلیل |
+|---|---|---|
+| تنظیمات عمومی ← سایر ← **Headless CMS Support** | **روشن** (ضروری) | بدون آن سایت به داده‌های سئوی Rank Math دسترسی ندارد |
+| ماژول **Sitemap** | خاموش | sitemap مجله روی arkan.gold ساخته می‌شود؛ sitemap رنک مث آدرس‌های cms را دارد |
+| ماژول **Instant Indexing** | خاموش | آدرس‌های cms را به بینگ/IndexNow می‌فرستد |
+| ماژول **404 Monitor** | خاموش | صفحه‌های عمومی cms به arkan.gold هدایت می‌شوند و این ماژول چیزی ثبت نمی‌کند |
+| ماژول **Redirections** | روشن (اختیاری) | روی arkan.gold/mag اجرا می‌شود؛ تغییرات حداکثر ۵ دقیقه بعد یا بلافاصله بعد از «پاک کردن کش مجله» |
+| ماژول **Schema** (Pro) | روشن | FAQ و HowTo و ... در نتایج گوگل |
+| ماژول **Analytics** | اختیاری | آمار را مستقیم از Search Console دامنه‌ی arkan.gold ببینید |
+| عنوان‌ها و متا ← عمومی ← قالب عنوان | `%title% %sep% %sitename%` | نام سایت (تنظیمات ← عمومی ← عنوان سایت) را «مجله آرکان گلد» بگذارید |
+| عنوان‌ها و متا ← تصویر پیش‌فرض OpenGraph | یک تصویر برند | برای مطالب بدون تصویر شاخص |
+| تنظیمات عمومی ← پیوندها ← **Strip Category Base** | تغییر ندهید | آدرس دسته‌ها عوض می‌شود و آدرس‌های ایندکس‌شده از دست می‌روند |
+| تنظیمات عمومی ← Breadcrumbs | لازم نیست | سایت مسیر صفحه را خودش می‌سازد |
+
 ### مخفی ماندن cms.arkan.gold از گوگل
 1. افزونه‌ی `wordpress/arkan-headless` (نسخه ۲.۱) فعال باشد: صفحه‌های عمومی cms با ۳۰۱ به همان آدرس در
    `arkan.gold/mag` می‌روند، همه‌ی پاسخ‌های وردپرس هدر `X-Robots-Tag: noindex` دارند و sitemap خود
@@ -344,7 +368,7 @@ GET https://api.arkan.gold/public/gold-ingots/{slug}                         ←
 
 ### سئو
 - **Yoast SEO**: عنوان سئو، توضیحات متا، تصویر شبکه‌های اجتماعی و noindex هر مطلب، دسته، برچسب و نویسنده.
-- **Rank Math**: گزینه‌ی «Headless CMS Support» را در تنظیمات Rank Math روشن کنید.
+- **Rank Math (و Pro)**: بخش «Rank Math (Pro) — تنظیمات لازم» پایین‌تر.
 - بدون افزونه: عنوان مطلب، خلاصه (یا ابتدای متن) و تصویر شاخص.
 - canonical، Open Graph و `article:*`، JSON-LD از نوع `BlogPosting` و `BreadcrumbList`، `Blog`/`CollectionPage`
   برای فهرست‌ها، `/mag/sitemap.xml` با `lastmod`، خوراک RSS، و صفحه‌ی جست‌وجو/۴۰۴ با noindex.

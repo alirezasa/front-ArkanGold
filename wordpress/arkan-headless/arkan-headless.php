@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Arkan Gold — مجله هدلس
  * Description: وردپرس را به پنل محتوای مجله‌ی آرکان گلد تبدیل می‌کند: بازدید از صفحه‌های عمومی وردپرس به همان آدرس در arkan.gold/mag هدایت می‌شود و با هر انتشار/ویرایش مطلب، کش صفحه‌های مجله روی سرور Node.js پاک می‌شود تا تغییر فوراً دیده شود.
- * Version:     2.1.0
+ * Version:     2.2.0
  * Author:      Arkan Gold
  * Requires PHP: 7.4
  *
@@ -125,6 +125,112 @@ add_action('admin_notices', function () {
         . '<a href="' . esc_url(admin_url('options-reading.php')) . '">تنظیمات ← خواندن</a> روشن است. '
         . 'آن را خاموش کنید؛ وگرنه همه‌ی مطالب مجله روی arkan.gold هم از گوگل حذف می‌شوند. '
         . 'خود cms.arkan.gold با افزونه‌ی «مجله هدلس» از نتایج جست‌وجو مخفی است.</p></div>';
+});
+
+/* ------------------------------------------------------------------
+ * سازگاری با Rank Math / Yoast برای سایت اصلی
+ *   - فیلد arkan_noindex در REST (نوشته، برگه، دسته، برچسب، نویسنده): sitemap و صفحه‌های
+ *     arkan.gold/mag صفحه‌های noindex را بدون درخواست جداگانه می‌شناسند
+ *   - GET /wp-json/arkan/v1/redirects: ریدایرکت‌های فعال ماژول Redirections افزونه‌ی Rank Math تا
+ *     همان ریدایرکت‌ها روی arkan.gold/mag هم اجرا شوند
+ * ------------------------------------------------------------------ */
+
+function arkan_headless_has_noindex($robots)
+{
+    if (is_string($robots)) {
+        $robots = maybe_unserialize($robots);
+    }
+    return is_array($robots) && in_array('noindex', $robots, true);
+}
+
+function arkan_headless_post_noindex($post_id)
+{
+    try {
+        if (class_exists('\RankMath\Helper') && method_exists('\RankMath\Helper', 'is_post_indexable')) {
+            return !\RankMath\Helper::is_post_indexable($post_id);
+        }
+    } catch (\Throwable $e) {
+        // نسخه‌های دیگر Rank Math: از متای مطلب
+    }
+    if (arkan_headless_has_noindex(get_post_meta($post_id, 'rank_math_robots', true))) {
+        return true;
+    }
+    return get_post_meta($post_id, '_yoast_wpseo_meta-robots-noindex', true) === '1';
+}
+
+function arkan_headless_term_noindex($term_id, $taxonomy)
+{
+    try {
+        if (class_exists('\RankMath\Helper') && method_exists('\RankMath\Helper', 'is_term_indexable')) {
+            $term = get_term($term_id, $taxonomy);
+            if ($term && !is_wp_error($term)) {
+                return !\RankMath\Helper::is_term_indexable($term);
+            }
+        }
+    } catch (\Throwable $e) {
+        // از متای دسته/برچسب
+    }
+    return arkan_headless_has_noindex(get_term_meta($term_id, 'rank_math_robots', true));
+}
+
+add_action('rest_api_init', function () {
+    $schema = ['type' => 'boolean', 'context' => ['view', 'embed'], 'readonly' => true];
+    foreach (['post', 'page'] as $type) {
+        register_rest_field($type, 'arkan_noindex', [
+            'get_callback' => function ($obj) {
+                return arkan_headless_post_noindex((int) $obj['id']);
+            },
+            'schema' => $schema,
+        ]);
+    }
+    foreach (['category', 'post_tag'] as $type) {
+        register_rest_field($type, 'arkan_noindex', [
+            'get_callback' => function ($obj) {
+                return arkan_headless_term_noindex((int) $obj['id'], (string) ($obj['taxonomy'] ?? ''));
+            },
+            'schema' => $schema,
+        ]);
+    }
+    register_rest_field('user', 'arkan_noindex', [
+        'get_callback' => function ($obj) {
+            return arkan_headless_has_noindex(get_user_meta((int) $obj['id'], 'rank_math_robots', true));
+        },
+        'schema' => $schema,
+    ]);
+
+    register_rest_route('arkan/v1', '/redirects', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => function () {
+            global $wpdb;
+            $table = $wpdb->prefix . 'rank_math_redirections';
+            if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+                return rest_ensure_response([]);
+            }
+            $rows = $wpdb->get_results("SELECT sources, url_to, header_code FROM {$table} WHERE status = 'active' ORDER BY id ASC LIMIT 5000", ARRAY_A);
+            $out = [];
+            foreach ((array) $rows as $row) {
+                $sources = maybe_unserialize($row['sources']);
+                if (!is_array($sources)) {
+                    continue;
+                }
+                $out[] = [
+                    'sources' => array_values(array_map(function ($src) {
+                        return [
+                            'pattern'    => (string) ($src['pattern'] ?? ''),
+                            'comparison' => (string) ($src['comparison'] ?? 'exact'),
+                            'ignore'     => (string) ($src['ignore'] ?? ''),
+                        ];
+                    }, $sources)),
+                    'to'      => (string) $row['url_to'],
+                    'code'    => (int) $row['header_code'],
+                ];
+            }
+            $response = rest_ensure_response($out);
+            $response->header('Cache-Control', 'no-store');
+            return $response;
+        },
+    ]);
 });
 
 /* ------------------------------------------------------------------

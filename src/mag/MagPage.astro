@@ -16,7 +16,9 @@ import MagLanding from '../components/mag/MagLanding.astro';
 import MagPagination from '../components/mag/MagPagination.astro';
 import MagSearch from '../components/mag/MagSearch.astro';
 import { MAG_NAME, MAG_PATH, SITE_URL } from '../config/site';
+import { withDeadline } from '../lib/cache';
 import {
+  findRedirect,
   getSite,
   latestPosts,
   magLanding,
@@ -41,6 +43,10 @@ if (/^[a-z_-]+-sitemap\d*\.xml$/.test(rawPath)) return Astro.redirect('/mag/site
 if (rawPath.startsWith('wp-content/uploads/')) {
   return Astro.redirect(`/${rawPath.split('/').map(encodeURIComponent).join('/')}${Astro.url.search}`, 301);
 }
+
+// ریدایرکت‌های ماژول Redirections افزونه‌ی Rank Math (۴۱۰/۴۵۱ هم پشتیبانی می‌شود)
+const rmRedirect = rawPath ? await withDeadline(findRedirect(rawPath, Astro.url.search.slice(1)), 1500, null) : null;
+if (rmRedirect && 'location' in rmRedirect) return Astro.redirect(rmRedirect.location, rmRedirect.status);
 
 const query = (Astro.url.searchParams.get('s') ?? '').trim();
 const isSearch = rawPath === '' && query.length > 0;
@@ -71,7 +77,8 @@ try {
 if (route.kind === 'redirect') return Astro.redirect(magHref(route.path), 301);
 
 const unavailable = Astro.response.status === 503;
-if (route.kind === 'notfound' && !unavailable) Astro.response.status = 404;
+if (rmRedirect && !('location' in rmRedirect)) route = { kind: 'notfound' };
+if (route.kind === 'notfound' && !unavailable) Astro.response.status = rmRedirect && !('location' in rmRedirect) ? rmRedirect.status : 404;
 // صفحه‌ی ۴۰۴ همین فایل نمایش داده شود؛ در غیر این صورت Astro صفحه‌ی 404.html ایستا را از خود سرور
 // درخواست می‌کند که برنامه‌ی Node.js فقط /mag را پاسخ می‌دهد و آن درخواست در حلقه می‌افتد
 if (route.kind === 'notfound') Astro.response.headers.set('X-Astro-Reroute', 'no');

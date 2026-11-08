@@ -47,6 +47,8 @@ export interface WpTerm {
   count?: number;
   parent?: number;
   yoast_head_json?: YoastHeadJson | null;
+  /** noindex بودن طبق Rank Math / Yoast (افزونه‌ی arkan-headless) */
+  arkan_noindex?: boolean;
 }
 
 export interface WpUser {
@@ -57,6 +59,8 @@ export interface WpUser {
   description?: string;
   avatar_urls?: Record<string, string>;
   yoast_head_json?: YoastHeadJson | null;
+  /** noindex بودن طبق Rank Math / Yoast (افزونه‌ی arkan-headless) */
+  arkan_noindex?: boolean;
   code?: string;
 }
 
@@ -88,6 +92,8 @@ export interface WpPost {
   categories?: number[];
   tags?: number[];
   yoast_head_json?: YoastHeadJson | null;
+  /** noindex بودن طبق Rank Math / Yoast (افزونه‌ی arkan-headless) */
+  arkan_noindex?: boolean;
   _embedded?: {
     author?: WpUser[];
     'wp:featuredmedia'?: WpMedia[];
@@ -112,6 +118,8 @@ export interface SeoHead {
   description?: string;
   noindex?: boolean;
   image?: string;
+  /** schema های تکمیلی که نویسنده در Rank Math Pro ساخته (FAQ، HowTo، ویدیو و ...) با آدرس‌های سایت اصلی */
+  schemas?: Record<string, unknown>[];
 }
 
 export interface MagImage {
@@ -386,8 +394,37 @@ export function seoFromYoast(y: YoastHeadJson | null | undefined): SeoHead {
   };
 }
 
+/** schema هایی از Rank Math Pro که سایت خودش نمی‌سازد و ارزش نمایش در نتایج گوگل دارند */
+const RICH_SCHEMA_TYPES = new Set(['FAQPage', 'HowTo', 'VideoObject', 'Recipe', 'Course', 'Event', 'Review', 'Dataset', 'SoftwareApplication']);
+
+/**
+ * آدرس‌های وردپرس داخل schema به آدرس سایت اصلی تبدیل می‌شوند:
+ * فایل‌ها ← https://arkan.gold/wp-content/uploads/...، صفحه‌ها ← https://arkan.gold/mag/...
+ */
+function rewriteWpUrl(url: string, home: string): string {
+  const media = localMedia(url, home);
+  if (media !== url && media) return `${SITE}${media}`;
+  const path = wpPath(url, home);
+  if (path === null) return url;
+  const hash = url.includes('#') ? url.slice(url.indexOf('#')) : '';
+  return `${magUrl(path)}${hash}`;
+}
+
+export function rewriteWpUrls<T>(value: T, home: string): T {
+  if (typeof value === 'string') {
+    // آدرس تنها، یا آدرس‌های داخل متن/HTML (مثلا لینک داخل پاسخ FAQ)
+    if (/^https?:\/\/\S+$/i.test(value)) return rewriteWpUrl(value, home) as T;
+    return value.replace(/https?:\/\/[^\s"'<>]+/gi, (u) => rewriteWpUrl(u, home)) as T;
+  }
+  if (Array.isArray(value)) return value.map((v) => rewriteWpUrls(v, home)) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, rewriteWpUrls(v, home)])) as T;
+  }
+  return value;
+}
+
 /** داده‌های سئو از HTML تگ head (پاسخ getHead افزونه‌ی Rank Math) */
-export function seoFromHeadHtml(head: string): SeoHead {
+export function seoFromHeadHtml(head: string, home: string): SeoHead {
   const meta = (attr: string, name: string) => {
     const tag = head.match(new RegExp(`<meta[^>]+${attr}=["']${name}["'][^>]*>`, 'i'))?.[0];
     const content = tag?.match(/content=["']([^"']*)["']/i)?.[1];
@@ -395,11 +432,30 @@ export function seoFromHeadHtml(head: string): SeoHead {
   };
   const title = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const robots = meta('name', 'robots');
+
+  const schemas: Record<string, unknown>[] = [];
+  for (const m of head.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const json = JSON.parse(m[1]);
+      const nodes: Record<string, unknown>[] = Array.isArray(json?.['@graph']) ? json['@graph'] : [json];
+      for (const node of nodes) {
+        const types = ([] as unknown[]).concat(node?.['@type'] ?? []);
+        if (types.some((t) => RICH_SCHEMA_TYPES.has(String(t)))) {
+          schemas.push(rewriteWpUrls({ '@context': 'https://schema.org', ...node }, home));
+        }
+      }
+    } catch {
+      /* JSON نامعتبر */
+    }
+  }
+
+  const image = meta('property', 'og:image');
   return {
     title: title ? decodeEntities(title).trim() : undefined,
     description: meta('name', 'description'),
     noindex: robots ? /noindex/i.test(robots) : undefined,
-    image: meta('property', 'og:image'),
+    image: image ? localMedia(image, home) : undefined,
+    schemas: schemas.length ? schemas : undefined,
   };
 }
 
@@ -445,6 +501,7 @@ export function toMagPost(raw: WpPost, home: string): MagPost | null {
       .filter((t): t is MagTermRef => !!t);
 
   const seo = seoFromYoast(raw.yoast_head_json);
+  if (raw.arkan_noindex) seo.noindex = true;
   return {
     id: raw.id,
     type: raw.type === 'page' ? 'page' : 'post',
@@ -677,6 +734,6 @@ export function magPostSeo(post: MagPost): PageSeo {
     noindex: !!post.seo.noindex,
     ogType: isPost ? 'article' : 'website',
     meta,
-    schemas: [article, breadcrumbSchema(postCrumbs(post))],
+    schemas: [article, breadcrumbSchema(postCrumbs(post)), ...(post.seo.schemas ?? [])],
   };
 }

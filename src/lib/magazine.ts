@@ -24,6 +24,7 @@ import {
   toMagPost,
   wpGet,
   wpPath,
+  magHref,
   type MagPost,
   type SeoHead,
   type WpPost,
@@ -92,11 +93,12 @@ const POST_FIELDS = [
   'categories',
   'tags',
   'yoast_head_json',
+  'arkan_noindex',
   '_links',
   '_embedded',
 ].join(',');
-const TERM_FIELDS = 'id,name,slug,link,taxonomy,description,count,parent,yoast_head_json';
-const USER_FIELDS = 'id,name,slug,link,description,avatar_urls,yoast_head_json';
+const TERM_FIELDS = 'id,name,slug,link,taxonomy,description,count,parent,yoast_head_json,arkan_noindex';
+const USER_FIELDS = 'id,name,slug,link,description,avatar_urls,yoast_head_json,arkan_noindex';
 
 /** همه‌ی صفحه‌های یک endpoint (۱۰۰ مورد در هر درخواست) */
 async function wpAll<T>(endpoint: string, params: Record<string, string | number> = {}): Promise<T[]> {
@@ -128,11 +130,17 @@ export async function topCategories(limit = 10): Promise<{ name: string; path: s
  * سئو از Rank Math (وقتی Yoast نصب نیست)
  * ------------------------------------------------------------------ */
 
+/**
+ * سئو از Rank Math (وقتی Yoast نصب نیست) — نیازمند «Headless CMS Support» در تنظیمات Rank Math.
+ * عنوان، توضیحات، robots، تصویر شبکه‌های اجتماعی و schema های Pro (FAQ، HowTo، ...) خوانده می‌شوند.
+ */
 async function withRankMath(site: WpSiteInfo, link: string, seo: SeoHead): Promise<SeoHead> {
   if (seo.title || seo.description || !site.namespaces?.includes('rankmath/v1')) return seo;
   try {
     const { data } = await wpGet<{ head?: string }>('rankmath/v1/getHead', { url: link });
-    return data?.head ? seoFromHeadHtml(data.head) : seo;
+    if (!data?.head) return seo;
+    const rm = seoFromHeadHtml(data.head, site.home);
+    return { ...rm, noindex: rm.noindex || seo.noindex };
   } catch {
     return seo;
   }
@@ -193,7 +201,7 @@ async function findCategory(site: WpSiteInfo, path: string): Promise<{ archive: 
     name: htmlToText(cat.name),
     path,
     description: htmlToText(cat.description || ''),
-    seo: await withRankMath(site, cat.link, seoFromYoast(cat.yoast_head_json)),
+    seo: await withRankMath(site, cat.link, { ...seoFromYoast(cat.yoast_head_json), ...(cat.arkan_noindex ? { noindex: true } : {}) }),
     count: cat.count,
   };
   return { archive, ids };
@@ -209,7 +217,7 @@ async function findTag(site: WpSiteInfo, path: string): Promise<MagArchive | nul
     name: htmlToText(tag.name),
     path,
     description: htmlToText(tag.description || ''),
-    seo: await withRankMath(site, tag.link, seoFromYoast(tag.yoast_head_json)),
+    seo: await withRankMath(site, tag.link, { ...seoFromYoast(tag.yoast_head_json), ...(tag.arkan_noindex ? { noindex: true } : {}) }),
     count: tag.count,
   };
 }
@@ -232,7 +240,7 @@ async function findAuthor(site: WpSiteInfo, path: string): Promise<MagArchive | 
     name: author.name,
     path,
     description: author.description,
-    seo: author.seo,
+    seo: user.arkan_noindex ? { ...author.seo, noindex: true } : author.seo,
     avatar: author.avatar,
   };
 }
@@ -343,6 +351,89 @@ export function latestPosts(count = 30): Promise<MagPost[]> {
 }
 
 /* ------------------------------------------------------------------
+ * ریدایرکت‌های Rank Math (ماژول Redirections)
+ * ------------------------------------------------------------------ */
+
+interface RankMathRedirect {
+  sources: { pattern: string; comparison: 'exact' | 'contains' | 'start' | 'end' | 'regex'; ignore?: string }[];
+  to: string;
+  code: number;
+}
+
+export type MagRedirect = { status: 301 | 302 | 307; location: string } | { status: 410 | 451 };
+
+/** فهرست ریدایرکت‌های فعال (افزونه‌ی arkan-headless ← /wp-json/arkan/v1/redirects) — کش ۵ دقیقه */
+function getRedirects(): Promise<RankMathRedirect[]> {
+  return cached('mag:redirects', 5 * 60_000, async () => {
+    try {
+      const { data } = await wpGet<RankMathRedirect[]>('arkan/v1/redirects');
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      // افزونه‌ی قدیمی یا Rank Math غیرفعال: ریدایرکتی وجود ندارد
+      if (err instanceof WpHttpError && err.status < 500) return [];
+      throw err;
+    }
+  });
+}
+
+const trimSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
+const safeDecode = (s: string) => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+};
+
+/**
+ * ریدایرکتی که Rank Math برای این آدرس مجله تعریف کرده (همان قواعد Rank Math: exact، contains، start، end،
+ * regex با $1 و ...). path نسبت به ریشه‌ی وردپرس است (یعنی بدون /mag).
+ */
+export async function findRedirect(path: string, query = ''): Promise<MagRedirect | null> {
+  const list = await getRedirects();
+  if (!list.length) return null;
+  const site = await getSite();
+  const subject = trimSlashes(safeDecode(path));
+
+  for (const r of list) {
+    for (const src of r.sources ?? []) {
+      const ci = String(src.ignore ?? '').includes('case');
+      const pattern = src.comparison === 'regex' ? String(src.pattern ?? '') : trimSlashes(safeDecode(String(src.pattern ?? '')));
+      if (!pattern) continue;
+      const a = ci ? subject.toLowerCase() : subject;
+      const b = ci ? pattern.toLowerCase() : pattern;
+      let match: RegExpMatchArray | null | boolean = false;
+      if (src.comparison === 'exact') match = a === b || `${a}?${query}` === b;
+      else if (src.comparison === 'contains') match = a.includes(b);
+      else if (src.comparison === 'start') match = a.startsWith(b);
+      else if (src.comparison === 'end') match = a.endsWith(b);
+      else if (src.comparison === 'regex') {
+        try {
+          match = subject.match(new RegExp(pattern, ci ? 'i' : ''));
+        } catch {
+          match = false;
+        }
+      }
+      if (!match) continue;
+
+      if (r.code === 410 || r.code === 451) return { status: r.code };
+      const groups = Array.isArray(match) ? match : null;
+      let to = String(r.to ?? '');
+      if (groups) to = to.replace(/\$(\d+)/g, (_m, n: string) => groups[Number(n)] ?? '');
+      if (!to) continue;
+      // آدرس نسبی یا آدرس خود وردپرس ← همان صفحه روی arkan.gold/mag
+      const absolute = /^https?:\/\//i.test(to) ? to : `${site.home.replace(/\/$/, '')}/${to.replace(/^\//, '')}`;
+      const magPath = wpPath(absolute, site.home);
+      const u = new URL(absolute);
+      const location = magPath === null ? absolute : `${magHref(magPath)}${u.search}${u.hash}`;
+      const status = r.code === 302 || r.code === 307 ? r.code : 301;
+      return { status, location };
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------------
  * صفحه‌ی اصلی مجله
  * ------------------------------------------------------------------ */
 
@@ -403,11 +494,15 @@ export interface SitemapEntry {
   lastmod?: string;
 }
 
+/** noindex طبق Yoast (yoast_head_json) یا Rank Math/Yoast (فیلد arkan_noindex افزونه‌ی arkan-headless) */
+const isNoindex = (x: { yoast_head_json?: { robots?: { index?: string } } | null; arkan_noindex?: boolean }) =>
+  x.arkan_noindex === true || x.yoast_head_json?.robots?.index === 'noindex';
+
 /** همه‌ی صفحه‌های قابل‌ایندکس مجله با تاریخ آخرین تغییر */
 export function sitemapEntries(): Promise<SitemapEntry[]> {
   return cached('mag:sitemap', TTL.lists, async () => {
     const site = await getSite();
-    const fields = { _fields: 'link,modified_gmt,yoast_head_json' };
+    const fields = { _fields: 'link,modified_gmt,yoast_head_json,arkan_noindex' };
     const [posts, pages, cats, tags] = await Promise.all([
       wpAll<WpPost>('wp/v2/posts', fields),
       wpAll<WpPost>('wp/v2/pages', fields),
@@ -422,15 +517,15 @@ export function sitemapEntries(): Promise<SitemapEntry[]> {
     out.push({ path: '', lastmod: latest ? iso(latest) : undefined });
     for (const p of [...posts, ...pages]) {
       const path = wpPath(p.link, site.home);
-      if (path && p.yoast_head_json?.robots?.index !== 'noindex') out.push({ path, lastmod: iso(p.modified_gmt) });
+      if (path && !isNoindex(p)) out.push({ path, lastmod: iso(p.modified_gmt) });
     }
     for (const t of [...cats.filter((c) => (c.count ?? 1) > 0), ...tags]) {
       const path = wpPath(t.link, site.home);
-      if (path && t.yoast_head_json?.robots?.index !== 'noindex') out.push({ path });
+      if (path && !isNoindex(t)) out.push({ path });
     }
     for (const u of users) {
       const path = u.link ? wpPath(u.link, site.home) : null;
-      if (path && u.yoast_head_json?.robots?.index !== 'noindex') out.push({ path });
+      if (path && !isNoindex(u)) out.push({ path });
     }
     return out;
   });
