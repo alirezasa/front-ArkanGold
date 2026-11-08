@@ -44,6 +44,13 @@ const TTL = {
   search: 60_000,
 };
 
+/**
+ * صفحه‌ها و فهرست‌ها: بعد از تمام شدن تازگی فقط ۳۰ ثانیه نسخه‌ی قبلی بدون انتظار نمایش داده می‌شود؛
+ * بعد از آن بازدیدکننده منتظر نسخه‌ی تازه می‌ماند (حداکثر ۱۰ ثانیه) و نسخه‌ی قبلی فقط در خطا یا قطعی
+ * وردپرس (تا ۲۴ ساعت) نمایش داده می‌شود. پس ویرایش مطلب حتی بدون پاک‌سازی کش، حداکثر حدود ۲.۵ دقیقه بعد دیده می‌شود.
+ */
+const FRESH = { swrMs: 30_000 };
+
 export interface MagArchive {
   kind: 'category' | 'tag' | 'author';
   id: number;
@@ -329,7 +336,7 @@ async function resolve(path: string): Promise<MagRoute> {
 /** صفحه‌ی /mag/{path} (مسیر decode‌شده، بدون / اول و آخر) */
 export function resolveMagRoute(path: string): Promise<MagRoute> {
   const clean = path.split('/').filter(Boolean).join('/');
-  return cached(`mag:route:${clean}`, TTL.page, () => resolve(clean));
+  return cached(`mag:route:${clean}`, TTL.page, () => resolve(clean), FRESH);
 }
 
 export function searchMag(query: string): Promise<MagRoute> {
@@ -338,16 +345,20 @@ export function searchMag(query: string): Promise<MagRoute> {
     const site = await getSite();
     const { data } = await wpGet<WpPost[]>('wp/v2/posts', { search: q, per_page: 24, _embed: WP_EMBED, _fields: POST_FIELDS });
     return { kind: 'search', query: q, posts: data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p) };
-  });
+  }, FRESH);
 }
 
 /** آخرین مطالب (RSS و بخش «مطالب مجله» صفحه‌ی اصلی) */
 export function latestPosts(count = 30): Promise<MagPost[]> {
-  return cached(`mag:latest:${count}`, TTL.page, async () => {
+  return cached(`mag:latest:${count}`, TTL.page, latestFetcher(count), FRESH);
+}
+
+function latestFetcher(count: number) {
+  return async () => {
     const site = await getSite();
     const listing = await listPosts(site, { per_page: count }, 1, '');
     return listing?.posts.slice(0, count) ?? [];
-  });
+  };
 }
 
 /* ------------------------------------------------------------------
@@ -482,7 +493,7 @@ export function magLanding(): Promise<MagLanding> {
 
     const sections = tabs.slice(0, 3).map((t) => ({ ...t, posts: t.posts.slice(0, 4) }));
     return { featured, sections, tabs };
-  });
+  }, FRESH);
 }
 
 /* ------------------------------------------------------------------
