@@ -82,11 +82,8 @@ if (route.kind === 'notfound' && !unavailable) Astro.response.status = rmRedirec
 // صفحه‌ی ۴۰۴ همین فایل نمایش داده شود؛ در غیر این صورت Astro صفحه‌ی 404.html ایستا را از خود سرور
 // درخواست می‌کند که برنامه‌ی Node.js فقط /mag را پاسخ می‌دهد و آن درخواست در حلقه می‌افتد
 if (route.kind === 'notfound') Astro.response.headers.set('X-Astro-Reroute', 'no');
-// کش مرورگر/CDN کوتاه است؛ تازه بودن محتوا را کش سرور و پاک‌سازی بعد از انتشار تضمین می‌کنند
-Astro.response.headers.set(
-  'Cache-Control',
-  route.kind === 'notfound' || route.kind === 'search' ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300'
-);
+// مرورگر/CDN نسخه‌ی قدیمی نگه ندارند تا ویرایش مطلب فوراً دیده شود؛ سرعت را کش سرور تأمین می‌کند
+Astro.response.headers.set('Cache-Control', route.kind === 'notfound' || route.kind === 'search' ? 'no-store' : 'public, max-age=0, must-revalidate');
 
 const fa = faNum;
 const DEFAULT_DESCRIPTION =

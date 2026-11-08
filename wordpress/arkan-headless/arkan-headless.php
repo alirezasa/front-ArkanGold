@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Arkan Gold — مجله هدلس
  * Description: وردپرس را به پنل محتوای مجله‌ی آرکان گلد تبدیل می‌کند: بازدید از صفحه‌های عمومی وردپرس به همان آدرس در arkan.gold/mag هدایت می‌شود و با هر انتشار/ویرایش مطلب، کش صفحه‌های مجله روی سرور Node.js پاک می‌شود تا تغییر فوراً دیده شود.
- * Version:     2.2.0
+ * Version:     2.3.0
  * Author:      Arkan Gold
  * Requires PHP: 7.4
  *
@@ -109,6 +109,10 @@ add_action('admin_init', 'arkan_headless_noindex_header');
 add_filter('rest_post_dispatch', function ($response) {
     if ($response instanceof WP_REST_Response) {
         $response->header('X-Robots-Tag', 'noindex, nofollow');
+        // پاسخ‌های REST نباید در LiteSpeed Cache، کش افزونه‌ها یا CDN جلوی cms بمانند؛ وگرنه ویرایش مطلب
+        // دیر روی arkan.gold دیده می‌شود (سایت اصلی خودش پاسخ‌ها را کش و بعد از انتشار پاک می‌کند)
+        $response->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+        $response->header('X-LiteSpeed-Cache-Control', 'no-cache');
     }
     return $response;
 });
