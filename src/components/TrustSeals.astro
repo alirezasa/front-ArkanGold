@@ -1,0 +1,41 @@
+---
+// ردیف نمادها و مجوزهای فوتر — داده و راهنمای اضافه کردن تصویر: src/data/trustSeals.ts
+import Icon from './Icon.astro';
+import { ENAMAD_CODE, ENAMAD_ID } from '../config/site';
+import { trustSeals } from '../data/trustSeals';
+
+// تصاویر src/assets/trust/{id}.{png,jpg,jpeg,webp,svg} خودکار پیدا می‌شوند
+const images = import.meta.glob<{ default: ImageMetadata }>('../assets/trust/*.{png,jpg,jpeg,webp,svg}', { eager: true });
+const imageFor = (id: string) => {
+  const key = Object.keys(images).find((k) => k.split('/').pop()!.replace(/\.[^.]+$/, '') === id);
+  return key ? images[key].default : undefined;
+};
+const enamadQuery = ENAMAD_ID && ENAMAD_CODE ? `id=${encodeURIComponent(ENAMAD_ID)}&Code=${encodeURIComponent(ENAMAD_CODE)}` : '';
+const box = 'flex h-[104px] w-[92px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl bg-white p-2 text-center shadow-sm transition-transform hover:-translate-y-0.5';
+---
+
+<div class="flex flex-wrap items-center justify-center gap-3">
+  {trustSeals.map((seal) => {
+    if (seal.id === 'enamad' && enamadQuery) {
+      return (
+        <a href={`https://trustseal.enamad.ir/?${enamadQuery}`} target="_blank" referrerpolicy="origin" rel="noopener" class={box} aria-label={seal.label}>
+          <img referrerpolicy="origin" src={`https://trustseal.enamad.ir/logo.aspx?${enamadQuery}`} alt={seal.label} width="84" height="96" loading="lazy" class="h-full w-auto object-contain cursor-pointer" code={ENAMAD_CODE} />
+        </a>
+      );
+    }
+    const img = imageFor(seal.id);
+    const inner = img ? (
+      <img src={img.src} width={img.width} height={img.height} alt={seal.label} loading="lazy" decoding="async" class="max-h-[84px] w-auto object-contain" />
+    ) : (
+      <>
+        <Icon name="seal" class="h-7 w-7 text-gold" />
+        <span class="text-[10px] font-semibold leading-4 text-brand">{seal.label}</span>
+      </>
+    );
+    return seal.href ? (
+      <a href={seal.href} target="_blank" rel="noopener" class={box} aria-label={seal.label} title={seal.label}>{inner}</a>
+    ) : (
+      <span class={box} title={seal.label}>{inner}</span>
+    );
+  })}
+</div>

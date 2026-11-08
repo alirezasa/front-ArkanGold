@@ -183,10 +183,10 @@ const LOGO_H = 356;
 
     <nav aria-label="ناوبری موبایل" class="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4">
       <ul class="flex flex-col gap-2">
-        {mainNav.map((item, idx) => (
+        {mainNav.map((item) => (
           item.children ? (
             <li>
-              <details class="m-group group/d rounded-xl border border-brand-100/40 bg-white" open={idx === 0}>
+              <details class="m-group group/d rounded-xl border border-brand-100/40 bg-white">
                 <summary class="m-row cursor-pointer list-none">
                   <span class="m-icon"><Icon name={item.icon} class="h-5 w-5" /></span>
                   <span class="flex-1">{item.label}</span>
