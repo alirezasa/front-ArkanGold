@@ -213,14 +213,50 @@ canvas {
 }
 
 /* توضیحات HTML محصول (صفحه‌ی جزئیات شمش) */
+.product-description > :first-child { margin-top: 0; }
 .product-description p { margin-bottom: 0.9rem; }
 .product-description ul { list-style: disc; padding-right: 1.25rem; margin-bottom: 0.9rem; }
 .product-description ol { list-style: decimal; padding-right: 1.25rem; margin-bottom: 0.9rem; }
+.product-description li + li { margin-top: 0.3rem; }
+.product-description li::marker { color: #a9843f; }
+/* عنوان‌های داخل توضیحات: خوانا، با فاصله‌ی کافی و یک خط کوچک طلایی */
 .product-description h2,
-.product-description h3 { color: #330509; font-weight: 700; margin: 1rem 0 0.5rem; }
+.product-description h3,
+.product-description h4 {
+  color: #330509;
+  font-weight: 800;
+  line-height: 1.8;
+  margin: 1.6rem 0 0.6rem;
+  padding-right: 0.75rem;
+  border-right: 3px solid #c5a059;
+}
+.product-description h2 { font-size: 1.15rem; }
+.product-description h3 { font-size: 1.05rem; }
+.product-description h4 { font-size: 0.975rem; border-right-color: #e6c2c5; }
+.product-description strong, .product-description b { color: #330509; font-weight: 700; }
+.product-description blockquote {
+  margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 12px;
+  background: #fafafb; border-right: 3px solid #330509;
+}
 .product-description img { max-width: 100%; height: auto; border-radius: 12px; margin: 0.75rem 0; }
 .product-description a { color: #7a171e; text-decoration: underline; }
-.product-description table { display: block; max-width: 100%; overflow-x: auto; }
+.product-description table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1rem 0; }
+.product-description th, .product-description td { border: 1px solid #e2e2e5; padding: 0.4rem 0.75rem; }
+.product-description th { background: #f6e7e8; color: #330509; }
+
+/* «نمایش بیشتر» توضیحات محصول */
+.desc-collapse { position: relative; }
+.desc-collapse[data-collapsed='true'] > .product-description { max-height: 17rem; overflow: hidden; }
+.desc-fade {
+  position: absolute; inset-inline: 0; bottom: 0; height: 5rem; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+  opacity: 0; transition: opacity 0.2s;
+}
+.desc-collapse[data-collapsed='true'] > .desc-fade { opacity: 1; }
+.desc-collapse[data-short='true'] > .product-description { max-height: none; }
+.desc-collapse[data-short='true'] > .desc-fade,
+.desc-collapse[data-short='true'] + .desc-toggle { display: none; }
+.desc-toggle[aria-expanded='true'] svg { transform: rotate(180deg); }
 
 /* چت آنلاین آرکان گلد (app.arkan.gold/livechat-embed.js): دکمه‌ی شناور چت روی صفحات نمایش داده
    نمی‌شود و فقط پنجره‌ی باز چت دیده می‌شود. کلاس arkan-chat-open را src/lib/support.ts از روی

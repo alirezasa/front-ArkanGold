@@ -38,7 +38,31 @@ function setBuyLink(el: HTMLAnchorElement | null, url: string, enabled: boolean)
   el.classList.toggle('pointer-events-none', !enabled);
 }
 
+/** «نمایش بیشتر / کمتر» توضیحات محصول؛ اگر متن کوتاه باشد دکمه پنهان می‌شود */
+function initDescriptionToggle() {
+  const box = document.querySelector<HTMLElement>('[data-desc]');
+  const body = box?.querySelector<HTMLElement>('.product-description');
+  const btn = document.querySelector<HTMLButtonElement>('[data-desc-toggle]');
+  if (!box || !body || !btn) return;
+  const label = btn.querySelector<HTMLElement>('[data-desc-label]');
+  // ۴۰ پیکسل حاشیه: اگر فقط چند خط بیشتر از ارتفاع جمع‌شده است، کل متن نمایش داده شود
+  if (body.scrollHeight <= body.clientHeight + 40) {
+    box.dataset.short = 'true';
+    box.dataset.collapsed = 'false';
+    return;
+  }
+  btn.addEventListener('click', () => {
+    const expand = box.dataset.collapsed === 'true';
+    box.dataset.collapsed = String(!expand);
+    btn.setAttribute('aria-expanded', String(expand));
+    if (label) label.textContent = expand ? 'نمایش کمتر' : 'نمایش بیشتر';
+    // بعد از جمع کردن، ابتدای توضیحات در دید بماند
+    if (!expand) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+}
+
 export function initIngotDetail({ slug, serviceEnabled: initialService, product: initialProduct = null }: InitOptions) {
+  initDescriptionToggle();
   let serviceEnabled = initialService;
   let product: GoldIngot | null = initialProduct;
 

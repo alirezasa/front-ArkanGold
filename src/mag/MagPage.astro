@@ -57,16 +57,24 @@ let cats: { name: string; path: string }[] = [];
 let landing: Landing | null = null;
 let latest: MagPost[] = [];
 try {
+  // همه‌ی داده‌ها هم‌زمان (نه پشت سر هم): داده‌های جانبی اختیاری‌اند و خطایشان صفحه را خراب نمی‌کند
+  const isHome = !isSearch && rawPath === '';
+  const sidePromises = !isSearch
+    ? Promise.all([
+        getSite().then((s) => s.description).catch(() => ''),
+        topCategories(12).catch(() => [] as { name: string; path: string }[]),
+        latestPosts(12).catch(() => [] as MagPost[]),
+        isHome ? magLanding().catch(() => null) : Promise.resolve(null),
+      ])
+    : null;
   route = isSearch ? await searchMag(query) : await resolveMagRoute(rawPath);
-  // داده‌های جانبی اختیاری‌اند: خطای آن‌ها صفحه را خراب نمی‌کند
-  if (route.kind === 'home' || route.kind === 'post') {
-    [siteDescription, cats] = await Promise.all([
-      getSite().then((s) => s.description).catch(() => ''),
-      topCategories(12).catch(() => []),
-    ]);
+  if (sidePromises && (route.kind === 'home' || route.kind === 'post')) {
+    const [description, categories, recent, landingData] = await sidePromises;
+    siteDescription = description;
+    cats = categories;
+    latest = recent.slice(0, 6);
+    if (route.kind === 'home' && route.page === 1) landing = landingData;
   }
-  if (route.kind === 'home' && route.page === 1) landing = await magLanding().catch(() => null);
-  if (route.kind === 'post') latest = await latestPosts(6).catch(() => []);
 } catch (err) {
   console.error(`[mag] /mag/${rawPath}:`, err);
   route = { kind: 'notfound' };

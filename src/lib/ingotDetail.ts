@@ -116,7 +116,8 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
   const variants = sortedVariants(p);
   const { from, to } = priceRange(p);
   const code = specValue(p, 'کد محصول');
-  const gtin = validGtin(specValue(p, 'کد GTIN'));
+  // بارکد ۱۳ رقمی (EAN-13) معمولا همان GTIN است؛ اول «بارکد محصول»، بعد «کد GTIN» (فقط مقدار معتبر)
+  const gtin = validGtin(specValue(p, 'بارکد محصول')) ?? validGtin(specValue(p, 'کد GTIN'));
   const karat = karatLabel(p.purityKarat);
   const inStock = serviceEnabled && p.inStock;
 
@@ -489,7 +490,15 @@ export function ingotDetailHtml(p: GoldIngot, { serviceEnabled }: DetailHtmlOpti
   <section class="container-page pb-6 grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_420px]">
     <article class="min-w-0 rounded-xl2 bg-white border border-brand-100/40 shadow-card p-5 sm:p-6 md:p-8">
       <h2 class="text-xl font-bold text-brand mb-4">معرفی و بررسی ${esc(p.name)}</h2>
-      <div class="product-description text-sm leading-8 text-ink-soft">${descriptionHtml}</div>
+      <!-- توضیحات جمع‌شده با «نمایش بیشتر» — کل متن در HTML هست (برای سئو)، فقط نمایش محدود می‌شود -->
+      <div class="desc-collapse" data-desc data-collapsed="true">
+        <div id="product-description" class="product-description text-sm leading-8 text-ink-soft">${descriptionHtml}</div>
+        <div class="desc-fade" aria-hidden="true"></div>
+      </div>
+      <button type="button" data-desc-toggle aria-controls="product-description" aria-expanded="false" class="desc-toggle mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-100 px-4 py-1.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">
+        <span data-desc-label>نمایش بیشتر</span>
+        ${iconSvg('chevron', 'h-4 w-4 transition-transform')}
+      </button>
     </article>
     ${specs}
   </section>

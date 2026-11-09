@@ -23,7 +23,7 @@ let legacyPosts: WpPost[] = [];
 
 if (MAG_ENABLED) {
   // حداکثر ۱.۵ ثانیه انتظار؛ اگر وردپرس کند است، صفحه‌ی اصلی بدون این بخش ساخته می‌شود
-  magPosts = await withDeadline(latestPosts(4), 1500, []);
+  magPosts = (await withDeadline(latestPosts(12), 1500, [])).slice(0, 4);
 } else {
   legacyPosts = await withDeadline(cached('legacy-mag:latest', 10 * 60_000, async () => {
     const res = await fetch('https://arkan.gold/mag/wp-json/wp/v2/posts?per_page=3&_fields=id,link,title,excerpt,date', {
