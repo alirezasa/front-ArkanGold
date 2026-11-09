@@ -74,6 +74,22 @@ export function ingotFaq(p: GoldIngot): { question: string; answer: string }[] {
   ];
 }
 
+/**
+ * GTIN معتبر (۸، ۱۲، ۱۳ یا ۱۴ رقم با رقم کنترل درست) یا undefined — گوگل GTIN نامعتبر را در
+ * Merchant listings خطا می‌گیرد؛ ارقام فارسی/عربی و فاصله‌ها پذیرفته و نرمال می‌شوند.
+ */
+export function validGtin(value: string | undefined): string | undefined {
+  const digits = (value ?? '')
+    .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[\s-]/g, '');
+  if (!/^(\d{8}|\d{12,14})$/.test(digits) || /^0+$/.test(digits)) return undefined;
+  const body = digits.slice(0, -1);
+  let sum = 0;
+  for (let i = 0; i < body.length; i++) sum += Number(body[body.length - 1 - i]) * (i % 2 === 0 ? 3 : 1);
+  return (10 - (sum % 10)) % 10 === Number(digits.at(-1)) ? digits : undefined;
+}
+
 /* ------------------------------------------------------------------
  * سئو
  * ------------------------------------------------------------------ */
@@ -99,7 +115,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
   const variants = sortedVariants(p);
   const { from, to } = priceRange(p);
   const code = specValue(p, 'کد محصول');
-  const gtin = specValue(p, 'کد GTIN');
+  const gtin = validGtin(specValue(p, 'کد GTIN'));
   const karat = karatLabel(p.purityKarat);
   const inStock = serviceEnabled && p.inStock;
 
@@ -151,7 +167,8 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
     name: p.name,
     description: description,
     url,
-    category: categoryOf(p),
+    // category عمدا نیست: گوگل برای Merchant listings مقدار طبقه‌بندی محصولات خودش را می‌خواهد و
+    // نام آزاد دسته را «Invalid value» اعلام می‌کند (دسته در additionalProperty/صفحه آمده است)
     material: `طلا ${karat}`,
     brand: { '@type': 'Brand', name: 'آرکان گلد' },
     manufacturer: { '@type': 'Organization', name: 'آرکان گلد', url: SITE },
