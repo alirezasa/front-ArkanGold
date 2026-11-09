@@ -20,6 +20,7 @@ import {
 } from './goldIngots';
 import { esc, ingotDetailPath, safeHref, INGOT_PLACEHOLDER_IMAGE } from './ingotCard';
 import { iconSvg, type IconName } from './icons';
+import { RETURN_POLICY, SHIPPING_DETAILS } from './merchantPolicy';
 import { OFFICE_ADDRESS_PARTS, SUPPORT_PHONE, SUPPORT_PHONE_FA, TRADE_FEE_LABEL } from '../config/site';
 
 const SITE = 'https://arkan.gold';
@@ -127,6 +128,10 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
   );
 
   const seller = { '@type': 'Organization', name: 'آرکان گلد', url: SITE };
+  const offerPolicies = {
+    shippingDetails: SHIPPING_DETAILS,
+    hasMerchantReturnPolicy: RETURN_POLICY,
+  };
   const availability = (ok: boolean) => (ok ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock');
   // ارز در schema باید کد ISO باشد؛ تومان × ۱۰ = ریال (IRR)
   const rial = (toman: number) => String(Math.round(toman * 10));
@@ -139,6 +144,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
     availability: availability(serviceEnabled && v.inStock),
     itemCondition: 'https://schema.org/NewCondition',
     seller,
+    ...offerPolicies,
   });
 
   const pricedVariants = variants.filter((v) => toNumber(v.finalPriceToman) > 0);
@@ -155,9 +161,10 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
       offerCount: pricedVariants.length,
       availability: availability(inStock),
       offers: pricedVariants.map(offerOf),
+      ...offerPolicies,
     };
   } else if (from > 0) {
-    offers = { '@type': 'Offer', url, price: rial(from), priceCurrency: 'IRR', availability: availability(inStock), seller };
+    offers = { '@type': 'Offer', url, price: rial(from), priceCurrency: 'IRR', availability: availability(inStock), seller, ...offerPolicies };
   }
 
   const product: Record<string, unknown> = {
