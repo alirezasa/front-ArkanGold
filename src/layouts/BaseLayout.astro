@@ -5,6 +5,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import { INSTAGRAM_URL, LIVECHAT_EMBED_URL, OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
+import { RETURN_POLICY } from '../lib/merchantPolicy';
 
 interface Props {
   title: string;
@@ -40,6 +41,8 @@ const organizationSchema = {
     availableLanguage: ['fa'],
   },
   sameAs: [INSTAGRAM_URL],
+  // سیاست مرجوعی کل فروشگاه (همان RETURN_POLICY صفحه‌ی شمش‌ها): مرجوعی ندارد، فقط فروش مجدد به قیمت روز
+  hasMerchantReturnPolicy: RETURN_POLICY,
 };
 
 const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];

@@ -514,7 +514,8 @@ export function toMagPost(raw: WpPost, home: string): MagPost | null {
     date: gmtIso(raw.date_gmt),
     modified: gmtIso(raw.modified_gmt || raw.date_gmt),
     sticky: !!raw.sticky,
-    readingMinutes: Math.max(1, Math.round(words / 200)),
+    // فهرست‌ها متن کامل را نمی‌گیرند (سبک‌تر)؛ آنجا زمان مطالعه ۰ است و نمایش داده نمی‌شود
+    readingMinutes: words ? Math.max(1, Math.round(words / 200)) : 0,
     author: toAuthor(raw._embedded?.author?.[0], home),
     image: mediaToImage(raw._embedded?.['wp:featuredmedia']?.[0], title, home),
     categories: refs('category'),

@@ -20,6 +20,7 @@ import {
 } from './goldIngots';
 import { esc, ingotDetailPath, safeHref, INGOT_PLACEHOLDER_IMAGE } from './ingotCard';
 import { iconSvg, type IconName } from './icons';
+import { RETURN_POLICY, SHIPPING_DETAILS } from './merchantPolicy';
 import { OFFICE_ADDRESS_PARTS, SUPPORT_PHONE, SUPPORT_PHONE_FA, TRADE_FEE_LABEL } from '../config/site';
 
 const SITE = 'https://arkan.gold';
@@ -74,6 +75,22 @@ export function ingotFaq(p: GoldIngot): { question: string; answer: string }[] {
   ];
 }
 
+/**
+ * GTIN معتبر (۸، ۱۲، ۱۳ یا ۱۴ رقم با رقم کنترل درست) یا undefined — گوگل GTIN نامعتبر را در
+ * Merchant listings خطا می‌گیرد؛ ارقام فارسی/عربی و فاصله‌ها پذیرفته و نرمال می‌شوند.
+ */
+export function validGtin(value: string | undefined): string | undefined {
+  const digits = (value ?? '')
+    .replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[\s-]/g, '');
+  if (!/^(\d{8}|\d{12,14})$/.test(digits) || /^0+$/.test(digits)) return undefined;
+  const body = digits.slice(0, -1);
+  let sum = 0;
+  for (let i = 0; i < body.length; i++) sum += Number(body[body.length - 1 - i]) * (i % 2 === 0 ? 3 : 1);
+  return (10 - (sum % 10)) % 10 === Number(digits.at(-1)) ? digits : undefined;
+}
+
 /* ------------------------------------------------------------------
  * سئو
  * ------------------------------------------------------------------ */
@@ -99,7 +116,8 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
   const variants = sortedVariants(p);
   const { from, to } = priceRange(p);
   const code = specValue(p, 'کد محصول');
-  const gtin = specValue(p, 'کد GTIN');
+  // بارکد ۱۳ رقمی (EAN-13) معمولا همان GTIN است؛ اول «بارکد محصول»، بعد «کد GTIN» (فقط مقدار معتبر)
+  const gtin = validGtin(specValue(p, 'بارکد محصول')) ?? validGtin(specValue(p, 'کد GTIN'));
   const karat = karatLabel(p.purityKarat);
   const inStock = serviceEnabled && p.inStock;
 
@@ -111,6 +129,10 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
   );
 
   const seller = { '@type': 'Organization', name: 'آرکان گلد', url: SITE };
+  const offerPolicies = {
+    shippingDetails: SHIPPING_DETAILS,
+    hasMerchantReturnPolicy: RETURN_POLICY,
+  };
   const availability = (ok: boolean) => (ok ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock');
   // ارز در schema باید کد ISO باشد؛ تومان × ۱۰ = ریال (IRR)
   const rial = (toman: number) => String(Math.round(toman * 10));
@@ -123,6 +145,7 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
     availability: availability(serviceEnabled && v.inStock),
     itemCondition: 'https://schema.org/NewCondition',
     seller,
+    ...offerPolicies,
   });
 
   const pricedVariants = variants.filter((v) => toNumber(v.finalPriceToman) > 0);
@@ -139,9 +162,10 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
       offerCount: pricedVariants.length,
       availability: availability(inStock),
       offers: pricedVariants.map(offerOf),
+      ...offerPolicies,
     };
   } else if (from > 0) {
-    offers = { '@type': 'Offer', url, price: rial(from), priceCurrency: 'IRR', availability: availability(inStock), seller };
+    offers = { '@type': 'Offer', url, price: rial(from), priceCurrency: 'IRR', availability: availability(inStock), seller, ...offerPolicies };
   }
 
   const product: Record<string, unknown> = {
@@ -151,7 +175,8 @@ export function ingotSeo(p: GoldIngot, serviceEnabled = true): IngotSeo {
     name: p.name,
     description: description,
     url,
-    category: categoryOf(p),
+    // category عمدا نیست: گوگل برای Merchant listings مقدار طبقه‌بندی محصولات خودش را می‌خواهد و
+    // نام آزاد دسته را «Invalid value» اعلام می‌کند (دسته در additionalProperty/صفحه آمده است)
     material: `طلا ${karat}`,
     brand: { '@type': 'Brand', name: 'آرکان گلد' },
     manufacturer: { '@type': 'Organization', name: 'آرکان گلد', url: SITE },
@@ -465,7 +490,15 @@ export function ingotDetailHtml(p: GoldIngot, { serviceEnabled }: DetailHtmlOpti
   <section class="container-page pb-6 grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_420px]">
     <article class="min-w-0 rounded-xl2 bg-white border border-brand-100/40 shadow-card p-5 sm:p-6 md:p-8">
       <h2 class="text-xl font-bold text-brand mb-4">معرفی و بررسی ${esc(p.name)}</h2>
-      <div class="product-description text-sm leading-8 text-ink-soft">${descriptionHtml}</div>
+      <!-- توضیحات جمع‌شده با «نمایش بیشتر» — کل متن در HTML هست (برای سئو)، فقط نمایش محدود می‌شود -->
+      <div class="desc-collapse" data-desc data-collapsed="true">
+        <div id="product-description" class="product-description text-sm leading-8 text-ink-soft">${descriptionHtml}</div>
+        <div class="desc-fade" aria-hidden="true"></div>
+      </div>
+      <button type="button" data-desc-toggle aria-controls="product-description" aria-expanded="false" class="desc-toggle mt-3 inline-flex items-center gap-1.5 rounded-full border border-brand-100 px-4 py-1.5 text-xs font-semibold text-brand hover:bg-brand hover:text-white transition-colors">
+        <span data-desc-label>نمایش بیشتر</span>
+        ${iconSvg('chevron', 'h-4 w-4 transition-transform')}
+      </button>
     </article>
     ${specs}
   </section>

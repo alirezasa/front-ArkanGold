@@ -70,8 +70,12 @@ const cat = post.categories[0];
       {large && <p class="mt-2 hidden sm:block max-w-2xl text-sm leading-7 text-white/80 line-clamp-2">{post.excerpt}</p>}
       <p class="mt-2 flex items-center gap-2 whitespace-nowrap text-[11px] text-white/70">
         <time datetime={post.date} class="tnum">{faDate(post.date)}</time>
-        <span aria-hidden="true" class:list={[!large && 'hidden sm:inline']}>·</span>
-        <span class:list={[!large && 'hidden sm:inline']}>{faNum(post.readingMinutes)} دقیقه مطالعه</span>
+        {post.readingMinutes > 0 && (
+          <>
+            <span aria-hidden="true" class:list={[!large && 'hidden sm:inline']}>·</span>
+            <span class:list={[!large && 'hidden sm:inline']}>{faNum(post.readingMinutes)} دقیقه مطالعه</span>
+          </>
+        )}
       </p>
     </div>
   </article>

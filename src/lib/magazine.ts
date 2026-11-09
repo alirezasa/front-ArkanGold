@@ -12,6 +12,7 @@
  * همه‌ی نتیجه‌ها از کش src/lib/cache.ts (کلیدهای «mag:») می‌گذرند؛ انتشار مطلب در وردپرس کش را پاک می‌کند
  * (افزونه‌ی wordpress/arkan-headless ← /mag/wp-revalidate).
  */
+import { WP_API_URL } from '../config/site';
 import { cached } from './cache';
 import {
   WP_EMBED,
@@ -45,11 +46,11 @@ const TTL = {
 };
 
 /**
- * صفحه‌ها و فهرست‌ها: بعد از تمام شدن تازگی فقط ۳۰ ثانیه نسخه‌ی قبلی بدون انتظار نمایش داده می‌شود؛
- * بعد از آن بازدیدکننده منتظر نسخه‌ی تازه می‌ماند (حداکثر ۱۰ ثانیه) و نسخه‌ی قبلی فقط در خطا یا قطعی
- * وردپرس (تا ۲۴ ساعت) نمایش داده می‌شود. پس ویرایش مطلب حتی بدون پاک‌سازی کش، حداکثر حدود ۲.۵ دقیقه بعد دیده می‌شود.
+ * صفحه‌ها و فهرست‌ها: تا ۲ دقیقه تازه؛ بعد از آن تا ۱ ساعت نسخه‌ی قبلی **فوراً** نمایش داده و در
+ * پس‌زمینه تازه می‌شود (بازدیدکننده هیچ‌وقت منتظر وردپرس نمی‌ماند). انتشار/ویرایش مطلب کش را فوراً پاک
+ * می‌کند (/mag/wp-revalidate)؛ بدون آن، ویرایش در اولین بازدید بعد از ۲ دقیقه تازه می‌شود.
  */
-const FRESH = { swrMs: 30_000 };
+const FRESH = { swrMs: 60 * 60_000 };
 
 export interface MagArchive {
   kind: 'category' | 'tag' | 'author';
@@ -104,6 +105,8 @@ const POST_FIELDS = [
   '_links',
   '_embedded',
 ].join(',');
+/** فهرست‌ها متن کامل مطلب را لازم ندارند؛ بدون content، وردپرس متن هر مطلب را رندر نمی‌کند (خیلی سبک‌تر) */
+const LIST_FIELDS = POST_FIELDS.split(',').filter((f) => f !== 'content').join(',');
 const TERM_FIELDS = 'id,name,slug,link,taxonomy,description,count,parent,yoast_head_json,arkan_noindex';
 const USER_FIELDS = 'id,name,slug,link,description,avatar_urls,yoast_head_json,arkan_noindex';
 
@@ -171,7 +174,7 @@ async function listPosts(
       ...params,
       page,
       _embed: WP_EMBED,
-      _fields: POST_FIELDS,
+      _fields: LIST_FIELDS,
     });
     const posts = res.data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p);
     if (!posts.length && page > 1) return null;
@@ -272,15 +275,17 @@ async function relatedPosts(site: WpSiteInfo, post: MagPost): Promise<MagPost[]>
   if (post.type !== 'post') return [];
   const fetchList = async (params: Record<string, string | number>) =>
     (
-      await wpGet<WpPost[]>('wp/v2/posts', { ...params, per_page: 4, exclude: post.id, _embed: WP_EMBED, _fields: POST_FIELDS })
+      await wpGet<WpPost[]>('wp/v2/posts', { ...params, per_page: 4, exclude: post.id, _embed: WP_EMBED, _fields: LIST_FIELDS })
     ).data
       .map((p) => toMagPost(p, site.home))
       .filter((p): p is MagPost => !!p);
   try {
-    const sameCategory = post.categories.length ? await fetchList({ categories: post.categories.map((c) => c.id).join(',') }) : [];
-    if (sameCategory.length >= 4) return sameCategory;
-    const latest = await fetchList({});
-    return [...sameCategory, ...latest.filter((p) => !sameCategory.some((s) => s.id === p.id))].slice(0, 4);
+    const [sameCategory, latest] = await Promise.all([
+      post.categories.length ? fetchList({ categories: post.categories.map((c) => c.id).join(',') }) : Promise.resolve([]),
+      latestPosts(12).catch(() => [] as MagPost[]),
+    ]);
+    const others = latest.filter((p) => p.id !== post.id && !sameCategory.some((s) => s.id === p.id));
+    return [...sameCategory, ...others].slice(0, 4);
   } catch {
     return []; // مطالب مرتبط اختیاری‌اند؛ خطای آن‌ها صفحه را خراب نمی‌کند
   }
@@ -343,12 +348,21 @@ export function searchMag(query: string): Promise<MagRoute> {
   const q = query.trim().slice(0, 100);
   return cached(`mag:search:${q.toLowerCase()}`, TTL.search, async () => {
     const site = await getSite();
-    const { data } = await wpGet<WpPost[]>('wp/v2/posts', { search: q, per_page: 24, _embed: WP_EMBED, _fields: POST_FIELDS });
+    const { data } = await wpGet<WpPost[]>('wp/v2/posts', { search: q, per_page: 24, _embed: WP_EMBED, _fields: LIST_FIELDS });
     return { kind: 'search', query: q, posts: data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p) };
   }, FRESH);
 }
 
 /** آخرین مطالب (RSS و بخش «مطالب مجله» صفحه‌ی اصلی) */
+/** مطالب RSS با متن کامل (content:encoded) */
+export function feedPosts(count = 30): Promise<MagPost[]> {
+  return cached(`mag:feed:${count}`, TTL.feed, async () => {
+    const site = await getSite();
+    const { data } = await wpGet<WpPost[]>('wp/v2/posts', { per_page: count, _embed: WP_EMBED, _fields: POST_FIELDS });
+    return data.map((p) => toMagPost(p, site.home)).filter((p): p is MagPost => !!p);
+  }, FRESH);
+}
+
 export function latestPosts(count = 30): Promise<MagPost[]> {
   return cached(`mag:latest:${count}`, TTL.page, latestFetcher(count), FRESH);
 }
@@ -467,33 +481,49 @@ export interface MagLanding {
 export function magLanding(): Promise<MagLanding> {
   return cached('mag:landing', TTL.page, async () => {
     const site = await getSite();
-    const [cats, sticky, latest] = await Promise.all([
+    // ۳ درخواست: دسته‌ها (کش ۱۰ دقیقه)، مطالب سنجاق‌شده، و ۴۸ مطلب آخر (بدون متن کامل) — تب‌ها و بخش
+    // دسته‌ها از همین ۴۸ مطلب ساخته می‌شوند (قبلا برای هر دسته یک درخواست جدا)
+    const [cats, sticky, recent] = await Promise.all([
       getCategories(),
       listPosts(site, { sticky: 'true', per_page: 5 }, 1, '').catch(() => null),
-      latestPosts(12),
+      listPosts(site, { per_page: 48 }, 1, '').then((l) => l?.posts ?? []),
     ]);
 
     const seen = new Set<number>();
-    const featured = [...(sticky?.posts ?? []), ...latest].filter((p) => !seen.has(p.id) && seen.add(p.id)).slice(0, 5);
+    const featured = [...(sticky?.posts ?? []), ...recent].filter((p) => !seen.has(p.id) && seen.add(p.id)).slice(0, 5);
 
-    const top = cats
+    const tabs = cats
       .filter((c) => (c.count ?? 1) > 0)
       .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+      .map((c): MagCategoryBlock | null => {
+        const path = wpPath(c.link, site.home);
+        const ids = new Set(categoryIds(cats, c.id));
+        const posts = recent.filter((p) => p.categories.some((r) => ids.has(r.id))).slice(0, 8);
+        return path && posts.length ? { name: htmlToText(c.name), path, posts } : null;
+      })
+      .filter((t): t is MagCategoryBlock => !!t)
       .slice(0, 6);
-    const tabs = (
-      await Promise.all(
-        top.map(async (c): Promise<MagCategoryBlock | null> => {
-          const path = wpPath(c.link, site.home);
-          if (!path) return null;
-          const listing = await listPosts(site, { categories: categoryIds(cats, c.id).join(','), per_page: 8 }, 1, path).catch(() => null);
-          return listing?.posts.length ? { name: htmlToText(c.name), path, posts: listing.posts } : null;
-        })
-      )
-    ).filter((t): t is MagCategoryBlock => !!t);
 
     const sections = tabs.slice(0, 3).map((t) => ({ ...t, posts: t.posts.slice(0, 4) }));
     return { featured, sections, tabs };
   }, FRESH);
+}
+
+/* ------------------------------------------------------------------
+ * گرم نگه داشتن کش: صفحه‌ی اصلی مجله، آخرین مطالب (صفحه‌ی اصلی سایت و ستون کناری) و صفحه‌ی اول فهرست
+ * هر ۹۰ ثانیه در پس‌زمینه از وردپرس تازه می‌شوند تا بازدیدکننده هیچ‌وقت منتظر نماند.
+ * (تایمر unref است: build و خاموش شدن سرور را نگه نمی‌دارد.)
+ * ------------------------------------------------------------------ */
+
+const g = globalThis as unknown as { __arkanMagWarm?: ReturnType<typeof setInterval> };
+if (typeof window === 'undefined' && !g.__arkanMagWarm && WP_API_URL) {
+  const warm = () => {
+    for (const task of [() => magLanding(), () => latestPosts(12), () => resolveMagRoute(''), () => topCategories(12)]) {
+      task().catch(() => {});
+    }
+  };
+  g.__arkanMagWarm = setInterval(warm, 90_000);
+  g.__arkanMagWarm.unref?.();
 }
 
 /* ------------------------------------------------------------------

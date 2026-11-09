@@ -3,7 +3,7 @@
  */
 import type { APIRoute } from 'astro';
 import { MAG_NAME, SITE_URL } from '../config/site';
-import { getSite, latestPosts } from '../lib/magazine';
+import { feedPosts, getSite } from '../lib/magazine';
 import { magUrl } from '../lib/wp';
 
 export const prerender = false;
@@ -17,7 +17,7 @@ const imageType = (src: string) => (/\.png(\?|$)/i.test(src) ? 'png' : /\.webp(\
 
 export const GET: APIRoute = async () => {
   try {
-    const [site, posts] = await Promise.all([getSite(), latestPosts(30)]);
+    const [site, posts] = await Promise.all([getSite(), feedPosts(30)]);
     const items = posts
       .map(
         (p) => `    <item>
