@@ -504,3 +504,21 @@ npm run build
 
 لاگ خطاها: cPanel ← Setup Node.js App یا فایل `stderr.log` در پوشه‌ی برنامه.
 
+## دامنه‌ی جایگزین arkangold.ir (قطعی اینترنت بین‌الملل)
+
+همان برنامه و محتوا روی `arkan.gold` و `arkangold.ir` اجرا می‌شود. هر سرویس آدرس هم‌ارز `.ir` دارد:
+`api.arkangold.ir`، `app.arkangold.ir` و `cms.arkangold.ir` (`src/lib/endpoints.ts`).
+
+- **درخواست‌ها:** مرورگر اول سرویس هم‌دامنه‌ی صفحه را صدا می‌زند. سرور، که داخل ایران است، اول `.ir` را صدا می‌زند. اگر خطای شبکه یا ۵۰۲/۵۰۳/۵۰۴ بیاید، دامنه‌ی دیگر امتحان می‌شود و دامنه‌ای که جواب داده به خاطر سپرده می‌شود.
+- **لینک‌ها روی arkangold.ir:** ورود، خرید، ماشین‌حساب، چت آنلاین و `/login` به `app.arkangold.ir` می‌روند (`src/lib/domainLinks.ts`).
+- **سئو:** canonical، og:url، schema و sitemap ها روی هر دو دامنه **همیشه** `arkan.gold` هستند. گوگل `arkangold.ir` را نسخه‌ی تکراری نمی‌بیند و اعتبارش به `arkan.gold` می‌رسد.
+  - `arkangold.ir` را noindex نکنید و به `arkan.gold` ریدایرکت نکنید؛ ریدایرکت در قطعی، دسترسی کاربران را قطع می‌کند.
+  - در Search Console برای `arkangold.ir` ملک Domain بسازید ولی sitemap ثبت نکنید. وضعیت «Alternate page with proper canonical tag» برای صفحه‌های آن طبیعی است.
+  - بک‌لینک‌ها و تبلیغات را به `arkan.gold` بدهید.
+  - لینک فوتر به `arkangold.ir` با `rel="nofollow"` است.
+- **پیش‌نیاز سرورها:**
+  - گواهی SSL معتبر روی هر سه آدرس `.ir`.
+  - `api.arkangold.ir` باید هدر CORS برای هر دو origin بدهد: `https://arkan.gold` و `https://arkangold.ir`.
+  - `cms.arkangold.ir` باید REST API و فایل‌های `wp-content/uploads` را مثل `cms.arkan.gold` سرو کند.
+  - `app.arkangold.ir` باید کامل کار کند: ورود، پرداخت و چت.
+- **غیرفعال کردن:** `PUBLIC_IR_MIRROR=off`.

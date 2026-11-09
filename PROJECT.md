@@ -191,6 +191,7 @@ wordpress/
 | `PORT` | اجرا | `4321` (در Docker `3000`) | پورت سرور |
 | `HOST` | اجرا | همه‌ی رابط‌ها | آدرس گوش دادن سرور |
 | `MAG_REVALIDATE_TOKEN` | اجرا | — | رمز پاک‌سازی کش مجله (حداقل ۱۶ کاراکتر؛ همان رمز در افزونه‌ی وردپرس) |
+| `PUBLIC_IR_MIRROR` | build | روشن | دامنه‌ی جایگزین arkangold.ir؛ `off` = غیرفعال |
 | `MEDIA_CACHE_DIR` | اجرا | `./cache/uploads` | محل کش تصاویر مجله (مثلا روی دیسک ماندگار) |
 
 متغیرهای `PUBLIC_*` در build خوانده و داخل خروجی نوشته می‌شوند. برای تغییرشان باید دوباره build کرد. نمونه‌ی همه‌ی متغیرها در `.env.example` آمده است.
@@ -256,6 +257,27 @@ docker run -p 3000:3000 -e MAG_REVALIDATE_TOKEN=... arkan-gold
 ### بعد از دیپلوی
 - `https://arkan.gold/healthz`: باید `goldPrice`، `shop` و `magazine` هر سه `"ok": true` باشند.
 - Search Console: سه sitemap ثبت شده باشند و **Test Live URL** موفق باشد. هاست باید به گوگل، یعنی ترافیک خارج از ایران، دسترسی بدهد.
+
+---
+
+## ۹-ب. دامنه‌ی جایگزین arkangold.ir (قطعی اینترنت بین‌الملل)
+
+همان برنامه و محتوا روی `arkan.gold` و `arkangold.ir` اجرا می‌شود. هر سرویس آدرس هم‌ارز `.ir` دارد:
+`api.arkangold.ir`، `app.arkangold.ir` و `cms.arkangold.ir` (`src/lib/endpoints.ts`).
+
+- **درخواست‌ها:** مرورگر اول سرویس هم‌دامنه‌ی صفحه را صدا می‌زند. سرور، که داخل ایران است، اول `.ir` را صدا می‌زند. اگر خطای شبکه یا ۵۰۲/۵۰۳/۵۰۴ بیاید، دامنه‌ی دیگر امتحان می‌شود و دامنه‌ای که جواب داده به خاطر سپرده می‌شود.
+- **لینک‌ها روی arkangold.ir:** ورود، خرید، ماشین‌حساب، چت آنلاین و `/login` به `app.arkangold.ir` می‌روند (`src/lib/domainLinks.ts`).
+- **سئو:** canonical، og:url، schema و sitemap ها روی هر دو دامنه **همیشه** `arkan.gold` هستند. گوگل `arkangold.ir` را نسخه‌ی تکراری نمی‌بیند و اعتبارش به `arkan.gold` می‌رسد.
+  - `arkangold.ir` را noindex نکنید و به `arkan.gold` ریدایرکت نکنید؛ ریدایرکت در قطعی، دسترسی کاربران را قطع می‌کند.
+  - در Search Console برای `arkangold.ir` ملک Domain بسازید ولی sitemap ثبت نکنید. وضعیت «Alternate page with proper canonical tag» برای صفحه‌های آن طبیعی است.
+  - بک‌لینک‌ها و تبلیغات را به `arkan.gold` بدهید.
+  - لینک فوتر به `arkangold.ir` با `rel="nofollow"` است.
+- **پیش‌نیاز سرورها:**
+  - گواهی SSL معتبر روی هر سه آدرس `.ir`.
+  - `api.arkangold.ir` باید هدر CORS برای هر دو origin بدهد: `https://arkan.gold` و `https://arkangold.ir`.
+  - `cms.arkangold.ir` باید REST API و فایل‌های `wp-content/uploads` را مثل `cms.arkan.gold` سرو کند.
+  - `app.arkangold.ir` باید کامل کار کند: ورود، پرداخت و چت.
+- **غیرفعال کردن:** `PUBLIC_IR_MIRROR=off`.
 
 ---
 

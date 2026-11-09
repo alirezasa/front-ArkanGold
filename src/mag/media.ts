@@ -11,6 +11,7 @@ import type { APIRoute } from 'astro';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { WP_API_URL } from '../config/site';
+import { fetchFallback } from '../lib/endpoints';
 
 export const prerender = false;
 
@@ -68,7 +69,7 @@ export const GET: APIRoute = async ({ params }) => {
   // ۲) از وردپرس
   let res: Response;
   try {
-    res = await fetch(`${UPSTREAM}/${segments.map(encodeURIComponent).join('/')}`, { signal: AbortSignal.timeout(20_000) });
+    res = await fetchFallback(`${UPSTREAM}/${segments.map(encodeURIComponent).join('/')}`, { timeoutMs: 20_000 });
   } catch (err) {
     console.error(`[media] ${file}:`, (err as Error)?.message ?? err);
     return new Response('Bad gateway', { status: 502, headers: { 'Cache-Control': 'no-store', 'Retry-After': '60' } });

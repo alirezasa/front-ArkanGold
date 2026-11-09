@@ -19,6 +19,7 @@
  *   «تماس با ما» هدایت می‌شود.
  */
 import { LIVECHAT_EMBED_URL } from '../config/site';
+import { localUrl } from './endpoints';
 
 declare global {
   interface Window {
@@ -28,7 +29,8 @@ declare global {
 
 const CHAT_ORIGIN = (() => {
   try {
-    return new URL(LIVECHAT_EMBED_URL).origin;
+    // روی arkangold.ir چت از app.arkangold.ir بارگذاری می‌شود (BaseLayout)
+    return new URL(localUrl(LIVECHAT_EMBED_URL)).origin;
   } catch {
     return 'https://app.arkan.gold';
   }

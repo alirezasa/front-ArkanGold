@@ -6,6 +6,7 @@ import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import { INSTAGRAM_URL, LIVECHAT_EMBED_URL, OFFICE_ADDRESS_PARTS, SUPPORT_PHONE_INTL } from '../config/site';
 import { RETURN_POLICY } from '../lib/merchantPolicy';
+import { MIRROR_ENABLED } from '../lib/endpoints';
 
 interface Props {
   title: string;
@@ -78,7 +79,20 @@ const schemas = [organizationSchema, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonL
       <slot />
     </main>
     <Footer />
-    <!-- چت آنلاین (پشتیبانی آنلاین) — دکمه‌ی شناورش مخفی است و از منوها باز می‌شود: src/lib/support.ts -->
-    <script is:inline src={LIVECHAT_EMBED_URL} defer></script>
+    <!-- چت آنلاین (پشتیبانی آنلاین) — دکمه‌ی شناورش مخفی است و از منوها باز می‌شود: src/lib/support.ts.
+         روی arkangold.ir از app.arkangold.ir بارگذاری می‌شود (قطعی اینترنت بین‌الملل) -->
+    <script is:inline define:vars={{ chatSrc: LIVECHAT_EMBED_URL, mirror: MIRROR_ENABLED }}>
+      (function () {
+        var h = location.hostname, src = chatSrc;
+        if (mirror && (h === 'arkangold.ir' || /\.arkangold\.ir$/.test(h))) src = src.replace('arkan.gold', 'arkangold.ir');
+        var s = document.createElement('script');
+        s.src = src;
+        s.defer = true;
+        document.body.appendChild(s);
+      })();
+    </script>
+    <script>
+      import '../lib/domainLinks';
+    </script>
   </body>
 </html>

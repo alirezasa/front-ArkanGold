@@ -17,6 +17,7 @@
  */
 import { ARKAN_API_URL } from '../config/site';
 import { cached } from './cache';
+import { fetchFallback } from './endpoints';
 
 export interface IngotSpec {
   label: string;
@@ -172,10 +173,10 @@ export function sanitizeDescription(text: string | null | undefined): string {
  * ------------------------------------------------------------------ */
 
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetchFallback(url, {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    timeoutMs: FETCH_TIMEOUT,
   });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return (await res.json()) as T;

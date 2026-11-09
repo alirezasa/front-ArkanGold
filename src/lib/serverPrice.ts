@@ -8,6 +8,7 @@
  * و کاربر قیمت را بدون انتظار می‌بیند. در مرورگر priceBinding.ts مثل قبل هر ۳۰ ثانیه به‌روز می‌کند.
  */
 import { cached } from './cache';
+import { fetchFallback } from './endpoints';
 import { GOLD_PRICE_API_URL, formatToman, normalize, type GoldPriceResponse, type NormalizedGoldPrice } from './goldPrice';
 
 /** قیمت روی سرور حداکثر ۲۰ ثانیه کش می‌شود (API هر ۳۰ ثانیه در مرورگر هم خوانده می‌شود) */
@@ -19,9 +20,9 @@ const PRICE_MAX_STALE = 5 * 60_000;
 
 export function serverGoldPrice(): Promise<NormalizedGoldPrice> {
   return cached('price:current', PRICE_TTL, async () => {
-    const res = await fetch(GOLD_PRICE_API_URL, {
+    const res = await fetchFallback(GOLD_PRICE_API_URL, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(PRICE_TIMEOUT),
+      timeoutMs: PRICE_TIMEOUT,
     });
     if (!res.ok) throw new Error(`${res.status} ${GOLD_PRICE_API_URL}`);
     const price = normalize((await res.json()) as GoldPriceResponse);

@@ -15,6 +15,7 @@
  */
 import { MAG_NAME, MAG_PATH, SITE_URL, WP_API_URL } from '../config/site';
 import { esc, safeHref } from './ingotCard';
+import { fetchFallback } from './endpoints';
 
 const SITE = SITE_URL;
 /** آدرس عمومی مجله؛ لینک‌هایی که در محتوای قدیمی به این آدرس اشاره می‌کنند هم داخلی حساب می‌شوند */
@@ -551,10 +552,10 @@ export async function wpGet<T>(
 ): Promise<WpResponse<T>> {
   const url = new URL(`${base}/${endpoint.replace(/^\//, '')}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
-  const res = await fetch(url, {
+  const res = await fetchFallback(url.toString(), {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    timeoutMs: FETCH_TIMEOUT,
   });
   if (!res.ok) throw new WpHttpError(res.status, url.toString());
   return {

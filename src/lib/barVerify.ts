@@ -15,6 +15,7 @@
  *   404 → کد یافت نشد          429 → تعداد درخواست بیش از حد مجاز
  */
 import { VERIFY_API_URL } from '../config/site';
+import { fetchFallback } from './endpoints';
 
 export type VerifyStatus = 'valid' | 'not_found' | 'revoked' | 'rate_limited' | 'error';
 
@@ -59,10 +60,10 @@ export async function verifyBar(codeInput: string): Promise<VerifyResult> {
 
   let res: Response;
   try {
-    res = await fetch(url.toString(), {
+    res = await fetchFallback(url.toString(), {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
-      signal: AbortSignal.timeout(12000),
+      timeoutMs: 12_000,
     });
   } catch {
     return { status: 'error', code };

@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly PUBLIC_ARKAN_API_URL?: string;
   readonly PUBLIC_VERIFY_API_URL?: string;
   readonly PUBLIC_WP_API_URL?: string;
+  readonly PUBLIC_IR_MIRROR?: string;
   readonly PUBLIC_ENAMAD_ID?: string;
   readonly PUBLIC_ENAMAD_CODE?: string;
 }

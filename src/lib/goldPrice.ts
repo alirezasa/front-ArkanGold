@@ -22,6 +22,7 @@
  */
 
 import { ARKAN_API_URL, TRADE_FEE_PERCENT } from '../config/site';
+import { fetchFallback } from './endpoints';
 
 export interface GoldPriceResponse {
   metal: string;
@@ -86,7 +87,7 @@ export function fetchGoldPrice(): Promise<NormalizedGoldPrice> {
   // درخواست‌های هم‌زمان چند کامپوننت در یک درخواست شبکه ادغام می‌شوند
   if (inFlight) return inFlight;
   inFlight = (async () => {
-    const res = await fetch(GOLD_PRICE_API_URL, { cache: 'no-store', headers: { Accept: 'application/json' } });
+    const res = await fetchFallback(GOLD_PRICE_API_URL, { cache: 'no-store', headers: { Accept: 'application/json' }, timeoutMs: 10_000 });
     if (!res.ok) throw new Error(`Gold price API error: ${res.status}`);
     const normalized = normalize((await res.json()) as GoldPriceResponse);
     if (!(normalized.pricePerGram > 0)) throw new Error('Gold price API returned an empty price');
@@ -136,7 +137,7 @@ export function subscribeGoldPrice(callback: (price: NormalizedGoldPrice) => voi
  */
 export async function fetchPriceHistory(hours: number): Promise<PriceHistoryPoint[]> {
   const url = `${GOLD_PRICE_HISTORY_API_URL}?hours=${encodeURIComponent(hours)}`;
-  const res = await fetch(url, { cache: 'no-store', headers: { Accept: 'application/json' } });
+  const res = await fetchFallback(url, { cache: 'no-store', headers: { Accept: 'application/json' }, timeoutMs: 15_000 });
   if (!res.ok) throw new Error(`Gold price history API error: ${res.status}`);
   const body = await res.json();
   const rows: { time?: string; priceRial?: string; priceToman?: string }[] = Array.isArray(body)

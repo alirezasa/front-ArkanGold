@@ -1,9 +1,13 @@
 ---
 // ورود و ثبت‌نام فقط در اپلیکیشن آرکان گلد انجام می‌شود؛ این مسیر برای لینک‌های قدیمی
-// نگه داشته شده و کاربر را روی سرور بلافاصله (۳۰۲) به app.arkan.gold می‌فرستد.
+// نگه داشته شده و کاربر را روی سرور بلافاصله (۳۰۲) به app.arkan.gold (یا app.arkangold.ir) می‌فرستد.
 import { APP_URL } from '../config/site';
+import { MIRROR_DOMAIN, MIRROR_ENABLED, otherDomainUrl } from '../lib/endpoints';
 
 export const prerender = false;
 
-return Astro.redirect(APP_URL, 302);
+// روی arkangold.ir به app.arkangold.ir (قطعی اینترنت بین‌الملل)
+const host = Astro.url.hostname;
+const onMirror = MIRROR_ENABLED && (host === MIRROR_DOMAIN || host.endsWith(`.${MIRROR_DOMAIN}`));
+return Astro.redirect(onMirror ? otherDomainUrl(APP_URL) ?? APP_URL : APP_URL, 302);
 ---
